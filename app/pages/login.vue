@@ -70,10 +70,14 @@
 
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
+import APIError from '@/components/api/user/APIError'
 
 definePageMeta({
     layout: false,
 })
+
+const { login } = useAuth()
+const route = useRoute()
 
 const state = reactive({
     email: '',
@@ -95,7 +99,11 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     isSubmitting.value = true
     authError.value = null
     try {
-        console.log('login submit', event.data)
+        await login(event.data.email, event.data.password, state.rememberMe)
+        const redirect = (route.query.redirect as string) || '/admin/products'
+        await navigateTo(redirect)
+    } catch (error) {
+        authError.value = error instanceof APIError ? error.message : 'Something went wrong. Please try again.'
     } finally {
         isSubmitting.value = false
     }
