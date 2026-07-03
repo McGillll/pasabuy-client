@@ -1,113 +1,3 @@
-<script setup lang="ts">
-import { publicPasabuyService } from '@/components/api/public/PublicPasabuyService'
-import APIError from '@/components/api/user/APIError'
-
-definePageMeta({ layout: false })
-
-interface Product {
-    uuid: string
-    name: string
-    description: string | null
-    image_url: string | null
-    is_active: boolean
-}
-
-interface ScheduleProduct {
-    uuid: string
-    price: string
-    max_quantity: number | null
-    product: Product
-}
-
-interface Schedule {
-    uuid: string
-    title: string
-    description: string | null
-    status: string
-    is_open: boolean
-    products: ScheduleProduct[]
-}
-
-interface OrderResult {
-    uuid: string
-    customer_name: string
-    total_amount: string
-}
-
-const route = useRoute()
-const uuid = route.params.uuid as string
-
-const schedule = ref<Schedule | null>(null)
-const loading = ref(true)
-const notFound = ref(false)
-
-const quantities = ref<Record<string, number>>({})
-const customerName = ref('')
-const customerContact = ref('')
-const submitting = ref(false)
-const submitError = ref<string | null>(null)
-const orderResult = ref<OrderResult | null>(null)
-
-const total = computed(() => {
-    if (!schedule.value) return 0
-    return schedule.value.products.reduce((sum, sp) => {
-        const qty = quantities.value[sp.product.uuid] || 0
-        return sum + qty * Number(sp.price)
-    }, 0)
-})
-
-const hasItems = computed(() => Object.values(quantities.value).some((qty) => qty > 0))
-
-async function load() {
-    loading.value = true
-    try {
-        const response = await publicPasabuyService.fetchSchedule(uuid)
-        schedule.value = response.data
-        for (const sp of schedule.value!.products) {
-            quantities.value[sp.product.uuid] = 0
-        }
-    } catch (error) {
-        if (error instanceof APIError) {
-            notFound.value = true
-        } else {
-            throw error
-        }
-    } finally {
-        loading.value = false
-    }
-}
-
-function increment(sp: ScheduleProduct) {
-    const current = quantities.value[sp.product.uuid] || 0
-    if (sp.max_quantity !== null && current >= sp.max_quantity) return
-    quantities.value[sp.product.uuid] = current + 1
-}
-
-function decrement(sp: ScheduleProduct) {
-    const current = quantities.value[sp.product.uuid] || 0
-    quantities.value[sp.product.uuid] = Math.max(0, current - 1)
-}
-
-async function submitOrder() {
-    submitError.value = null
-    submitting.value = true
-    try {
-        const items = Object.entries(quantities.value)
-            .filter(([, qty]) => qty > 0)
-            .map(([product_uuid, quantity]) => ({ product_uuid, quantity }))
-
-        const response = await publicPasabuyService.placeOrder(uuid, customerName.value, customerContact.value, items)
-        orderResult.value = response.data
-    } catch (error) {
-        submitError.value = error instanceof APIError ? error.message : 'Something went wrong. Please try again.'
-    } finally {
-        submitting.value = false
-    }
-}
-
-onMounted(load)
-</script>
-
 <template>
     <div class="min-h-screen bg-default px-4 py-8">
         <div class="mx-auto max-w-2xl space-y-6">
@@ -211,3 +101,117 @@ onMounted(load)
         </div>
     </div>
 </template>
+
+<script setup lang="ts">
+import { publicPasabuyService } from '@/components/api/public/PublicPasabuyService'
+import APIError from '@/components/api/user/APIError'
+
+definePageMeta({ layout: false })
+
+interface Product {
+    uuid: string
+    name: string
+    description: string | null
+    image_url: string | null
+    is_active: boolean
+}
+
+interface ScheduleProduct {
+    uuid: string
+    price: string
+    max_quantity: number | null
+    product: Product
+}
+
+interface Schedule {
+    uuid: string
+    title: string
+    description: string | null
+    status: string
+    is_open: boolean
+    products: ScheduleProduct[]
+}
+
+interface OrderResult {
+    uuid: string
+    customer_name: string
+    total_amount: string
+}
+
+const route = useRoute()
+const uuid = route.params.uuid as string
+
+const schedule = ref<Schedule | null>(null)
+const loading = ref(true)
+const notFound = ref(false)
+
+const quantities = ref<Record<string, number>>({})
+const customerName = ref('')
+const customerContact = ref('')
+const submitting = ref(false)
+const submitError = ref<string | null>(null)
+const orderResult = ref<OrderResult | null>(null)
+
+const total = computed(() => {
+    if (!schedule.value) return 0
+    return schedule.value.products.reduce((sum, sp) => {
+        const qty = quantities.value[sp.product.uuid] || 0
+        return sum + qty * Number(sp.price)
+    }, 0)
+})
+
+const hasItems = computed(() => Object.values(quantities.value).some((qty) => qty > 0))
+
+async function load() {
+    loading.value = true
+    try {
+        const response = await publicPasabuyService.fetchSchedule(uuid)
+        schedule.value = response.data
+        for (const sp of schedule.value!.products) {
+            quantities.value[sp.product.uuid] = 0
+        }
+    } catch (error) {
+        if (error instanceof APIError) {
+            notFound.value = true
+        } else {
+            throw error
+        }
+    } finally {
+        loading.value = false
+    }
+}
+
+function increment(sp: ScheduleProduct) {
+    const current = quantities.value[sp.product.uuid] || 0
+    if (sp.max_quantity !== null && current >= sp.max_quantity) return
+    quantities.value[sp.product.uuid] = current + 1
+}
+
+function decrement(sp: ScheduleProduct) {
+    const current = quantities.value[sp.product.uuid] || 0
+    quantities.value[sp.product.uuid] = Math.max(0, current - 1)
+}
+
+async function submitOrder() {
+    submitError.value = null
+    submitting.value = true
+    try {
+        const items = Object.entries(quantities.value)
+            .filter(([, qty]) => qty > 0)
+            .map(([product_uuid, quantity]) => ({ product_uuid, quantity }))
+
+        const response = await publicPasabuyService.placeOrder(uuid, {
+            customer_name: customerName.value,
+            customer_contact: customerContact.value,
+            items
+        })
+        orderResult.value = response.data
+    } catch (error) {
+        submitError.value = error instanceof APIError ? error.message : 'Something went wrong. Please try again.'
+    } finally {
+        submitting.value = false
+    }
+}
+
+onMounted(load)
+</script>

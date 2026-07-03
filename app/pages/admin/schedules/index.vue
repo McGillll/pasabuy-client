@@ -1,3 +1,41 @@
+<template>
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <h1 class="text-xl font-semibold text-highlighted">Pasabuy Schedules</h1>
+            <UButton icon="i-lucide-plus" @click="openCreateModal">New Schedule</UButton>
+        </div>
+
+        <UTable :data="schedules" :columns="columns" :loading="loading">
+            <template #status-cell="{ row }">
+                <UBadge :color="statusColor[row.original.status]" variant="subtle">{{ row.original.status }}</UBadge>
+            </template>
+            <template #actions-cell="{ row }">
+                <UButton size="xs" color="neutral" variant="ghost" :to="`/admin/schedules/${row.original.uuid}`">
+                    Manage
+                </UButton>
+            </template>
+        </UTable>
+
+        <div class="flex justify-center">
+            <UPagination v-model:page="page" :total="total" :items-per-page="perPage" />
+        </div>
+
+        <UModal v-model:open="isModalOpen" title="New Pasabuy Schedule">
+            <template #body>
+                <form class="space-y-4" @submit.prevent="onCreate">
+                    <UFormField label="Title" required>
+                        <UInput v-model="form.title" class="w-full" />
+                    </UFormField>
+                    <UFormField label="Description">
+                        <UTextarea v-model="form.description" class="w-full" />
+                    </UFormField>
+                    <UButton type="submit" block :loading="saving">Create</UButton>
+                </form>
+            </template>
+        </UModal>
+    </div>
+</template>
+
 <script setup lang="ts">
 import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
 import APIError from '@/components/api/user/APIError'
@@ -73,41 +111,3 @@ const statusColor: Record<string, 'neutral' | 'success' | 'error'> = {
 
 onMounted(loadSchedules)
 </script>
-
-<template>
-    <div class="space-y-4">
-        <div class="flex items-center justify-between">
-            <h1 class="text-xl font-semibold text-highlighted">Pasabuy Schedules</h1>
-            <UButton icon="i-lucide-plus" @click="openCreateModal">New Schedule</UButton>
-        </div>
-
-        <UTable :data="schedules" :columns="columns" :loading="loading">
-            <template #status-cell="{ row }">
-                <UBadge :color="statusColor[row.original.status]" variant="subtle">{{ row.original.status }}</UBadge>
-            </template>
-            <template #actions-cell="{ row }">
-                <UButton size="xs" color="neutral" variant="ghost" :to="`/admin/schedules/${row.original.uuid}`">
-                    Manage
-                </UButton>
-            </template>
-        </UTable>
-
-        <div class="flex justify-center">
-            <UPagination v-model:page="page" :total="total" :items-per-page="perPage" />
-        </div>
-
-        <UModal v-model:open="isModalOpen" title="New Pasabuy Schedule">
-            <template #body>
-                <form class="space-y-4" @submit.prevent="onCreate">
-                    <UFormField label="Title" required>
-                        <UInput v-model="form.title" class="w-full" />
-                    </UFormField>
-                    <UFormField label="Description">
-                        <UTextarea v-model="form.description" class="w-full" />
-                    </UFormField>
-                    <UButton type="submit" block :loading="saving">Create</UButton>
-                </form>
-            </template>
-        </UModal>
-    </div>
-</template>

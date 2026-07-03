@@ -18,18 +18,38 @@ export interface ScheduleProductInput {
  * See api/rsc-doc/pasabuy-schedule-api.md and order-api.md for response shapes.
  */
 class PasabuyScheduleService extends BaseAPIService {
+    /**
+     * GET /api/admin/pasabuy-schedules
+     * Query params: page, per_page.
+     * Response: paginated `{ data: Schedule[], total, ... }`.
+     */
     async fetchSchedules(params: object = {}): Promise<any> {
         return await this.request('/admin/pasabuy-schedules', 'GET', params)
     }
 
+    /**
+     * GET /api/admin/pasabuy-schedules/{uuid}
+     * Response: single `Schedule` including its attached `products`.
+     */
     async fetchSchedule(uuid: string): Promise<any> {
         return await this.request(`/admin/pasabuy-schedules/${uuid}`, 'GET')
     }
 
+    /**
+     * POST /api/admin/pasabuy-schedules
+     * FormData fields: title (string, required), description (string, optional),
+     * cutoff_at (string, optional), status ('draft'|'open'|'closed', optional).
+     * Response: created `Schedule`.
+     */
     async createSchedule(payload: SchedulePayload): Promise<any> {
         return await this.request('/admin/pasabuy-schedules', 'POST', this.buildFormData(payload))
     }
 
+    /**
+     * PUT /api/admin/pasabuy-schedules/{uuid} (sent as POST with `_method: 'PUT'` spoofing)
+     * FormData fields: same as createSchedule.
+     * Response: updated `Schedule`.
+     */
     async updateSchedule(uuid: string, payload: SchedulePayload): Promise<any> {
         const formData = this.buildFormData(payload)
         formData.append('_method', 'PUT')
@@ -37,10 +57,21 @@ class PasabuyScheduleService extends BaseAPIService {
         return await this.request(`/admin/pasabuy-schedules/${uuid}`, 'POST', formData)
     }
 
+    /**
+     * DELETE /api/admin/pasabuy-schedules/{uuid}
+     */
     async deleteSchedule(uuid: string): Promise<any> {
         return await this.request(`/admin/pasabuy-schedules/${uuid}`, 'DELETE')
     }
 
+    /**
+     * PUT /api/admin/pasabuy-schedules/{uuid}/products (sent as POST with `_method: 'PUT'` spoofing)
+     * Replaces the full set of products attached to the schedule.
+     * FormData fields: indexed array per product —
+     * `products[i][product_uuid]` (string), `products[i][price]` (numeric string),
+     * `products[i][max_quantity]` (numeric string, omitted when unlimited).
+     * Response: updated `Schedule` including its attached `products`.
+     */
     async syncProducts(uuid: string, products: ScheduleProductInput[]): Promise<any> {
         const formData = new FormData()
         formData.append('_method', 'PUT')
@@ -55,10 +86,19 @@ class PasabuyScheduleService extends BaseAPIService {
         return await this.request(`/admin/pasabuy-schedules/${uuid}/products`, 'POST', formData)
     }
 
+    /**
+     * GET /api/admin/pasabuy-schedules/{uuid}/orders
+     * Response: `Order[]` for the schedule.
+     */
     async fetchOrders(uuid: string): Promise<any> {
         return await this.request(`/admin/pasabuy-schedules/${uuid}/orders`, 'GET')
     }
 
+    /**
+     * PATCH /api/admin/orders/{uuid}/status (sent as POST with `_method: 'PATCH'` spoofing)
+     * FormData fields: status ('confirmed'|'cancelled', required).
+     * Response: updated `Order`.
+     */
     async updateOrderStatus(uuid: string, status: 'confirmed' | 'cancelled'): Promise<any> {
         const formData = new FormData()
         formData.append('_method', 'PATCH')

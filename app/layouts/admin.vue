@@ -1,12 +1,3 @@
-<script setup lang="ts">
-const { user, logout } = useAuth()
-
-const links = [
-    { label: 'Products', to: '/admin/products' },
-    { label: 'Pasabuy Schedules', to: '/admin/schedules' }
-]
-</script>
-
 <template>
     <div class="min-h-screen bg-default">
         <header class="border-b border-default">
@@ -36,3 +27,12 @@ const links = [
         </main>
     </div>
 </template>
+
+<script setup lang="ts">
+const { user, logout } = useAuth()
+
+const links = [
+    { label: 'Products', to: '/admin/products' },
+    { label: 'Pasabuy Schedules', to: '/admin/schedules' }
+]
+</script>

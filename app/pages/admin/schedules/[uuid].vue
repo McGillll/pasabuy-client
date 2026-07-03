@@ -1,3 +1,106 @@
+<template>
+    <div v-if="schedule" class="space-y-8">
+        <div>
+            <h1 class="text-xl font-semibold text-highlighted">{{ schedule.title }}</h1>
+            <div class="mt-2 flex items-center gap-2">
+                <UInput :model-value="publicLink" readonly class="w-96" />
+                <UButton icon="i-lucide-copy" color="neutral" variant="soft" @click="copyLink">Copy link</UButton>
+            </div>
+        </div>
+
+        <UCard>
+            <template #header>
+                <h2 class="font-medium">Details</h2>
+            </template>
+            <form class="space-y-4" @submit.prevent="saveDetails">
+                <UFormField label="Title" required>
+                    <UInput v-model="detailsForm.title" class="w-full" />
+                </UFormField>
+                <UFormField label="Description">
+                    <UTextarea v-model="detailsForm.description" class="w-full" />
+                </UFormField>
+                <UFormField label="Status">
+                    <USelect
+                        v-model="detailsForm.status"
+                        :items="[
+                            { label: 'Draft', value: 'draft' },
+                            { label: 'Open', value: 'open' },
+                            { label: 'Closed', value: 'closed' }
+                        ]"
+                        value-key="value"
+                        class="w-48"
+                    />
+                </UFormField>
+                <UButton type="submit" :loading="savingDetails">Save details</UButton>
+            </form>
+        </UCard>
+
+        <UCard>
+            <template #header>
+                <h2 class="font-medium">Products in this schedule</h2>
+            </template>
+            <div class="space-y-3">
+                <div
+                    v-for="product in catalog"
+                    :key="product.uuid"
+                    class="flex items-center gap-4 border-b border-default pb-3 last:border-0"
+                >
+                    <UCheckbox v-model="selectionFor(product.uuid).selected" />
+                    <img
+                        v-if="product.image_url"
+                        :src="product.image_url"
+                        class="size-10 rounded object-cover"
+                        alt=""
+                    >
+                    <div v-else class="size-10 rounded bg-elevated" />
+                    <span class="flex-1">{{ product.name }}</span>
+                    <UInput
+                        v-model.number="selectionFor(product.uuid).price"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Price"
+                        class="w-28"
+                    />
+                    <UInput
+                        v-model.number="selectionFor(product.uuid).max_quantity"
+                        type="number"
+                        min="1"
+                        placeholder="Unlimited"
+                        class="w-32"
+                    />
+                </div>
+            </div>
+            <template #footer>
+                <UButton :loading="savingProducts" @click="saveProducts">Save products</UButton>
+            </template>
+        </UCard>
+
+        <UCard>
+            <template #header>
+                <h2 class="font-medium">Orders</h2>
+            </template>
+            <UTable :data="orders" :columns="orderColumns">
+                <template #status-cell="{ row }">
+                    <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
+                        {{ row.original.status }}
+                    </UBadge>
+                </template>
+                <template #actions-cell="{ row }">
+                    <div v-if="row.original.status === 'pending'" class="flex gap-2">
+                        <UButton size="xs" color="success" variant="soft" @click="setOrderStatus(row.original, 'confirmed')">
+                            Confirm
+                        </UButton>
+                        <UButton size="xs" color="error" variant="soft" @click="setOrderStatus(row.original, 'cancelled')">
+                            Cancel
+                        </UButton>
+                    </div>
+                </template>
+            </UTable>
+        </UCard>
+    </div>
+</template>
+
 <script setup lang="ts">
 import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
 import { productService } from '@/components/api/admin/ProductService'
@@ -180,106 +283,3 @@ const orderStatusColor: Record<string, 'neutral' | 'success' | 'error'> = {
 
 onMounted(loadAll)
 </script>
-
-<template>
-    <div v-if="schedule" class="space-y-8">
-        <div>
-            <h1 class="text-xl font-semibold text-highlighted">{{ schedule.title }}</h1>
-            <div class="mt-2 flex items-center gap-2">
-                <UInput :model-value="publicLink" readonly class="w-96" />
-                <UButton icon="i-lucide-copy" color="neutral" variant="soft" @click="copyLink">Copy link</UButton>
-            </div>
-        </div>
-
-        <UCard>
-            <template #header>
-                <h2 class="font-medium">Details</h2>
-            </template>
-            <form class="space-y-4" @submit.prevent="saveDetails">
-                <UFormField label="Title" required>
-                    <UInput v-model="detailsForm.title" class="w-full" />
-                </UFormField>
-                <UFormField label="Description">
-                    <UTextarea v-model="detailsForm.description" class="w-full" />
-                </UFormField>
-                <UFormField label="Status">
-                    <USelect
-                        v-model="detailsForm.status"
-                        :items="[
-                            { label: 'Draft', value: 'draft' },
-                            { label: 'Open', value: 'open' },
-                            { label: 'Closed', value: 'closed' }
-                        ]"
-                        value-key="value"
-                        class="w-48"
-                    />
-                </UFormField>
-                <UButton type="submit" :loading="savingDetails">Save details</UButton>
-            </form>
-        </UCard>
-
-        <UCard>
-            <template #header>
-                <h2 class="font-medium">Products in this schedule</h2>
-            </template>
-            <div class="space-y-3">
-                <div
-                    v-for="product in catalog"
-                    :key="product.uuid"
-                    class="flex items-center gap-4 border-b border-default pb-3 last:border-0"
-                >
-                    <UCheckbox v-model="selectionFor(product.uuid).selected" />
-                    <img
-                        v-if="product.image_url"
-                        :src="product.image_url"
-                        class="size-10 rounded object-cover"
-                        alt=""
-                    >
-                    <div v-else class="size-10 rounded bg-elevated" />
-                    <span class="flex-1">{{ product.name }}</span>
-                    <UInput
-                        v-model.number="selectionFor(product.uuid).price"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="Price"
-                        class="w-28"
-                    />
-                    <UInput
-                        v-model.number="selectionFor(product.uuid).max_quantity"
-                        type="number"
-                        min="1"
-                        placeholder="Unlimited"
-                        class="w-32"
-                    />
-                </div>
-            </div>
-            <template #footer>
-                <UButton :loading="savingProducts" @click="saveProducts">Save products</UButton>
-            </template>
-        </UCard>
-
-        <UCard>
-            <template #header>
-                <h2 class="font-medium">Orders</h2>
-            </template>
-            <UTable :data="orders" :columns="orderColumns">
-                <template #status-cell="{ row }">
-                    <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
-                        {{ row.original.status }}
-                    </UBadge>
-                </template>
-                <template #actions-cell="{ row }">
-                    <div v-if="row.original.status === 'pending'" class="flex gap-2">
-                        <UButton size="xs" color="success" variant="soft" @click="setOrderStatus(row.original, 'confirmed')">
-                            Confirm
-                        </UButton>
-                        <UButton size="xs" color="error" variant="soft" @click="setOrderStatus(row.original, 'cancelled')">
-                            Cancel
-                        </UButton>
-                    </div>
-                </template>
-            </UTable>
-        </UCard>
-    </div>
-</template>

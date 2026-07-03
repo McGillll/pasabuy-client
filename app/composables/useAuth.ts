@@ -6,7 +6,7 @@ export function useAuth() {
     const user = useState<User | null>('auth_user', () => null)
 
     async function login(email: string, password: string, remember: boolean = false) {
-        const response = await authService.login(email, password, remember)
+        const response = await authService.login({ email, password, remember })
         localStorage.setItem('_token', response.data.token)
         if (remember) localStorage.setItem('rememberMe', '1')
         user.value = response.data.user

@@ -1,3 +1,59 @@
+<template>
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <h1 class="text-xl font-semibold text-highlighted">Products</h1>
+            <UButton icon="i-lucide-plus" @click="openCreateModal">Add Product</UButton>
+        </div>
+
+        <UTable :data="products" :columns="columns" :loading="loading">
+            <template #image_url-cell="{ row }">
+                <img
+                    v-if="row.original.image_url"
+                    :src="row.original.image_url"
+                    class="size-10 rounded object-cover"
+                    alt=""
+                >
+                <div v-else class="size-10 rounded bg-elevated" />
+            </template>
+            <template #is_active-cell="{ row }">
+                <UBadge :color="row.original.is_active ? 'success' : 'neutral'" variant="subtle">
+                    {{ row.original.is_active ? 'Active' : 'Inactive' }}
+                </UBadge>
+            </template>
+            <template #actions-cell="{ row }">
+                <div class="flex gap-2">
+                    <UButton size="xs" color="neutral" variant="ghost" @click="openEditModal(row.original)">Edit</UButton>
+                    <UButton size="xs" color="error" variant="ghost" @click="onDelete(row.original)">Delete</UButton>
+                </div>
+            </template>
+        </UTable>
+
+        <div class="flex justify-center">
+            <UPagination v-model:page="page" :total="total" :items-per-page="perPage" />
+        </div>
+
+        <UModal v-model:open="isModalOpen" :title="editingProduct ? 'Edit Product' : 'Add Product'">
+            <template #body>
+                <form class="space-y-4" @submit.prevent="onSave">
+                    <UFormField label="Name" required>
+                        <UInput v-model="form.name" class="w-full" />
+                    </UFormField>
+                    <UFormField label="Description">
+                        <UTextarea v-model="form.description" class="w-full" />
+                    </UFormField>
+                    <UFormField label="Image">
+                        <UFileUpload v-model="form.image" accept="image/*" />
+                    </UFormField>
+                    <UFormField label="Active">
+                        <UCheckbox v-model="form.is_active" label="Product is active" />
+                    </UFormField>
+                    <UButton type="submit" block :loading="saving">Save</UButton>
+                </form>
+            </template>
+        </UModal>
+    </div>
+</template>
+
 <script setup lang="ts">
 import { productService } from '@/components/api/admin/ProductService'
 import APIError from '@/components/api/user/APIError'
@@ -110,59 +166,3 @@ async function onDelete(product: Product) {
 
 onMounted(loadProducts)
 </script>
-
-<template>
-    <div class="space-y-4">
-        <div class="flex items-center justify-between">
-            <h1 class="text-xl font-semibold text-highlighted">Products</h1>
-            <UButton icon="i-lucide-plus" @click="openCreateModal">Add Product</UButton>
-        </div>
-
-        <UTable :data="products" :columns="columns" :loading="loading">
-            <template #image_url-cell="{ row }">
-                <img
-                    v-if="row.original.image_url"
-                    :src="row.original.image_url"
-                    class="size-10 rounded object-cover"
-                    alt=""
-                >
-                <div v-else class="size-10 rounded bg-elevated" />
-            </template>
-            <template #is_active-cell="{ row }">
-                <UBadge :color="row.original.is_active ? 'success' : 'neutral'" variant="subtle">
-                    {{ row.original.is_active ? 'Active' : 'Inactive' }}
-                </UBadge>
-            </template>
-            <template #actions-cell="{ row }">
-                <div class="flex gap-2">
-                    <UButton size="xs" color="neutral" variant="ghost" @click="openEditModal(row.original)">Edit</UButton>
-                    <UButton size="xs" color="error" variant="ghost" @click="onDelete(row.original)">Delete</UButton>
-                </div>
-            </template>
-        </UTable>
-
-        <div class="flex justify-center">
-            <UPagination v-model:page="page" :total="total" :items-per-page="perPage" />
-        </div>
-
-        <UModal v-model:open="isModalOpen" :title="editingProduct ? 'Edit Product' : 'Add Product'">
-            <template #body>
-                <form class="space-y-4" @submit.prevent="onSave">
-                    <UFormField label="Name" required>
-                        <UInput v-model="form.name" class="w-full" />
-                    </UFormField>
-                    <UFormField label="Description">
-                        <UTextarea v-model="form.description" class="w-full" />
-                    </UFormField>
-                    <UFormField label="Image">
-                        <UFileUpload v-model="form.image" accept="image/*" />
-                    </UFormField>
-                    <UFormField label="Active">
-                        <UCheckbox v-model="form.is_active" label="Product is active" />
-                    </UFormField>
-                    <UButton type="submit" block :loading="saving">Save</UButton>
-                </form>
-            </template>
-        </UModal>
-    </div>
-</template>
