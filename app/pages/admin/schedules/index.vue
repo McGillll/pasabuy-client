@@ -5,6 +5,8 @@
             <UButton icon="i-lucide-plus" @click="openCreateModal">New Schedule</UButton>
         </div>
 
+        <UInput v-model="search" icon="i-lucide-search" placeholder="Search schedules…" class="w-72" />
+
         <UTable :data="schedules" :columns="columns" :loading="loading">
             <template #status-cell="{ row }">
                 <UBadge :color="statusColor[row.original.status]" variant="subtle">{{ row.original.status }}</UBadge>
@@ -57,6 +59,7 @@ const loading = ref(false)
 const page = ref(1)
 const perPage = 15
 const total = ref(0)
+const search = ref('')
 
 const columns: TableColumn<Schedule>[] = [
     { accessorKey: 'title', header: 'Title' },
@@ -68,7 +71,7 @@ const columns: TableColumn<Schedule>[] = [
 async function loadSchedules() {
     loading.value = true
     try {
-        const response = await pasabuyScheduleService.fetchSchedules({ page: page.value, per_page: perPage })
+        const response = await pasabuyScheduleService.fetchSchedules({ page: page.value, per_page: perPage, search: search.value || undefined })
         schedules.value = response.data.data
         total.value = response.data.total
     } catch (error) {
@@ -79,6 +82,15 @@ async function loadSchedules() {
 }
 
 watch(page, loadSchedules)
+
+let searchDebounce: ReturnType<typeof setTimeout>
+watch(search, () => {
+    clearTimeout(searchDebounce)
+    searchDebounce = setTimeout(() => {
+        page.value = 1
+        loadSchedules()
+    }, 300)
+})
 
 const isModalOpen = ref(false)
 const form = reactive({ title: '', description: '' })

@@ -19,6 +19,9 @@
                 <UFormField label="Description">
                     <UTextarea v-model="detailsForm.description" class="w-full" />
                 </UFormField>
+                <UFormField label="Cutoff (optional)">
+                    <UInput v-model="detailsForm.cutoffAt" type="datetime-local" class="w-full" />
+                </UFormField>
                 <UFormField label="Status">
                     <USelect
                         v-model="detailsForm.status"
@@ -162,9 +165,17 @@ const loading = ref(true)
 const detailsForm = reactive({
     title: '',
     description: '',
+    cutoffAt: '',
     status: 'draft' as Schedule['status']
 })
 const savingDetails = ref(false)
+
+function isoToDatetimeLocal(iso: string | null): string {
+    if (!iso) return ''
+    const date = new Date(iso)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
 
 interface SelectionEntry {
     selected: boolean
@@ -199,6 +210,7 @@ async function loadAll() {
 
         detailsForm.title = schedule.value!.title
         detailsForm.description = schedule.value!.description ?? ''
+        detailsForm.cutoffAt = isoToDatetimeLocal(schedule.value!.cutoff_at)
         detailsForm.status = schedule.value!.status
 
         const initialSelection: typeof selection.value = {}
@@ -221,7 +233,12 @@ async function loadAll() {
 async function saveDetails() {
     savingDetails.value = true
     try {
-        const response = await pasabuyScheduleService.updateSchedule(uuid, { ...detailsForm })
+        const response = await pasabuyScheduleService.updateSchedule(uuid, {
+            title: detailsForm.title,
+            description: detailsForm.description,
+            cutoff_at: detailsForm.cutoffAt || null,
+            status: detailsForm.status
+        })
         schedule.value = { ...schedule.value!, ...response.data }
         toast.add({ title: 'Schedule updated', color: 'success' })
     } catch (error) {

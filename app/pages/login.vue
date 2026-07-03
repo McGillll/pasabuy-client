@@ -1,19 +1,22 @@
 <template>
-    <div class="min-h-screen flex items-center justify-center bg-default px-4">
-        <div class="w-full max-w-sm">
-            <div class="flex flex-col items-center gap-2 mb-8">
-                <div class="flex items-center justify-center size-12 rounded-lg bg-primary text-inverted font-bold text-xl">
+    <div class="dark relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-950 px-4 py-12">
+        <div class="pointer-events-none absolute inset-0 bg-linear-to-br from-slate-950 via-slate-900 to-slate-950" />
+        <div class="pointer-events-none absolute -top-32 -left-32 size-112 rounded-full bg-primary/30 blur-3xl" />
+        <div class="pointer-events-none absolute -bottom-32 -right-32 size-112 rounded-full bg-primary/20 blur-3xl" />
+        <div class="pointer-events-none absolute top-1/2 left-1/2 size-144 -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-500/10 blur-3xl" />
+
+        <div class="relative w-full max-w-sm">
+            <div class="flex flex-col items-center gap-3 mb-8">
+                <div class="flex items-center justify-center size-14 rounded-2xl bg-primary text-inverted font-bold text-2xl shadow-lg shadow-primary/30">
                     P
                 </div>
-                <h1 class="text-lg font-semibold text-highlighted">
-                    Pasabuy
-                </h1>
-                <p class="text-sm text-muted">
-                    Seller sign in
-                </p>
+                <div class="text-center">
+                    <h1 class="text-xl font-semibold text-white">Pasabuy</h1>
+                    <p class="text-sm text-white/60">Seller sign in</p>
+                </div>
             </div>
 
-            <UCard>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
                 <UAlert
                     v-if="authError"
                     color="error"
@@ -63,7 +66,11 @@
                         Sign in
                     </UButton>
                 </UForm>
-            </UCard>
+            </div>
+
+            <p class="mt-6 text-center text-xs text-white/40">
+                &copy; {{ currentYear }} Pasabuy. All rights reserved.
+            </p>
         </div>
     </div>
 </template>
@@ -78,6 +85,8 @@ definePageMeta({
 
 const { login } = useAuth()
 const route = useRoute()
+
+const currentYear = new Date().getFullYear()
 
 const state = reactive({
     email: '',

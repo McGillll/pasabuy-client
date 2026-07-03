@@ -5,6 +5,8 @@
             <UButton icon="i-lucide-plus" @click="openCreateModal">Add Product</UButton>
         </div>
 
+        <UInput v-model="search" icon="i-lucide-search" placeholder="Search products…" class="w-72" />
+
         <UTable :data="products" :columns="columns" :loading="loading">
             <template #image_url-cell="{ row }">
                 <img
@@ -75,6 +77,7 @@ const loading = ref(false)
 const page = ref(1)
 const perPage = 15
 const total = ref(0)
+const search = ref('')
 
 const columns: TableColumn<Product>[] = [
     { accessorKey: 'image_url', header: '' },
@@ -87,7 +90,7 @@ const columns: TableColumn<Product>[] = [
 async function loadProducts() {
     loading.value = true
     try {
-        const response = await productService.fetchProducts({ page: page.value, per_page: perPage })
+        const response = await productService.fetchProducts({ page: page.value, per_page: perPage, search: search.value || undefined })
         products.value = response.data.data
         total.value = response.data.total
     } catch (error) {
@@ -98,6 +101,15 @@ async function loadProducts() {
 }
 
 watch(page, loadProducts)
+
+let searchDebounce: ReturnType<typeof setTimeout>
+watch(search, () => {
+    clearTimeout(searchDebounce)
+    searchDebounce = setTimeout(() => {
+        page.value = 1
+        loadProducts()
+    }, 300)
+})
 
 const isModalOpen = ref(false)
 const editingProduct = ref<Product | null>(null)
