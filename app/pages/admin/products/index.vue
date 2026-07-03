@@ -16,6 +16,9 @@ interface Product {
 const toast = useToast()
 const products = ref<Product[]>([])
 const loading = ref(false)
+const page = ref(1)
+const perPage = 15
+const total = ref(0)
 
 const columns: TableColumn<Product>[] = [
     { accessorKey: 'image_url', header: '' },
@@ -28,14 +31,17 @@ const columns: TableColumn<Product>[] = [
 async function loadProducts() {
     loading.value = true
     try {
-        const response = await productService.fetchProducts()
+        const response = await productService.fetchProducts({ page: page.value, per_page: perPage })
         products.value = response.data.data
+        total.value = response.data.total
     } catch (error) {
         toast.add({ title: 'Failed to load products', description: (error as APIError).message, color: 'error' })
     } finally {
         loading.value = false
     }
 }
+
+watch(page, loadProducts)
 
 const isModalOpen = ref(false)
 const editingProduct = ref<Product | null>(null)
@@ -134,6 +140,10 @@ onMounted(loadProducts)
                 </div>
             </template>
         </UTable>
+
+        <div class="flex justify-center">
+            <UPagination v-model:page="page" :total="total" :items-per-page="perPage" />
+        </div>
 
         <UModal v-model:open="isModalOpen" :title="editingProduct ? 'Edit Product' : 'Add Product'">
             <template #body>

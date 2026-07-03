@@ -27,14 +27,14 @@ class PasabuyScheduleService extends BaseAPIService {
     }
 
     async createSchedule(payload: SchedulePayload): Promise<any> {
-        return await this.requestFormData('/admin/pasabuy-schedules', this.buildFormData(payload))
+        return await this.request('/admin/pasabuy-schedules', 'POST', this.buildFormData(payload))
     }
 
     async updateSchedule(uuid: string, payload: SchedulePayload): Promise<any> {
         const formData = this.buildFormData(payload)
         formData.append('_method', 'PUT')
 
-        return await this.requestFormData(`/admin/pasabuy-schedules/${uuid}`, formData)
+        return await this.request(`/admin/pasabuy-schedules/${uuid}`, 'POST', formData)
     }
 
     async deleteSchedule(uuid: string): Promise<any> {
@@ -52,7 +52,7 @@ class PasabuyScheduleService extends BaseAPIService {
             }
         })
 
-        return await this.requestFormData(`/admin/pasabuy-schedules/${uuid}/products`, formData)
+        return await this.request(`/admin/pasabuy-schedules/${uuid}/products`, 'POST', formData)
     }
 
     async fetchOrders(uuid: string): Promise<any> {
@@ -64,7 +64,7 @@ class PasabuyScheduleService extends BaseAPIService {
         formData.append('_method', 'PATCH')
         formData.append('status', status)
 
-        return await this.requestFormData(`/admin/orders/${uuid}/status`, formData)
+        return await this.request(`/admin/orders/${uuid}/status`, 'POST', formData)
     }
 
     private buildFormData(payload: SchedulePayload): FormData {

@@ -23,7 +23,7 @@ class PublicPasabuyService extends BaseAPIService {
             formData.append(`items[${index}][quantity]`, String(item.quantity))
         })
 
-        return await this.requestFormData(`/public/pasabuy-schedules/${uuid}/orders`, formData)
+        return await this.request(`/public/pasabuy-schedules/${uuid}/orders`, 'POST', formData)
     }
 }
 

@@ -22,14 +22,14 @@ class ProductService extends BaseAPIService {
     }
 
     async createProduct(payload: ProductPayload): Promise<any> {
-        return await this.requestFormData('/admin/products', this.buildFormData(payload))
+        return await this.request('/admin/products', 'POST', this.buildFormData(payload))
     }
 
     async updateProduct(uuid: string, payload: ProductPayload): Promise<any> {
         const formData = this.buildFormData(payload)
         formData.append('_method', 'PUT')
 
-        return await this.requestFormData(`/admin/products/${uuid}`, formData)
+        return await this.request(`/admin/products/${uuid}`, 'POST', formData)
     }
 
     async deleteProduct(uuid: string): Promise<any> {

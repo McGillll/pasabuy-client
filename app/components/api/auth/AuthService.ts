@@ -11,7 +11,7 @@ class AuthService extends BaseAPIService {
         formData.append('password', password)
         formData.append('remember', remember ? '1' : '0')
 
-        return await this.requestFormData('/auth/login', formData)
+        return await this.request('/auth/login', 'POST', formData)
     }
 
     async logout(): Promise<any> {

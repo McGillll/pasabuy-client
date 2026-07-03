@@ -16,6 +16,9 @@ interface Schedule {
 const toast = useToast()
 const schedules = ref<Schedule[]>([])
 const loading = ref(false)
+const page = ref(1)
+const perPage = 15
+const total = ref(0)
 
 const columns: TableColumn<Schedule>[] = [
     { accessorKey: 'title', header: 'Title' },
@@ -27,14 +30,17 @@ const columns: TableColumn<Schedule>[] = [
 async function loadSchedules() {
     loading.value = true
     try {
-        const response = await pasabuyScheduleService.fetchSchedules()
+        const response = await pasabuyScheduleService.fetchSchedules({ page: page.value, per_page: perPage })
         schedules.value = response.data.data
+        total.value = response.data.total
     } catch (error) {
         toast.add({ title: 'Failed to load schedules', description: (error as APIError).message, color: 'error' })
     } finally {
         loading.value = false
     }
 }
+
+watch(page, loadSchedules)
 
 const isModalOpen = ref(false)
 const form = reactive({ title: '', description: '' })
@@ -85,6 +91,10 @@ onMounted(loadSchedules)
                 </UButton>
             </template>
         </UTable>
+
+        <div class="flex justify-center">
+            <UPagination v-model:page="page" :total="total" :items-per-page="perPage" />
+        </div>
 
         <UModal v-model:open="isModalOpen" title="New Pasabuy Schedule">
             <template #body>
