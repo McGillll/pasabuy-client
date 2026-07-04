@@ -7,30 +7,69 @@
 
         <UInput v-model="search" icon="i-lucide-search" placeholder="Search products…" class="w-full sm:w-72" />
 
-        <UTable :data="products" :columns="columns" :loading="loading">
-            <template #image_url-cell="{ row }">
-                <img
-                    v-if="row.original.image_url"
-                    :src="row.original.image_url"
-                    class="size-10 rounded object-cover"
-                    alt=""
-                >
-                <div v-else class="size-10 rounded bg-elevated" />
-            </template>
-            <template #is_active-cell="{ row }">
-                <UBadge :color="row.original.is_active ? 'success' : 'neutral'" variant="subtle">
-                    {{ row.original.is_active ? 'Active' : 'Inactive' }}
-                </UBadge>
-            </template>
-            <template #actions-cell="{ row }">
-                <div class="flex gap-2">
-                    <UButton size="xs" color="neutral" variant="ghost" @click="openEditModal(row.original)">Edit</UButton>
-                    <UButton size="xs" color="error" variant="ghost" @click="onDelete(row.original)">Delete</UButton>
-                </div>
-            </template>
-        </UTable>
+        <UCard :ui="{ body: 'p-0 sm:p-0' }">
+            <UTable
+                :data="products"
+                :columns="columns"
+                :loading="loading"
+                :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
+            >
+                <template #image-cell="{ row }">
+                    <img
+                        v-if="row.original.image_url"
+                        :src="row.original.image_url"
+                        class="size-12 rounded-lg object-cover ring-1 ring-default"
+                        alt=""
+                    >
+                    <div v-else class="flex items-center justify-center size-12 rounded-lg bg-elevated text-dimmed">
+                        <UIcon name="i-lucide-image" class="size-5" />
+                    </div>
+                </template>
+                <template #product-cell="{ row }">
+                    <p class="font-medium text-highlighted">{{ row.original.name }}</p>
+                    <p v-if="row.original.description" class="text-sm text-muted truncate max-w-xs">
+                        {{ row.original.description }}
+                    </p>
+                </template>
+                <template #is_active-cell="{ row }">
+                    <UBadge :color="row.original.is_active ? 'success' : 'neutral'" variant="subtle">
+                        <span class="flex items-center gap-1.5">
+                            <span class="size-1.5 rounded-full bg-current" />
+                            {{ row.original.is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                    </UBadge>
+                </template>
+                <template #actions-cell="{ row }">
+                    <div class="flex justify-end gap-1">
+                        <UButton
+                            icon="i-lucide-pencil"
+                            size="sm"
+                            color="neutral"
+                            variant="ghost"
+                            aria-label="Edit product"
+                            @click="openEditModal(row.original)"
+                        />
+                        <UButton
+                            icon="i-lucide-trash-2"
+                            size="sm"
+                            color="error"
+                            variant="ghost"
+                            aria-label="Delete product"
+                            @click="onDelete(row.original)"
+                        />
+                    </div>
+                </template>
+                <template #empty>
+                    <div class="flex flex-col items-center gap-3 py-10">
+                        <UIcon name="i-lucide-package-search" class="size-8 text-dimmed" />
+                        <p class="text-sm text-muted">No products found.</p>
+                        <UButton size="sm" icon="i-lucide-plus" @click="openCreateModal">Add your first product</UButton>
+                    </div>
+                </template>
+            </UTable>
+        </UCard>
 
-        <div class="flex justify-center">
+        <div v-if="total > perPage" class="flex justify-center">
             <UPagination v-model:page="page" :total="total" :items-per-page="perPage" />
         </div>
 
@@ -80,10 +119,9 @@ const total = ref(0)
 const search = ref('')
 
 const columns: TableColumn<Product>[] = [
-    { accessorKey: 'image_url', header: '' },
-    { accessorKey: 'name', header: 'Name' },
-    { accessorKey: 'description', header: 'Description' },
-    { accessorKey: 'is_active', header: 'Active' },
+    { id: 'image', header: '' },
+    { id: 'product', header: 'Product' },
+    { accessorKey: 'is_active', header: 'Status' },
     { id: 'actions', header: '' }
 ]
 

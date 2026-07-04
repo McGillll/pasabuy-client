@@ -1,5 +1,5 @@
 <template>
-    <div v-if="schedule" class="space-y-8">
+    <div v-if="schedule" class="space-y-6">
         <div>
             <h1 class="text-xl font-semibold text-highlighted">{{ schedule.title }}</h1>
             <div class="mt-2 flex items-center gap-2">
@@ -8,99 +8,209 @@
             </div>
         </div>
 
-        <UCard>
-            <template #header>
-                <h2 class="font-medium">Details</h2>
-            </template>
-            <form class="space-y-4" @submit.prevent="saveDetails">
-                <UFormField label="Title" required>
-                    <UInput v-model="detailsForm.title" class="w-full" />
-                </UFormField>
-                <UFormField label="Description">
-                    <UTextarea v-model="detailsForm.description" class="w-full" />
-                </UFormField>
-                <UFormField label="Cutoff (optional)">
-                    <UInput v-model="detailsForm.cutoffAt" type="datetime-local" class="w-full" />
-                </UFormField>
-                <UFormField label="Status">
-                    <USelect
-                        v-model="detailsForm.status"
-                        :items="[
-                            { label: 'Draft', value: 'draft' },
-                            { label: 'Open', value: 'open' },
-                            { label: 'Closed', value: 'closed' }
-                        ]"
-                        value-key="value"
-                        class="w-48"
+        <UTabs :items="tabs" class="w-full">
+            <template #details>
+                <UCard class="mt-4">
+                    <UAlert
+                        v-if="isClosed"
+                        color="neutral"
+                        variant="subtle"
+                        icon="i-lucide-lock"
+                        title="This schedule is closed"
+                        description="Change the status below and save to reopen it before making other changes."
+                        class="max-w-lg mb-4"
                     />
-                </UFormField>
-                <UButton type="submit" :loading="savingDetails">Save details</UButton>
-            </form>
-        </UCard>
+                    <form class="max-w-lg space-y-4" @submit.prevent="saveDetails">
+                        <UFormField label="Title" required>
+                            <UInput v-model="detailsForm.title" :disabled="isClosed" class="w-full" />
+                        </UFormField>
+                        <UFormField label="Description">
+                            <UTextarea v-model="detailsForm.description" :disabled="isClosed" class="w-full" />
+                        </UFormField>
+                        <UFormField label="Cutoff (optional)">
+                            <UInput v-model="detailsForm.cutoffAt" type="datetime-local" :disabled="isClosed" class="w-full" />
+                        </UFormField>
+                        <UFormField label="Status">
+                            <USelect
+                                v-model="detailsForm.status"
+                                :items="[
+                                    { label: 'Draft', value: 'draft' },
+                                    { label: 'Open', value: 'open' },
+                                    { label: 'Closed', value: 'closed' }
+                                ]"
+                                value-key="value"
+                                class="w-48"
+                            />
+                        </UFormField>
+                        <UButton type="submit" :loading="savingDetails" :disabled="isClosed && detailsForm.status === 'closed'">
+                            Save details
+                        </UButton>
+                    </form>
+                </UCard>
+            </template>
 
-        <UCard>
-            <template #header>
-                <h2 class="font-medium">Products in this schedule</h2>
-            </template>
-            <div class="space-y-3">
-                <div
-                    v-for="product in catalog"
-                    :key="product.uuid"
-                    class="flex items-center gap-4 border-b border-default pb-3 last:border-0"
-                >
-                    <UCheckbox v-model="selectionFor(product.uuid).selected" />
-                    <img
-                        v-if="product.image_url"
-                        :src="product.image_url"
-                        class="size-10 rounded object-cover"
-                        alt=""
-                    >
-                    <div v-else class="size-10 rounded bg-elevated" />
-                    <span class="flex-1">{{ product.name }}</span>
-                    <UInput
-                        v-model.number="selectionFor(product.uuid).price"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="Price"
-                        class="w-28"
-                    />
-                    <UInput
-                        v-model.number="selectionFor(product.uuid).max_quantity"
-                        type="number"
-                        min="1"
-                        placeholder="Unlimited"
-                        class="w-32"
-                    />
+            <template #products>
+                <UAlert
+                    v-if="isClosed"
+                    color="neutral"
+                    variant="subtle"
+                    icon="i-lucide-lock"
+                    title="This schedule is closed"
+                    description="Reopen it from the Details tab to change its products."
+                    class="mt-4"
+                />
+
+                <div class="mt-4 flex justify-end">
+                    <UButton :loading="savingProducts" :disabled="isClosed" @click="saveProducts">Save products</UButton>
                 </div>
-            </div>
-            <template #footer>
-                <UButton :loading="savingProducts" @click="saveProducts">Save products</UButton>
-            </template>
-        </UCard>
 
-        <UCard>
-            <template #header>
-                <h2 class="font-medium">Orders</h2>
+                <div class="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <UCard :ui="{ body: 'p-0 sm:p-0' }">
+                        <template #header>
+                            <div class="flex items-center justify-between gap-3">
+                                <h3 class="font-medium">Catalog</h3>
+                                <UInput v-model="productSearch" icon="i-lucide-search" placeholder="Search…" class="w-40 sm:w-56" />
+                            </div>
+                        </template>
+
+                        <div class="max-h-112 divide-y divide-default overflow-y-auto">
+                            <div v-for="product in availableProducts" :key="product.uuid" class="flex items-center gap-3 p-3">
+                                <img
+                                    v-if="product.image_url"
+                                    :src="product.image_url"
+                                    class="size-10 rounded-lg object-cover ring-1 ring-default"
+                                    alt=""
+                                >
+                                <div v-else class="flex items-center justify-center size-10 rounded-lg bg-elevated text-dimmed">
+                                    <UIcon name="i-lucide-image" class="size-4" />
+                                </div>
+                                <span class="flex-1 truncate font-medium text-highlighted">{{ product.name }}</span>
+                                <UButton
+                                    icon="i-lucide-plus"
+                                    size="xs"
+                                    color="neutral"
+                                    variant="soft"
+                                    :disabled="isClosed"
+                                    @click="addProduct(product.uuid)"
+                                >
+                                    Add
+                                </UButton>
+                            </div>
+
+                            <div v-if="availableProducts.length === 0" class="flex flex-col items-center gap-3 py-10">
+                                <UIcon name="i-lucide-package-search" class="size-8 text-dimmed" />
+                                <p class="text-sm text-muted">
+                                    {{ catalog.length === 0 ? 'No products in your catalog yet.' : 'No matching products.' }}
+                                </p>
+                            </div>
+                        </div>
+                    </UCard>
+
+                    <UCard :ui="{ body: 'p-0 sm:p-0' }">
+                        <template #header>
+                            <div class="flex items-center justify-between gap-3">
+                                <h3 class="font-medium">In this schedule</h3>
+                                <span class="text-sm text-muted">{{ selectedProducts.length }} added</span>
+                            </div>
+                        </template>
+
+                        <div class="max-h-112 divide-y divide-default overflow-y-auto">
+                            <div v-for="{ product, entry } in selectedProducts" :key="product.uuid" class="p-3">
+                                <div class="flex items-center gap-3">
+                                    <img
+                                        v-if="product.image_url"
+                                        :src="product.image_url"
+                                        class="size-10 rounded-lg object-cover ring-1 ring-default"
+                                        alt=""
+                                    >
+                                    <div v-else class="flex items-center justify-center size-10 rounded-lg bg-elevated text-dimmed">
+                                        <UIcon name="i-lucide-image" class="size-4" />
+                                    </div>
+                                    <span class="flex-1 truncate font-medium text-highlighted">{{ product.name }}</span>
+                                    <UButton
+                                        icon="i-lucide-x"
+                                        size="xs"
+                                        color="error"
+                                        variant="ghost"
+                                        aria-label="Remove product"
+                                        :disabled="isClosed"
+                                        @click="removeProduct(product.uuid)"
+                                    />
+                                </div>
+                                <div class="mt-3 grid grid-cols-2 gap-3">
+                                    <UFormField label="Price">
+                                        <UInput
+                                            v-model.number="entry.price"
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                            :disabled="isClosed"
+                                            class="w-full"
+                                        >
+                                            <template #leading>
+                                                <span class="text-sm text-dimmed">₱</span>
+                                            </template>
+                                        </UInput>
+                                    </UFormField>
+                                    <UFormField label="Max qty">
+                                        <UInput
+                                            v-model.number="entry.max_quantity"
+                                            type="number"
+                                            min="1"
+                                            placeholder="Unlimited"
+                                            :disabled="isClosed"
+                                            class="w-full"
+                                        />
+                                    </UFormField>
+                                </div>
+                            </div>
+
+                            <div v-if="selectedProducts.length === 0" class="flex flex-col items-center gap-3 py-10">
+                                <UIcon name="i-lucide-shopping-basket" class="size-8 text-dimmed" />
+                                <p class="text-sm text-muted">No products added yet.</p>
+                                <p class="text-xs text-dimmed">Add some from the catalog on the left.</p>
+                            </div>
+                        </div>
+                    </UCard>
+                </div>
             </template>
-            <UTable :data="orders" :columns="orderColumns">
-                <template #status-cell="{ row }">
-                    <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
-                        {{ row.original.status }}
-                    </UBadge>
-                </template>
-                <template #actions-cell="{ row }">
-                    <div v-if="row.original.status === 'pending'" class="flex gap-2">
-                        <UButton size="xs" color="success" variant="soft" @click="setOrderStatus(row.original, 'confirmed')">
-                            Confirm
-                        </UButton>
-                        <UButton size="xs" color="error" variant="soft" @click="setOrderStatus(row.original, 'cancelled')">
-                            Cancel
-                        </UButton>
-                    </div>
-                </template>
-            </UTable>
-        </UCard>
+
+            <template #orders>
+                <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
+                    <UTable :data="orders" :columns="orderColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
+                        <template #status-cell="{ row }">
+                            <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
+                                {{ row.original.status }}
+                            </UBadge>
+                        </template>
+                        <template #actions-cell="{ row }">
+                            <div v-if="row.original.status === 'pending'" class="flex items-center gap-2">
+                                <UButton
+                                    v-if="isClosed"
+                                    size="xs"
+                                    color="success"
+                                    variant="soft"
+                                    @click="setOrderStatus(row.original, 'confirmed')"
+                                >
+                                    Confirm
+                                </UButton>
+                                <span v-else class="text-xs text-dimmed">Close schedule to confirm</span>
+                                <UButton size="xs" color="error" variant="soft" @click="setOrderStatus(row.original, 'cancelled')">
+                                    Cancel
+                                </UButton>
+                            </div>
+                        </template>
+                        <template #empty>
+                            <div class="flex flex-col items-center gap-3 py-10">
+                                <UIcon name="i-lucide-receipt" class="size-8 text-dimmed" />
+                                <p class="text-sm text-muted">No orders yet.</p>
+                            </div>
+                        </template>
+                    </UTable>
+                </UCard>
+            </template>
+        </UTabs>
     </div>
 </template>
 
@@ -108,7 +218,7 @@
 import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
 import { productService } from '@/components/api/admin/ProductService'
 import APIError from '@/components/api/user/APIError'
-import type { TableColumn } from '@nuxt/ui'
+import type { TableColumn, TabsItem } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
@@ -162,6 +272,21 @@ const catalog = ref<Product[]>([])
 const orders = ref<Order[]>([])
 const loading = ref(true)
 
+const pendingOrderCount = computed(() => orders.value.filter((o) => o.status === 'pending').length)
+const isClosed = computed(() => schedule.value?.status === 'closed')
+
+const tabs = computed<TabsItem[]>(() => [
+    { label: 'Details', icon: 'i-lucide-file-text', value: 'details', slot: 'details' },
+    { label: 'Products', icon: 'i-lucide-package', value: 'products', slot: 'products' },
+    {
+        label: 'Orders',
+        icon: 'i-lucide-receipt',
+        value: 'orders',
+        slot: 'orders',
+        badge: pendingOrderCount.value > 0 ? pendingOrderCount.value : undefined
+    }
+])
+
 const detailsForm = reactive({
     title: '',
     description: '',
@@ -185,9 +310,29 @@ interface SelectionEntry {
 
 const selection = ref<Record<string, SelectionEntry>>({})
 const savingProducts = ref(false)
+const productSearch = ref('')
 
-function selectionFor(uuid: string): SelectionEntry {
-    return selection.value[uuid]!
+const availableProducts = computed(() => {
+    const query = productSearch.value.trim().toLowerCase()
+    return catalog.value.filter((product) => {
+        if (selection.value[product.uuid]?.selected) return false
+        return !query || product.name.toLowerCase().includes(query)
+    })
+})
+
+const selectedProducts = computed(() =>
+    catalog.value.flatMap((product) => {
+        const entry = selection.value[product.uuid]
+        return entry?.selected ? [{ product, entry }] : []
+    })
+)
+
+function addProduct(productUuid: string) {
+    selection.value[productUuid]!.selected = true
+}
+
+function removeProduct(productUuid: string) {
+    selection.value[productUuid]!.selected = false
 }
 
 const publicLink = computed(() => {

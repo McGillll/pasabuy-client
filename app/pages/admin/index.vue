@@ -40,8 +40,9 @@
                     </NuxtLink>
                 </template>
                 <template #actions-cell="{ row }">
-                    <div class="flex gap-2">
+                    <div class="flex items-center gap-2">
                         <UButton
+                            v-if="row.original.scheduleStatus === 'closed'"
                             size="xs"
                             color="success"
                             variant="soft"
@@ -50,6 +51,7 @@
                         >
                             Confirm
                         </UButton>
+                        <span v-else class="text-xs text-dimmed">Close schedule to confirm</span>
                         <UButton
                             size="xs"
                             color="error"
@@ -118,6 +120,7 @@ interface Order {
 interface PendingOrder extends Order {
     scheduleUuid: string
     scheduleTitle: string
+    scheduleStatus: Schedule['status']
 }
 
 const toast = useToast()
@@ -181,7 +184,8 @@ async function loadDashboard() {
                     .map((order) => ({
                         ...order,
                         scheduleUuid: schedules.value[index]!.uuid,
-                        scheduleTitle: schedules.value[index]!.title
+                        scheduleTitle: schedules.value[index]!.title,
+                        scheduleStatus: schedules.value[index]!.status
                     }))
             )
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())

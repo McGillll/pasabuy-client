@@ -7,18 +7,64 @@
 
         <UInput v-model="search" icon="i-lucide-search" placeholder="Search schedules…" class="w-full sm:w-72" />
 
-        <UTable :data="schedules" :columns="columns" :loading="loading">
-            <template #status-cell="{ row }">
-                <UBadge :color="statusColor[row.original.status]" variant="subtle">{{ row.original.status }}</UBadge>
-            </template>
-            <template #actions-cell="{ row }">
-                <UButton size="xs" color="neutral" variant="ghost" :to="`/admin/schedules/${row.original.uuid}`">
-                    Manage
-                </UButton>
-            </template>
-        </UTable>
+        <UCard :ui="{ body: 'p-0 sm:p-0' }">
+            <UTable
+                :data="schedules"
+                :columns="columns"
+                :loading="loading"
+                :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
+            >
+                <template #title-cell="{ row }">
+                    <NuxtLink :to="`/admin/schedules/${row.original.uuid}`" class="font-medium text-highlighted hover:text-primary">
+                        {{ row.original.title }}
+                    </NuxtLink>
+                </template>
+                <template #status-cell="{ row }">
+                    <UBadge :color="statusColor[row.original.status]" variant="subtle">
+                        <span class="flex items-center gap-1.5">
+                            <span class="size-1.5 rounded-full bg-current" />
+                            {{ row.original.status }}
+                        </span>
+                    </UBadge>
+                </template>
+                <template #created_at-cell="{ row }">
+                    <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
+                </template>
+                <template #actions-cell="{ row }">
+                    <div class="flex justify-end gap-2">
+                        <UButton
+                            v-if="row.original.status !== 'closed'"
+                            size="sm"
+                            color="neutral"
+                            variant="ghost"
+                            icon="i-lucide-lock"
+                            :loading="closingUuid === row.original.uuid"
+                            @click="closeSchedule(row.original)"
+                        >
+                            Close
+                        </UButton>
+                        <UButton
+                            size="sm"
+                            color="neutral"
+                            variant="ghost"
+                            trailing-icon="i-lucide-arrow-right"
+                            :to="`/admin/schedules/${row.original.uuid}`"
+                        >
+                            Manage
+                        </UButton>
+                    </div>
+                </template>
+                <template #empty>
+                    <div class="flex flex-col items-center gap-3 py-10">
+                        <UIcon name="i-lucide-calendar-search" class="size-8 text-dimmed" />
+                        <p class="text-sm text-muted">No schedules found.</p>
+                        <UButton size="sm" icon="i-lucide-plus" @click="openCreateModal">Create your first schedule</UButton>
+                    </div>
+                </template>
+            </UTable>
+        </UCard>
 
-        <div class="flex justify-center">
+        <div v-if="total > perPage" class="flex justify-center">
             <UPagination v-model:page="page" :total="total" :items-per-page="perPage" />
         </div>
 
@@ -119,6 +165,33 @@ const statusColor: Record<string, 'neutral' | 'success' | 'error'> = {
     draft: 'neutral',
     open: 'success',
     closed: 'error'
+}
+
+function formatDate(iso: string): string {
+    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+const closingUuid = ref<string | null>(null)
+
+async function closeSchedule(scheduleRow: Schedule) {
+    if (!confirm(`Close "${scheduleRow.title}"? It can no longer be edited while closed.`)) return
+
+    closingUuid.value = scheduleRow.uuid
+    try {
+        const detail = await pasabuyScheduleService.fetchSchedule(scheduleRow.uuid)
+        await pasabuyScheduleService.updateSchedule(scheduleRow.uuid, {
+            title: detail.data.title,
+            description: detail.data.description,
+            cutoff_at: detail.data.cutoff_at,
+            status: 'closed'
+        })
+        scheduleRow.status = 'closed'
+        toast.add({ title: 'Schedule closed', color: 'success' })
+    } catch (error) {
+        toast.add({ title: 'Failed to close schedule', description: (error as APIError).message, color: 'error' })
+    } finally {
+        closingUuid.value = null
+    }
 }
 
 onMounted(loadSchedules)
