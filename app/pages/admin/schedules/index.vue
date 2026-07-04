@@ -5,7 +5,7 @@
             <UButton icon="i-lucide-plus" @click="openCreateModal">New Schedule</UButton>
         </div>
 
-        <UInput v-model="search" icon="i-lucide-search" placeholder="Search schedules…" class="w-72" />
+        <UInput v-model="search" icon="i-lucide-search" placeholder="Search schedules…" class="w-full sm:w-72" />
 
         <UTable :data="schedules" :columns="columns" :loading="loading">
             <template #status-cell="{ row }">

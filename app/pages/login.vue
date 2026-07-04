@@ -29,7 +29,7 @@
                 <UForm
                     :state="state"
                     :validate="validate"
-                    class="flex flex-col gap-4"
+                    class="flex flex-col gap-5"
                     @submit="onSubmit"
                 >
                     <UFormField label="Email" name="email" required>
@@ -39,6 +39,7 @@
                             placeholder="you@example.com"
                             icon="i-lucide-mail"
                             autocomplete="email"
+                            size="xl"
                             class="w-full"
                         />
                     </UFormField>
@@ -50,17 +51,19 @@
                             placeholder="••••••••"
                             icon="i-lucide-lock"
                             autocomplete="current-password"
+                            size="xl"
                             class="w-full"
                         />
                     </UFormField>
 
                     <div class="flex items-center justify-between">
-                        <UCheckbox v-model="state.rememberMe" label="Remember me" />
+                        <UCheckbox v-model="state.rememberMe" label="Remember me" size="lg" />
                     </div>
 
                     <UButton
                         type="submit"
                         block
+                        size="xl"
                         :loading="isSubmitting"
                     >
                         Sign in
@@ -109,7 +112,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     authError.value = null
     try {
         await login(event.data.email, event.data.password, state.rememberMe)
-        const redirect = (route.query.redirect as string) || '/admin/products'
+        const redirect = (route.query.redirect as string) || '/admin'
         await navigateTo(redirect)
     } catch (error) {
         authError.value = error instanceof APIError ? error.message : 'Something went wrong. Please try again.'

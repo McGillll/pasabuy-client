@@ -3,7 +3,7 @@
         <div>
             <h1 class="text-xl font-semibold text-highlighted">{{ schedule.title }}</h1>
             <div class="mt-2 flex items-center gap-2">
-                <UInput :model-value="publicLink" readonly class="w-96" />
+                <UInput :model-value="publicLink" readonly class="w-full sm:w-96" />
                 <UButton icon="i-lucide-copy" color="neutral" variant="soft" @click="copyLink">Copy link</UButton>
             </div>
         </div>

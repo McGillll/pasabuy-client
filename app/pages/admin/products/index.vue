@@ -5,7 +5,7 @@
             <UButton icon="i-lucide-plus" @click="openCreateModal">Add Product</UButton>
         </div>
 
-        <UInput v-model="search" icon="i-lucide-search" placeholder="Search products…" class="w-72" />
+        <UInput v-model="search" icon="i-lucide-search" placeholder="Search products…" class="w-full sm:w-72" />
 
         <UTable :data="products" :columns="columns" :loading="loading">
             <template #image_url-cell="{ row }">
