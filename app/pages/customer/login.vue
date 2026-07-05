@@ -122,7 +122,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     authError.value = null
     try {
         await login(event.data.email, event.data.password, state.rememberMe)
-        const redirect = (route.query.redirect as string) || '/'
+        const redirect = (route.query.redirect as string) || '/customer'
         await navigateTo(redirect)
     } catch (error) {
         authError.value = error instanceof APIError ? error.message : 'Something went wrong. Please try again.'

@@ -25,6 +25,40 @@ class CustomerOrderService extends BaseAPIService {
 
         return await this.request(`/customer/pasabuy-schedules/${scheduleUuid}/orders`, 'POST', formData)
     }
+
+    /**
+     * GET /api/customer/orders
+     * Query params: per_page.
+     * Response: paginated `{ data: Order[], total, ... }` — the authenticated customer's own orders.
+     */
+    async fetchMyOrders(params: object = {}): Promise<any> {
+        return await this.request('/customer/orders', 'GET', params)
+    }
+
+    /**
+     * GET /api/customer/orders/{uuid}
+     * Response: single `Order` (only if owned by the authenticated customer).
+     */
+    async fetchMyOrder(uuid: string): Promise<any> {
+        return await this.request(`/customer/orders/${uuid}`, 'GET')
+    }
+
+    /**
+     * PUT /api/customer/orders/{uuid}
+     * FormData fields: same indexed items array as placeOrder. Replaces the order's items entirely.
+     * Only allowed while the order is pending and its schedule is still open (see `is_editable`).
+     * Response: updated `Order`.
+     */
+    async updateMyOrder(uuid: string, items: CustomerOrderItemInput[]): Promise<any> {
+        const formData = new FormData()
+        formData.append('_method', 'PUT')
+        items.forEach((item, index) => {
+            formData.append(`items[${index}][product_uuid]`, item.product_uuid)
+            formData.append(`items[${index}][quantity]`, String(item.quantity))
+        })
+
+        return await this.request(`/customer/orders/${uuid}`, 'POST', formData)
+    }
 }
 
 export const customerOrderService = new CustomerOrderService()
