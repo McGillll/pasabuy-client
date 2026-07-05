@@ -129,13 +129,9 @@ async function loadSchedules() {
 
 watch(page, loadSchedules)
 
-let searchDebounce: ReturnType<typeof setTimeout>
-watch(search, () => {
-    clearTimeout(searchDebounce)
-    searchDebounce = setTimeout(() => {
-        page.value = 1
-        loadSchedules()
-    }, 300)
+useSearchDebounce(search, () => {
+    page.value = 1
+    loadSchedules()
 })
 
 const isModalOpen = ref(false)

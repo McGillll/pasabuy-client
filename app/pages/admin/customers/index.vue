@@ -248,13 +248,9 @@ async function loadPending() {
 watch(approvedPage, loadApproved)
 watch(pendingPage, loadPending)
 
-let searchDebounce: ReturnType<typeof setTimeout>
-watch(search, () => {
-    clearTimeout(searchDebounce)
-    searchDebounce = setTimeout(() => {
-        approvedPage.value = 1
-        loadApproved()
-    }, 300)
+useSearchDebounce(search, () => {
+    approvedPage.value = 1
+    loadApproved()
 })
 
 const isOrdersModalOpen = ref(false)
