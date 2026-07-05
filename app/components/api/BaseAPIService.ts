@@ -4,8 +4,19 @@ class BaseAPIService {
     async request(url: string, method: string, params: object = [], signal?: AbortSignal): Promise<any> {
         const runtimeConfig = useRuntimeConfig()
         let config: any = null
+        let requestUrl = url
+
         if (method === 'GET') {
-            // GET
+            // GET — build the query string directly into the URL so it's guaranteed to be sent
+            const query = new URLSearchParams()
+            Object.entries(params ?? {}).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    query.append(key, String(value))
+                }
+            })
+            const queryString = query.toString()
+            requestUrl = queryString ? `${url}?${queryString}` : url
+
             config = {
                 baseURL: runtimeConfig.public.apiBaseURL,
                 method: method,
@@ -14,9 +25,6 @@ class BaseAPIService {
                     Accept: 'application/json',
                 },
                 signal,
-                async onRequest({ request, options }: { request: any, options: any }) {
-                    options.params = params
-                },
             }
         } else {
             // POST, PUT, DELETE
@@ -33,7 +41,7 @@ class BaseAPIService {
         }
 
         try {
-            return await $fetch<any>(url, config)
+            return await $fetch<any>(requestUrl, config)
         } catch (error: any) {
             if (error?.name === 'AbortError') throw error
             switch (error.response?.status) {

@@ -185,9 +185,9 @@
                             </UBadge>
                         </template>
                         <template #actions-cell="{ row }">
-                            <div v-if="row.original.status === 'pending'" class="flex items-center gap-2">
+                            <div class="flex items-center justify-end gap-2">
                                 <UButton
-                                    v-if="isClosed"
+                                    v-if="row.original.status === 'pending' && isClosed"
                                     size="xs"
                                     color="success"
                                     variant="soft"
@@ -195,10 +195,26 @@
                                 >
                                     Confirm
                                 </UButton>
-                                <span v-else class="text-xs text-dimmed">Close schedule to confirm</span>
-                                <UButton size="xs" color="error" variant="soft" @click="setOrderStatus(row.original, 'cancelled')">
+                                <span v-else-if="row.original.status === 'pending'" class="text-xs text-dimmed">
+                                    Close schedule to confirm
+                                </span>
+                                <UButton
+                                    v-if="row.original.status === 'pending'"
+                                    size="xs"
+                                    color="error"
+                                    variant="soft"
+                                    @click="setOrderStatus(row.original, 'cancelled')"
+                                >
                                     Cancel
                                 </UButton>
+                                <UButton
+                                    icon="i-lucide-eye"
+                                    size="xs"
+                                    color="neutral"
+                                    variant="ghost"
+                                    aria-label="View order"
+                                    @click="viewOrder(row.original)"
+                                />
                             </div>
                         </template>
                         <template #empty>
@@ -211,6 +227,43 @@
                 </UCard>
             </template>
         </UTabs>
+
+        <UModal v-model:open="isOrderModalOpen" title="Order details">
+            <template #body>
+                <div v-if="viewingOrder" class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-highlighted">{{ viewingOrder.customer_name }}</p>
+                            <p class="text-sm text-muted">{{ viewingOrder.customer_contact }}</p>
+                        </div>
+                        <UBadge :color="orderStatusColor[viewingOrder.status]" variant="subtle">
+                            {{ viewingOrder.status }}
+                        </UBadge>
+                    </div>
+
+                    <div class="divide-y divide-default rounded-lg border border-default">
+                        <div
+                            v-for="item in viewingOrder.items"
+                            :key="item.uuid"
+                            class="flex items-center justify-between gap-3 p-3"
+                        >
+                            <div>
+                                <p class="font-medium text-highlighted">{{ item.product_name }}</p>
+                                <p class="text-sm text-muted">₱{{ item.product_price }} × {{ item.quantity }}</p>
+                            </div>
+                            <p class="font-medium text-highlighted">₱{{ item.subtotal }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between border-t border-default pt-3 font-medium text-highlighted">
+                        <span>Total</span>
+                        <span>₱{{ viewingOrder.total_amount }}</span>
+                    </div>
+
+                    <p class="text-xs text-dimmed">Placed {{ formatDate(viewingOrder.created_at) }}</p>
+                </div>
+            </template>
+        </UModal>
     </div>
 </template>
 
@@ -427,6 +480,18 @@ async function setOrderStatus(order: Order, status: 'confirmed' | 'cancelled') {
     } catch (error) {
         toast.add({ title: 'Update failed', description: (error as APIError).message, color: 'error' })
     }
+}
+
+const isOrderModalOpen = ref(false)
+const viewingOrder = ref<Order | null>(null)
+
+function viewOrder(order: Order) {
+    viewingOrder.value = order
+    isOrderModalOpen.value = true
+}
+
+function formatDate(iso: string): string {
+    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
 const orderColumns: TableColumn<Order>[] = [

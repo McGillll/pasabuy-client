@@ -29,13 +29,20 @@
                             :key="sp.uuid"
                             class="flex items-center gap-4 border-b border-default pb-3 last:border-0"
                         >
-                            <img
+                            <button
                                 v-if="sp.product.image_url"
-                                :src="sp.product.image_url"
-                                class="size-12 rounded object-cover"
-                                alt=""
+                                type="button"
+                                class="shrink-0 cursor-pointer"
+                                aria-label="Preview image"
+                                @click="openPreview(sp.product)"
                             >
-                            <div v-else class="size-12 rounded bg-elevated" />
+                                <img
+                                    :src="sp.product.image_url"
+                                    class="size-12 rounded object-cover transition hover:opacity-80"
+                                    alt=""
+                                >
+                            </button>
+                            <div v-else class="size-12 shrink-0 rounded bg-elevated" />
                             <div class="flex-1">
                                 <p class="font-medium">{{ sp.product.name }}</p>
                                 <p class="text-sm text-muted">₱{{ sp.price }}</p>
@@ -69,23 +76,47 @@
                                 <span>₱{{ total.toFixed(2) }}</span>
                             </div>
 
-                            <UFormField label="Your name" required>
-                                <UInput v-model="customerName" class="w-full" />
-                            </UFormField>
-                            <UFormField label="Contact number / Messenger" required>
-                                <UInput v-model="customerContact" class="w-full" />
-                            </UFormField>
+                            <template v-if="!isLoggedIn">
+                                <UAlert
+                                    color="info"
+                                    variant="subtle"
+                                    title="Log in to place an order"
+                                    description="You need a customer account to order from this pasabuy."
+                                />
+                                <UButton block :to="`/customer/login?redirect=${encodeURIComponent(route.fullPath)}`">
+                                    Log in to order
+                                </UButton>
+                                <p class="text-center text-sm text-muted">
+                                    New here?
+                                    <NuxtLink
+                                        :to="`/register?redirect=${encodeURIComponent(route.fullPath)}`"
+                                        class="text-primary hover:underline"
+                                    >
+                                        Create an account
+                                    </NuxtLink>
+                                </p>
+                            </template>
 
-                            <UAlert v-if="submitError" color="error" variant="subtle" :title="submitError" />
+                            <UAlert
+                                v-else-if="!isApproved"
+                                color="warning"
+                                variant="subtle"
+                                title="Account pending approval"
+                                description="An admin needs to approve your account before you can place orders."
+                            />
 
-                            <UButton
-                                block
-                                :loading="submitting"
-                                :disabled="!schedule.is_open || !hasItems || !customerName || !customerContact"
-                                @click="submitOrder"
-                            >
-                                Place order
-                            </UButton>
+                            <template v-else>
+                                <UAlert v-if="submitError" color="error" variant="subtle" :title="submitError" />
+
+                                <UButton
+                                    block
+                                    :loading="submitting"
+                                    :disabled="!schedule.is_open || !hasItems"
+                                    @click="submitOrder"
+                                >
+                                    Place order
+                                </UButton>
+                            </template>
                         </div>
                     </template>
                 </UCard>
@@ -99,11 +130,23 @@
                 />
             </template>
         </div>
+
+        <UModal v-model:open="isPreviewOpen" :title="previewProduct?.name">
+            <template #body>
+                <img
+                    v-if="previewProduct?.image_url"
+                    :src="previewProduct.image_url"
+                    class="max-h-[70vh] w-full rounded-lg object-contain"
+                    alt=""
+                >
+            </template>
+        </UModal>
     </div>
 </template>
 
 <script setup lang="ts">
 import { publicPasabuyService } from '@/components/api/public/PublicPasabuyService'
+import { customerOrderService } from '@/components/api/customer/CustomerOrderService'
 import APIError from '@/components/api/user/APIError'
 
 definePageMeta({ layout: false })
@@ -140,17 +183,19 @@ interface OrderResult {
 
 const route = useRoute()
 const uuid = route.params.uuid as string
+const { user, fetchCurrentUser } = useAuth()
 
 const schedule = ref<Schedule | null>(null)
 const loading = ref(true)
 const notFound = ref(false)
 
 const quantities = ref<Record<string, number>>({})
-const customerName = ref('')
-const customerContact = ref('')
 const submitting = ref(false)
 const submitError = ref<string | null>(null)
 const orderResult = ref<OrderResult | null>(null)
+
+const isLoggedIn = computed(() => !!user.value)
+const isApproved = computed(() => user.value?.is_approved === true)
 
 const total = computed(() => {
     if (!schedule.value) return 0
@@ -161,6 +206,14 @@ const total = computed(() => {
 })
 
 const hasItems = computed(() => Object.values(quantities.value).some((qty) => qty > 0))
+
+const isPreviewOpen = ref(false)
+const previewProduct = ref<Product | null>(null)
+
+function openPreview(product: Product) {
+    previewProduct.value = product
+    isPreviewOpen.value = true
+}
 
 async function load() {
     loading.value = true
@@ -178,6 +231,16 @@ async function load() {
         }
     } finally {
         loading.value = false
+    }
+}
+
+async function restoreSession() {
+    if (!import.meta.client || user.value) return
+    if (!localStorage.getItem('_token')) return
+    try {
+        await fetchCurrentUser()
+    } catch {
+        // invalid/expired token — treat as logged out
     }
 }
 
@@ -200,11 +263,7 @@ async function submitOrder() {
             .filter(([, qty]) => qty > 0)
             .map(([product_uuid, quantity]) => ({ product_uuid, quantity }))
 
-        const response = await publicPasabuyService.placeOrder(uuid, {
-            customer_name: customerName.value,
-            customer_contact: customerContact.value,
-            items
-        })
+        const response = await customerOrderService.placeOrder(uuid, items)
         orderResult.value = response.data
     } catch (error) {
         submitError.value = error instanceof APIError ? error.message : 'Something went wrong. Please try again.'
@@ -213,5 +272,8 @@ async function submitOrder() {
     }
 }
 
-onMounted(load)
+onMounted(() => {
+    load()
+    restoreSession()
+})
 </script>

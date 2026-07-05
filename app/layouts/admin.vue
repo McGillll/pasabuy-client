@@ -21,7 +21,7 @@
             />
 
             <div class="border-t border-default p-4">
-                <p class="text-sm font-medium text-highlighted truncate">{{ user?.name }}</p>
+                <p class="text-sm font-medium text-highlighted truncate">{{ user?.first_name }} {{ user?.last_name }}</p>
                 <p class="text-xs text-muted truncate mb-3">{{ user?.email }}</p>
                 <UButton block size="md" color="neutral" variant="soft" icon="i-lucide-log-out" @click="logout">
                     Log out
@@ -72,12 +72,14 @@ const { user, logout } = useAuth()
 const links: NavigationMenuItem[] = [
     { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/admin' },
     { label: 'Products', icon: 'i-lucide-package', to: '/admin/products' },
-    { label: 'Pasabuy Schedules', icon: 'i-lucide-calendar-clock', to: '/admin/schedules' }
+    { label: 'Pasabuy Schedules', icon: 'i-lucide-calendar-clock', to: '/admin/schedules' },
+    { label: 'Customers', icon: 'i-lucide-users', to: '/admin/customers' }
 ]
 
 const mobileLinks: NavigationMenuItem[] = [
     { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/admin' },
     { label: 'Products', icon: 'i-lucide-package', to: '/admin/products' },
-    { label: 'Schedules', icon: 'i-lucide-calendar-clock', to: '/admin/schedules' }
+    { label: 'Schedules', icon: 'i-lucide-calendar-clock', to: '/admin/schedules' },
+    { label: 'Customers', icon: 'i-lucide-users', to: '/admin/customers' }
 ]
 </script>
