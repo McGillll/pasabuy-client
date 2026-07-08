@@ -17,7 +17,7 @@ export interface ProductPayload {
 class ProductService extends BaseAPIService {
     /**
      * GET /api/admin/products
-     * Query params: page, per_page.
+     * Query params: page, per_page, search, category_uuid.
      * Response: paginated `{ data: Product[], total, ... }`.
      */
     async fetchProducts(params: object = {}): Promise<any> {
