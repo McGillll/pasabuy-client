@@ -47,7 +47,6 @@ class ProductService extends BaseAPIService {
      */
     async updateProduct(uuid: string, payload: ProductPayload): Promise<any> {
         const formData = this.buildFormData(payload)
-        formData.append('_method', 'PUT')
 
         return await this.request(`/admin/products/${uuid}`, 'POST', formData)
     }
