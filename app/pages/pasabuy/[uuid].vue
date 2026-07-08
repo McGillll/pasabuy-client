@@ -174,7 +174,6 @@
                                             Out of stock
                                         </UBadge>
                                     </div>
-                                    <p v-if="sp.max_quantity !== null" class="text-xs text-dimmed">Limit {{ sp.max_quantity }} per order</p>
                                     <p v-if="quantities[sp.product.uuid]" class="text-sm font-medium text-primary">
                                         Subtotal: ₱{{ (Number(displayPrice(sp)) * quantities[sp.product.uuid]!).toFixed(2) }}
                                     </p>
@@ -217,7 +216,7 @@
                                         size="xs"
                                         color="neutral"
                                         variant="soft"
-                                        :disabled="!schedule.is_open || atLimit(sp)"
+                                        :disabled="!schedule.is_open"
                                         @click="increment(sp)"
                                     />
                                 </div>
@@ -306,35 +305,10 @@
 import { publicPasabuyService } from '@/components/api/public/PublicPasabuyService'
 import { customerOrderService } from '@/components/api/customer/CustomerOrderService'
 import APIError from '@/components/api/user/APIError'
+import type { Product } from '@/types/Product'
+import type { Schedule, ScheduleProduct } from '@/types/Schedule'
 
 definePageMeta({ layout: false })
-
-interface Product {
-    uuid: string
-    name: string
-    description: string | null
-    image_url: string | null
-    is_active: boolean
-}
-
-interface ScheduleProduct {
-    uuid: string
-    estimated_price: string
-    actual_price: string | null
-    promo_status: 'none' | 'b1t1' | 'out_of_stock'
-    price_confirmed_at: string | null
-    max_quantity: number | null
-    product: Product
-}
-
-interface Schedule {
-    uuid: string
-    title: string
-    description: string | null
-    status: string
-    is_open: boolean
-    products: ScheduleProduct[]
-}
 
 interface OrderResult {
     uuid: string
@@ -404,7 +378,7 @@ const orderStatusColor: Record<string, 'neutral' | 'success' | 'error' | 'warnin
 }
 
 function displayPrice(sp: ScheduleProduct): string {
-    return sp.actual_price ?? sp.estimated_price
+    return sp.actual_price ?? sp.product.default_price
 }
 
 const isLoggedIn = computed(() => !!user.value)
@@ -429,11 +403,6 @@ const total = computed(() => {
 
 const itemCount = computed(() => Object.values(quantities.value).reduce((sum, qty) => sum + qty, 0))
 const hasItems = computed(() => itemCount.value > 0)
-
-function atLimit(sp: ScheduleProduct): boolean {
-    if (sp.max_quantity === null) return false
-    return (quantities.value[sp.product.uuid] || 0) >= sp.max_quantity
-}
 
 const isPreviewOpen = ref(false)
 const previewProduct = ref<Product | null>(null)
@@ -567,7 +536,6 @@ function cancelEditOrder() {
 }
 
 function increment(sp: ScheduleProduct) {
-    if (atLimit(sp)) return
     const current = quantities.value[sp.product.uuid] || 0
     quantities.value[sp.product.uuid] = current + 1
 }

@@ -11,13 +11,39 @@
         <UTabs :items="tabs" class="w-full">
             <template #details>
                 <UCard class="mt-4">
+                    <div class="mb-4 flex flex-wrap items-center gap-3">
+                        <UBadge :color="scheduleStatusColor[schedule.status]" variant="subtle" size="lg">
+                            {{ schedule.status }}
+                        </UBadge>
+                        <UButton
+                            v-if="schedule.status === 'open'"
+                            size="sm"
+                            color="neutral"
+                            variant="soft"
+                            :loading="changingStatus"
+                            @click="closeSchedule"
+                        >
+                            Close schedule
+                        </UButton>
+                        <UButton
+                            v-if="schedule.status === 'closed'"
+                            size="sm"
+                            color="neutral"
+                            variant="soft"
+                            :loading="changingStatus"
+                            @click="reopenSchedule"
+                        >
+                            Reopen schedule
+                        </UButton>
+                    </div>
+
                     <UAlert
                         v-if="isClosed"
                         color="neutral"
                         variant="subtle"
                         icon="i-lucide-lock"
                         title="This schedule is closed"
-                        description="Change the status below and save to reopen it before making other changes."
+                        description="Reopen it above to edit the title, description, or cutoff."
                         class="max-w-lg mb-4"
                     />
                     <form class="max-w-lg space-y-4" @submit.prevent="saveDetails">
@@ -30,19 +56,7 @@
                         <UFormField label="Cutoff (optional)">
                             <UInput v-model="detailsForm.cutoffAt" type="datetime-local" :disabled="isClosed" class="w-full" />
                         </UFormField>
-                        <UFormField label="Status">
-                            <USelect
-                                v-model="detailsForm.status"
-                                :items="[
-                                    { label: 'Draft', value: 'draft' },
-                                    { label: 'Open', value: 'open' },
-                                    { label: 'Closed', value: 'closed' }
-                                ]"
-                                value-key="value"
-                                class="w-48"
-                            />
-                        </UFormField>
-                        <UButton type="submit" :loading="savingDetails" :disabled="isClosed && detailsForm.status === 'closed'">
+                        <UButton type="submit" :loading="savingDetails" :disabled="isClosed">
                             Save details
                         </UButton>
                     </form>
@@ -50,18 +64,8 @@
             </template>
 
             <template #products>
-                <UAlert
-                    v-if="isClosed"
-                    color="neutral"
-                    variant="subtle"
-                    icon="i-lucide-lock"
-                    title="This schedule is closed"
-                    description="Reopen it from the Details tab to change its products."
-                    class="mt-4"
-                />
-
                 <div class="mt-4 flex justify-end">
-                    <UButton :loading="savingProducts" :disabled="isClosed" @click="saveProducts">Save products</UButton>
+                    <UButton :loading="savingProducts" @click="saveProducts">Save products</UButton>
                 </div>
 
                 <div class="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -90,7 +94,6 @@
                                     size="xs"
                                     color="neutral"
                                     variant="soft"
-                                    :disabled="isClosed"
                                     @click="addProduct(product.uuid)"
                                 >
                                     Add
@@ -115,7 +118,7 @@
                         </template>
 
                         <div class="max-h-112 divide-y divide-default overflow-y-auto">
-                            <div v-for="{ product, entry, scheduleProduct } in selectedProducts" :key="product.uuid" class="p-3">
+                            <div v-for="{ product, scheduleProduct } in selectedProducts" :key="product.uuid" class="p-3">
                                 <div class="flex items-center gap-3">
                                     <img
                                         v-if="product.image_url"
@@ -126,46 +129,18 @@
                                     <div v-else class="flex items-center justify-center size-10 rounded-lg bg-elevated text-dimmed">
                                         <UIcon name="i-lucide-image" class="size-4" />
                                     </div>
-                                    <span class="flex-1 truncate font-medium text-highlighted">{{ product.name }}</span>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate font-medium text-highlighted">{{ product.name }}</p>
+                                        <p class="text-sm text-muted">₱{{ product.default_price }}</p>
+                                    </div>
                                     <UButton
                                         icon="i-lucide-x"
                                         size="xs"
                                         color="error"
                                         variant="ghost"
                                         aria-label="Remove product"
-                                        :disabled="isClosed"
                                         @click="removeProduct(product.uuid)"
                                     />
-                                </div>
-                                <div class="mt-3 grid grid-cols-2 gap-3">
-                                    <UFormField label="Estimated price">
-                                        <UInput
-                                            v-model.number="entry.estimated_price"
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            placeholder="0.00"
-                                            :disabled="isClosed"
-                                            class="w-full"
-                                        >
-                                            <template #leading>
-                                                <span class="text-sm text-dimmed">₱</span>
-                                            </template>
-                                        </UInput>
-                                        <p v-if="product.last_known_price !== null" class="mt-1 text-xs text-dimmed">
-                                            last: ₱{{ product.last_known_price }} ({{ product.last_known_price_source === 'actual' ? 'confirmed' : 'estimated' }})
-                                        </p>
-                                    </UFormField>
-                                    <UFormField label="Max qty">
-                                        <UInput
-                                            v-model.number="entry.max_quantity"
-                                            type="number"
-                                            min="1"
-                                            placeholder="Unlimited"
-                                            :disabled="isClosed"
-                                            class="w-full"
-                                        />
-                                    </UFormField>
                                 </div>
 
                                 <div v-if="scheduleProduct && canConfirmPrice" class="mt-3 border-t border-default pt-3">
@@ -218,6 +193,34 @@
                         </div>
                     </UCard>
                 </div>
+            </template>
+
+            <template #summary>
+                <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
+                    <UTable :data="summary" :columns="summaryColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
+                        <template #category_name-cell="{ row }">
+                            <span class="text-sm text-muted">{{ row.original.category_name ?? '—' }}</span>
+                        </template>
+                        <template #default_price-cell="{ row }">
+                            ₱{{ row.original.default_price }}
+                        </template>
+                        <template #subtotal-cell="{ row }">
+                            ₱{{ row.original.subtotal }}
+                        </template>
+                        <template #empty>
+                            <div class="flex flex-col items-center gap-3 py-10">
+                                <UIcon name="i-lucide-clipboard-list" class="size-8 text-dimmed" />
+                                <p class="text-sm text-muted">No orders yet — the checklist fills in once customers order.</p>
+                            </div>
+                        </template>
+                    </UTable>
+                    <template v-if="summary.length > 0" #footer>
+                        <div class="flex items-center justify-between font-medium text-highlighted">
+                            <span>Grand total</span>
+                            <span>₱{{ summaryGrandTotal.toFixed(2) }}</span>
+                        </div>
+                    </template>
+                </UCard>
             </template>
 
             <template #orders>
@@ -287,7 +290,52 @@
                         </UBadge>
                     </div>
 
-                    <div class="divide-y divide-default rounded-lg border border-default">
+                    <template v-if="canEditOrderItems">
+                        <div class="space-y-2">
+                            <div
+                                v-for="editItem in editableItems"
+                                :key="editItem.product_uuid"
+                                class="flex items-center gap-3 rounded-lg border border-default p-3"
+                            >
+                                <span class="flex-1 truncate font-medium text-highlighted">{{ editItem.product_name }}</span>
+                                <UInput v-model.number="editItem.quantity" type="number" min="1" size="sm" class="w-20" />
+                                <UButton
+                                    icon="i-lucide-x"
+                                    size="xs"
+                                    color="error"
+                                    variant="ghost"
+                                    aria-label="Remove item"
+                                    @click="removeEditableItem(editItem.product_uuid)"
+                                />
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <USelect
+                                    v-model="itemToAdd"
+                                    :items="addableProductOptions"
+                                    value-key="value"
+                                    placeholder="Add a product…"
+                                    class="flex-1"
+                                />
+                                <UButton
+                                    icon="i-lucide-plus"
+                                    size="sm"
+                                    color="neutral"
+                                    variant="soft"
+                                    :disabled="!itemToAdd"
+                                    @click="addEditableItem"
+                                >
+                                    Add
+                                </UButton>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <UButton :loading="savingOrderItems" @click="saveOrderItems">Save changes</UButton>
+                        </div>
+                    </template>
+
+                    <div v-else class="divide-y divide-default rounded-lg border border-default">
                         <div
                             v-for="item in viewingOrder.items"
                             :key="item.uuid"
@@ -326,62 +374,12 @@
 import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
 import { productService } from '@/components/api/admin/ProductService'
 import APIError from '@/components/api/user/APIError'
+import type { Product } from '@/types/Product'
+import type { Schedule, ScheduleProduct, ScheduleSummaryItem } from '@/types/Schedule'
+import type { Order } from '@/types/Order'
 import type { TableColumn, TabsItem } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
-
-interface Product {
-    uuid: string
-    name: string
-    image_url: string | null
-    last_known_price: string | null
-    last_known_price_source: 'actual' | 'estimated' | null
-}
-
-interface ScheduleProduct {
-    uuid: string
-    estimated_price: string
-    actual_price: string | null
-    promo_status: 'none' | 'b1t1' | 'out_of_stock'
-    price_confirmed_at: string | null
-    max_quantity: number | null
-    product: Product
-}
-
-interface Schedule {
-    uuid: string
-    title: string
-    description: string | null
-    cutoff_at: string | null
-    status: 'draft' | 'open' | 'closed'
-    is_open: boolean
-    products: ScheduleProduct[]
-}
-
-interface OrderItem {
-    uuid: string
-    product_name: string
-    estimated_price: string
-    actual_price: string | null
-    is_bonus: boolean
-    confirmation_status: 'none' | 'pending' | 'accepted' | 'removed'
-    max_price: string | null
-    auto_buy_if_under_max: boolean
-    quantity: number
-    subtotal: string
-}
-
-interface Order {
-    uuid: string
-    customer_name: string
-    customer_contact: string
-    status: 'pending' | 'needs_confirmation' | 'confirmed' | 'cancelled'
-    total_amount: string
-    is_cancellable: boolean
-    needs_confirmation_count: number
-    items: OrderItem[]
-    created_at: string
-}
 
 const route = useRoute()
 const uuid = route.params.uuid as string
@@ -390,6 +388,7 @@ const toast = useToast()
 const schedule = ref<Schedule | null>(null)
 const catalog = ref<Product[]>([])
 const orders = ref<Order[]>([])
+const summary = ref<ScheduleSummaryItem[]>([])
 const loading = ref(true)
 
 const pendingOrderCount = computed(() =>
@@ -397,9 +396,16 @@ const pendingOrderCount = computed(() =>
 )
 const isClosed = computed(() => schedule.value?.status === 'closed')
 
+const scheduleStatusColor: Record<Schedule['status'], 'neutral' | 'success' | 'warning'> = {
+    draft: 'neutral',
+    open: 'success',
+    closed: 'warning'
+}
+
 const tabs = computed<TabsItem[]>(() => [
     { label: 'Details', icon: 'i-lucide-file-text', value: 'details', slot: 'details' },
     { label: 'Products', icon: 'i-lucide-package', value: 'products', slot: 'products' },
+    { label: 'Summary', icon: 'i-lucide-clipboard-list', value: 'summary', slot: 'summary' },
     {
         label: 'Orders',
         icon: 'i-lucide-receipt',
@@ -412,10 +418,10 @@ const tabs = computed<TabsItem[]>(() => [
 const detailsForm = reactive({
     title: '',
     description: '',
-    cutoffAt: '',
-    status: 'draft' as Schedule['status']
+    cutoffAt: ''
 })
 const savingDetails = ref(false)
+const changingStatus = ref(false)
 
 function isoToDatetimeLocal(iso: string | null): string {
     if (!iso) return ''
@@ -426,8 +432,6 @@ function isoToDatetimeLocal(iso: string | null): string {
 
 interface SelectionEntry {
     selected: boolean
-    estimated_price: number | null
-    max_quantity: number | null
 }
 
 const selection = ref<Record<string, SelectionEntry>>({})
@@ -447,7 +451,7 @@ const selectedProducts = computed(() =>
         const entry = selection.value[product.uuid]
         if (!entry?.selected) return []
         const scheduleProduct = schedule.value?.products.find((sp) => sp.product.uuid === product.uuid) ?? null
-        return [{ product, entry, scheduleProduct }]
+        return [{ product, scheduleProduct }]
     })
 )
 
@@ -492,34 +496,39 @@ const publicLink = computed(() => {
     return `${window.location.origin}/pasabuy/${uuid}`
 })
 
+const summaryColumns: TableColumn<ScheduleSummaryItem>[] = [
+    { accessorKey: 'product_name', header: 'Product' },
+    { id: 'category_name', header: 'Category' },
+    { id: 'default_price', header: 'Price' },
+    { accessorKey: 'total_quantity', header: 'Total qty' },
+    { id: 'subtotal', header: 'Subtotal' }
+]
+
+const summaryGrandTotal = computed(() => summary.value.reduce((sum, item) => sum + Number(item.subtotal), 0))
+
 async function loadAll() {
     loading.value = true
     try {
-        const [scheduleResponse, catalogResponse, ordersResponse] = await Promise.all([
+        const [scheduleResponse, catalogResponse, ordersResponse, summaryResponse] = await Promise.all([
             pasabuyScheduleService.fetchSchedule(uuid),
             productService.fetchProducts({ per_page: 200 }),
-            pasabuyScheduleService.fetchOrders(uuid)
+            pasabuyScheduleService.fetchOrders(uuid),
+            pasabuyScheduleService.fetchScheduleSummary(uuid)
         ])
 
         schedule.value = scheduleResponse.data
         catalog.value = catalogResponse.data.data
         orders.value = ordersResponse.data
+        summary.value = summaryResponse.data
 
         detailsForm.title = schedule.value!.title
         detailsForm.description = schedule.value!.description ?? ''
         detailsForm.cutoffAt = isoToDatetimeLocal(schedule.value!.cutoff_at)
-        detailsForm.status = schedule.value!.status
 
         const initialSelection: typeof selection.value = {}
         for (const product of catalog.value) {
             const attached = schedule.value!.products.find((sp) => sp.product.uuid === product.uuid)
-            initialSelection[product.uuid] = {
-                selected: !!attached,
-                estimated_price: attached
-                    ? Number(attached.estimated_price)
-                    : (product.last_known_price !== null ? Number(product.last_known_price) : null),
-                max_quantity: attached ? attached.max_quantity : null
-            }
+            initialSelection[product.uuid] = { selected: !!attached }
         }
         selection.value = initialSelection
         syncConfirmForms()
@@ -530,14 +539,18 @@ async function loadAll() {
     }
 }
 
+async function refreshSummary() {
+    const response = await pasabuyScheduleService.fetchScheduleSummary(uuid)
+    summary.value = response.data
+}
+
 async function saveDetails() {
     savingDetails.value = true
     try {
         const response = await pasabuyScheduleService.updateSchedule(uuid, {
             title: detailsForm.title,
             description: detailsForm.description,
-            cutoff_at: detailsForm.cutoffAt || null,
-            status: detailsForm.status
+            cutoff_at: detailsForm.cutoffAt || null
         })
         schedule.value = { ...schedule.value!, ...response.data }
         toast.add({ title: 'Schedule updated', color: 'success' })
@@ -548,18 +561,44 @@ async function saveDetails() {
     }
 }
 
+async function closeSchedule() {
+    if (!confirm('Close this schedule? Customers will no longer be able to order or edit their orders.')) return
+
+    changingStatus.value = true
+    try {
+        const response = await pasabuyScheduleService.closeSchedule(uuid)
+        schedule.value = { ...schedule.value!, ...response.data }
+        toast.add({ title: 'Schedule closed', color: 'success' })
+    } catch (error) {
+        toast.add({ title: 'Failed to close schedule', description: (error as APIError).message, color: 'error' })
+    } finally {
+        changingStatus.value = false
+    }
+}
+
+async function reopenSchedule() {
+    if (!confirm('Reopen this schedule for customer orders?')) return
+
+    changingStatus.value = true
+    try {
+        const response = await pasabuyScheduleService.reopenSchedule(uuid)
+        schedule.value = { ...schedule.value!, ...response.data }
+        toast.add({ title: 'Schedule reopened', color: 'success' })
+    } catch (error) {
+        toast.add({ title: 'Failed to reopen schedule', description: (error as APIError).message, color: 'error' })
+    } finally {
+        changingStatus.value = false
+    }
+}
+
 async function saveProducts() {
     savingProducts.value = true
     try {
-        const products = Object.entries(selection.value)
+        const productUuids = Object.entries(selection.value)
             .filter(([, entry]) => entry.selected)
-            .map(([product_uuid, entry]) => ({
-                product_uuid,
-                estimated_price: entry.estimated_price ?? 0,
-                max_quantity: entry.max_quantity
-            }))
+            .map(([product_uuid]) => product_uuid)
 
-        const response = await pasabuyScheduleService.syncProducts(uuid, products)
+        const response = await pasabuyScheduleService.syncProducts(uuid, productUuids)
         schedule.value = response.data
         syncConfirmForms()
         toast.add({ title: 'Products updated', color: 'success' })
@@ -590,12 +629,12 @@ async function confirmPrice(scheduleProductUuid: string) {
         const sp = schedule.value?.products.find((p) => p.uuid === scheduleProductUuid)
         if (sp) Object.assign(sp, updated)
 
-        const summary = response.data.summary as { auto_applied: number, needs_confirmation: number, bonus_applied: number }
-        const parts = [`${summary.auto_applied} auto-updated`, `${summary.needs_confirmation} need customer confirmation`]
-        if (summary.bonus_applied > 0) parts.push(`${summary.bonus_applied} got a B1T1 bonus`)
+        const priceSummary = response.data.summary as { auto_applied: number, needs_confirmation: number, bonus_applied: number }
+        const parts = [`${priceSummary.auto_applied} auto-updated`, `${priceSummary.needs_confirmation} need customer confirmation`]
+        if (priceSummary.bonus_applied > 0) parts.push(`${priceSummary.bonus_applied} got a B1T1 bonus`)
 
         toast.add({ title: 'Price confirmed', description: parts.join(', '), color: 'success' })
-        await refreshOrders()
+        await Promise.all([refreshOrders(), refreshSummary()])
     } catch (error) {
         toast.add({ title: 'Confirm failed', description: (error as APIError).message, color: 'error' })
     } finally {
@@ -620,10 +659,67 @@ async function setOrderStatus(order: Order, status: 'confirmed' | 'cancelled') {
 
 const isOrderModalOpen = ref(false)
 const viewingOrder = ref<Order | null>(null)
+const canEditOrderItems = computed(() => isClosed.value)
+
+interface EditableItem {
+    product_uuid: string
+    product_name: string
+    quantity: number
+}
+
+const editableItems = ref<EditableItem[]>([])
+const itemToAdd = ref<string | undefined>(undefined)
+const savingOrderItems = ref(false)
+
+const addableProductOptions = computed(() => {
+    const usedUuids = new Set(editableItems.value.map((item) => item.product_uuid))
+    return (schedule.value?.products ?? [])
+        .filter((sp) => !usedUuids.has(sp.product.uuid))
+        .map((sp) => ({ label: sp.product.name, value: sp.product.uuid }))
+})
 
 function viewOrder(order: Order) {
     viewingOrder.value = order
+    editableItems.value = order.items
+        .filter((item) => !item.is_bonus && item.product_uuid)
+        .map((item) => ({ product_uuid: item.product_uuid!, product_name: item.product_name, quantity: item.quantity }))
+    itemToAdd.value = undefined
     isOrderModalOpen.value = true
+}
+
+function removeEditableItem(productUuid: string) {
+    editableItems.value = editableItems.value.filter((item) => item.product_uuid !== productUuid)
+}
+
+function addEditableItem() {
+    if (!itemToAdd.value) return
+    const sp = schedule.value?.products.find((p) => p.product.uuid === itemToAdd.value)
+    if (!sp) return
+
+    editableItems.value.push({ product_uuid: sp.product.uuid, product_name: sp.product.name, quantity: 1 })
+    itemToAdd.value = undefined
+}
+
+async function saveOrderItems() {
+    if (!viewingOrder.value) return
+
+    savingOrderItems.value = true
+    try {
+        const response = await pasabuyScheduleService.updateOrderItems(
+            uuid,
+            viewingOrder.value.uuid,
+            editableItems.value.map((item) => ({ product_uuid: item.product_uuid, quantity: item.quantity }))
+        )
+        viewingOrder.value = response.data
+        const row = orders.value.find((o) => o.uuid === response.data.uuid)
+        if (row) Object.assign(row, response.data)
+        await refreshSummary()
+        toast.add({ title: 'Order items updated', color: 'success' })
+    } catch (error) {
+        toast.add({ title: 'Failed to update order items', description: (error as APIError).message, color: 'error' })
+    } finally {
+        savingOrderItems.value = false
+    }
 }
 
 function formatDate(iso: string): string {

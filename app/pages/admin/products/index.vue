@@ -31,6 +31,12 @@
                         {{ row.original.description }}
                     </p>
                 </template>
+                <template #category-cell="{ row }">
+                    <span class="text-sm text-muted">{{ row.original.category?.name ?? '—' }}</span>
+                </template>
+                <template #default_price-cell="{ row }">
+                    <span class="font-medium text-highlighted">₱{{ row.original.default_price }}</span>
+                </template>
                 <template #is_active-cell="{ row }">
                     <UBadge :color="row.original.is_active ? 'success' : 'neutral'" variant="subtle">
                         <span class="flex items-center gap-1.5">
@@ -82,6 +88,21 @@
                     <UFormField label="Description">
                         <UTextarea v-model="form.description" class="w-full" />
                     </UFormField>
+                    <UFormField label="Default price" required>
+                        <UInput v-model.number="form.default_price" type="number" min="0" step="0.01" class="w-full">
+                            <template #leading>
+                                <span class="text-sm text-dimmed">₱</span>
+                            </template>
+                        </UInput>
+                    </UFormField>
+                    <UFormField label="Category">
+                        <USelect
+                            v-model="form.category_id"
+                            :items="categoryOptions"
+                            value-key="value"
+                            class="w-full"
+                        />
+                    </UFormField>
                     <UFormField label="Image">
                         <UFileUpload v-model="form.image" accept="image/*" />
                     </UFormField>
@@ -97,33 +118,45 @@
 
 <script setup lang="ts">
 import { productService } from '@/components/api/admin/ProductService'
+import { productCategoryService } from '@/components/api/admin/ProductCategoryService'
 import APIError from '@/components/api/user/APIError'
+import type { Product } from '@/types/Product'
+import type { Category } from '@/types/Category'
 import type { TableColumn } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
-interface Product {
-    uuid: string
-    name: string
-    description: string | null
-    image_url: string | null
-    is_active: boolean
-}
-
 const toast = useToast()
 const products = ref<Product[]>([])
+const categories = ref<Category[]>([])
 const loading = ref(false)
 const page = ref(1)
 const perPage = 15
 const total = ref(0)
 const search = ref('')
 
+const categoryOptions = computed(() => [
+    { label: 'Uncategorized', value: null },
+    ...categories.value.map((category) => ({ label: category.name, value: category.uuid }))
+])
+
 const columns: TableColumn<Product>[] = [
     { id: 'image', header: '' },
     { id: 'product', header: 'Product' },
+    { id: 'category', header: 'Category' },
+    { id: 'default_price', header: 'Price' },
     { accessorKey: 'is_active', header: 'Status' },
     { id: 'actions', header: '' }
 ]
+
+async function loadCategories() {
+    try {
+        const response = await productCategoryService.fetchCategories({ per_page: 200 })
+        categories.value = response.data.data
+    } catch (error) {
+        toast.add({ title: 'Failed to load categories', description: (error as APIError).message, color: 'error' })
+    }
+}
 
 async function loadProducts() {
     loading.value = true
@@ -151,6 +184,8 @@ const form = reactive({
     name: '',
     description: '',
     is_active: true,
+    default_price: null as number | null,
+    category_id: null as string | null,
     image: null as File | null
 })
 const saving = ref(false)
@@ -160,6 +195,8 @@ function openCreateModal() {
     form.name = ''
     form.description = ''
     form.is_active = true
+    form.default_price = null
+    form.category_id = null
     form.image = null
     isModalOpen.value = true
 }
@@ -169,6 +206,8 @@ function openEditModal(product: Product) {
     form.name = product.name
     form.description = product.description ?? ''
     form.is_active = product.is_active
+    form.default_price = Number(product.default_price)
+    form.category_id = product.category?.uuid ?? null
     form.image = null
     isModalOpen.value = true
 }
@@ -180,6 +219,8 @@ async function onSave() {
             name: form.name,
             description: form.description,
             is_active: form.is_active,
+            default_price: form.default_price ?? 0,
+            category_uuid: form.category_id,
             image: form.image
         }
         if (editingProduct.value) {
@@ -210,5 +251,8 @@ async function onDelete(product: Product) {
     }
 }
 
-onMounted(loadProducts)
+onMounted(() => {
+    loadCategories()
+    loadProducts()
+})
 </script>

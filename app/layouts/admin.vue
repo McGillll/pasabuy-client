@@ -72,6 +72,7 @@ const { user, logout } = useAuth()
 const links: NavigationMenuItem[] = [
     { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/admin' },
     { label: 'Products', icon: 'i-lucide-package', to: '/admin/products' },
+    { label: 'Categories', icon: 'i-lucide-tags', to: '/admin/product-categories' },
     { label: 'Pasabuy Schedules', icon: 'i-lucide-calendar-clock', to: '/admin/schedules' },
     { label: 'Customers', icon: 'i-lucide-users', to: '/admin/customers' }
 ]
@@ -79,6 +80,7 @@ const links: NavigationMenuItem[] = [
 const mobileLinks: NavigationMenuItem[] = [
     { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/admin' },
     { label: 'Products', icon: 'i-lucide-package', to: '/admin/products' },
+    { label: 'Categories', icon: 'i-lucide-tags', to: '/admin/product-categories' },
     { label: 'Schedules', icon: 'i-lucide-calendar-clock', to: '/admin/schedules' },
     { label: 'Customers', icon: 'i-lucide-users', to: '/admin/customers' }
 ]

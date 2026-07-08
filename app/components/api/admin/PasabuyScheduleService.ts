@@ -7,15 +7,14 @@ export interface SchedulePayload {
     status?: 'draft' | 'open' | 'closed'
 }
 
-export interface ScheduleProductInput {
-    product_uuid: string
-    estimated_price: number
-    max_quantity: number | null
-}
-
 export interface ConfirmPricePayload {
     actual_price?: number
     promo_status: 'none' | 'b1t1' | 'out_of_stock'
+}
+
+export interface AdminOrderItemInput {
+    product_uuid: string
+    quantity: number
 }
 
 /**
@@ -70,22 +69,33 @@ class PasabuyScheduleService extends BaseAPIService {
     }
 
     /**
+     * POST /api/admin/pasabuy-schedules/{uuid}/close
+     * No body fields. Response: updated `Schedule` (status: 'closed').
+     */
+    async closeSchedule(uuid: string): Promise<any> {
+        return await this.request(`/admin/pasabuy-schedules/${uuid}/close`, 'POST', new FormData())
+    }
+
+    /**
+     * POST /api/admin/pasabuy-schedules/{uuid}/reopen
+     * No body fields. Response: updated `Schedule` (status: 'open').
+     */
+    async reopenSchedule(uuid: string): Promise<any> {
+        return await this.request(`/admin/pasabuy-schedules/${uuid}/reopen`, 'POST', new FormData())
+    }
+
+    /**
      * PUT /api/admin/pasabuy-schedules/{uuid}/products (sent as POST with `_method: 'PUT'` spoofing)
-     * Replaces the full set of products attached to the schedule.
-     * FormData fields: indexed array per product —
-     * `products[i][product_uuid]` (string), `products[i][estimated_price]` (numeric string),
-     * `products[i][max_quantity]` (numeric string, omitted when unlimited).
+     * Replaces the full set of products attached to the schedule — pricing always comes from
+     * each product's own `default_price`, so only the product identity is sent.
+     * FormData fields: indexed array per product — `products[i][product_uuid]` (string).
      * Response: updated `Schedule` including its attached `products`.
      */
-    async syncProducts(uuid: string, products: ScheduleProductInput[]): Promise<any> {
+    async syncProducts(uuid: string, productUuids: string[]): Promise<any> {
         const formData = new FormData()
         formData.append('_method', 'PUT')
-        products.forEach((product, index) => {
-            formData.append(`products[${index}][product_uuid]`, product.product_uuid)
-            formData.append(`products[${index}][estimated_price]`, String(product.estimated_price))
-            if (product.max_quantity !== null) {
-                formData.append(`products[${index}][max_quantity]`, String(product.max_quantity))
-            }
+        productUuids.forEach((productUuid, index) => {
+            formData.append(`products[${index}][product_uuid]`, productUuid)
         })
 
         return await this.request(`/admin/pasabuy-schedules/${uuid}/products`, 'POST', formData)
@@ -127,6 +137,33 @@ class PasabuyScheduleService extends BaseAPIService {
         formData.append('status', status)
 
         return await this.request(`/admin/orders/${uuid}/status`, 'POST', formData)
+    }
+
+    /**
+     * GET /api/admin/pasabuy-schedules/{uuid}/summary
+     * Response: `Array<{ product_uuid, product_name, category_name, default_price, total_quantity, subtotal }>`.
+     * Sum `subtotal` client-side for a grand total.
+     */
+    async fetchScheduleSummary(uuid: string): Promise<any> {
+        return await this.request(`/admin/pasabuy-schedules/${uuid}/summary`, 'GET')
+    }
+
+    /**
+     * PUT /api/admin/pasabuy-schedules/{scheduleUuid}/orders/{orderUuid}/items
+     * (sent as POST with `_method: 'PUT'` spoofing)
+     * Seller-only full item-list replacement, only permitted while the schedule is closed.
+     * FormData fields: indexed array — `items[i][product_uuid]`, `items[i][quantity]`.
+     * Response: updated `Order` (items/subtotal/total recomputed).
+     */
+    async updateOrderItems(scheduleUuid: string, orderUuid: string, items: AdminOrderItemInput[]): Promise<any> {
+        const formData = new FormData()
+        formData.append('_method', 'PUT')
+        items.forEach((item, index) => {
+            formData.append(`items[${index}][product_uuid]`, item.product_uuid)
+            formData.append(`items[${index}][quantity]`, String(item.quantity))
+        })
+
+        return await this.request(`/admin/pasabuy-schedules/${scheduleUuid}/orders/${orderUuid}/items`, 'POST', formData)
     }
 
     private buildFormData(payload: SchedulePayload): FormData {
