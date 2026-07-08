@@ -152,6 +152,9 @@
                                                 <span class="text-sm text-dimmed">₱</span>
                                             </template>
                                         </UInput>
+                                        <p v-if="product.last_known_price !== null" class="mt-1 text-xs text-dimmed">
+                                            last: ₱{{ product.last_known_price }} ({{ product.last_known_price_source === 'actual' ? 'confirmed' : 'estimated' }})
+                                        </p>
                                     </UFormField>
                                     <UFormField label="Max qty">
                                         <UInput
@@ -331,6 +334,8 @@ interface Product {
     uuid: string
     name: string
     image_url: string | null
+    last_known_price: string | null
+    last_known_price_source: 'actual' | 'estimated' | null
 }
 
 interface ScheduleProduct {
@@ -510,7 +515,9 @@ async function loadAll() {
             const attached = schedule.value!.products.find((sp) => sp.product.uuid === product.uuid)
             initialSelection[product.uuid] = {
                 selected: !!attached,
-                estimated_price: attached ? Number(attached.estimated_price) : null,
+                estimated_price: attached
+                    ? Number(attached.estimated_price)
+                    : (product.last_known_price !== null ? Number(product.last_known_price) : null),
                 max_quantity: attached ? attached.max_quantity : null
             }
         }
