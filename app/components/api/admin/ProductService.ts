@@ -6,6 +6,7 @@ export interface ProductPayload {
     image?: File | null
     is_active?: boolean
     default_price: number
+    default_product_status?: 'none' | 'b1t1' | 'out_of_stock'
     category_uuid?: string | null
 }
 
@@ -36,7 +37,7 @@ class ProductService extends BaseAPIService {
      * POST /api/admin/products
      * FormData fields: name (string, required), description (string, optional),
      * image (File, optional), is_active ('1'|'0', optional), default_price (numeric string, required),
-     * category_uuid (string, optional).
+     * default_product_status ('none'|'b1t1'|'out_of_stock', optional), category_uuid (string, optional).
      * Response: created `Product`.
      */
     async createProduct(payload: ProductPayload): Promise<any> {
@@ -69,6 +70,7 @@ class ProductService extends BaseAPIService {
         if (payload.image) formData.append('image', payload.image)
         if (payload.is_active !== undefined) formData.append('is_active', payload.is_active ? '1' : '0')
         formData.append('default_price', String(payload.default_price))
+        if (payload.default_product_status) formData.append('default_product_status', payload.default_product_status)
         if (payload.category_uuid) formData.append('category_uuid', payload.category_uuid)
 
         return formData

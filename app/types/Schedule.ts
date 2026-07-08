@@ -3,7 +3,7 @@ import type { Product } from '@/types/Product'
 export interface ScheduleProduct {
     uuid: string
     actual_price: string | null
-    promo_status: 'none' | 'b1t1' | 'out_of_stock'
+    product_status: 'none' | 'b1t1' | 'out_of_stock'
     price_confirmed_at: string | null
     product: Product
 }
@@ -26,4 +26,24 @@ export interface ScheduleSummaryItem {
     default_price: string
     total_quantity: number
     subtotal: string
+}
+
+export interface ChecklistItem {
+    product_uuid: string
+    product_name: string
+    category_name: string | null
+    quantity: number
+    is_checked: boolean
+    checked_at: string | null
+    additional_quantity: number
+    return_quantity: number
+}
+
+export interface ProductBuyer {
+    customer_name: string
+    quantity: number
+    estimated_price: string
+    actual_price: string | null
+    subtotal: string
+    status: string
 }

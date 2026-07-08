@@ -8,7 +8,8 @@ import BaseAPIService from '@/components/api/BaseAPIService'
 class PublicPasabuyService extends BaseAPIService {
     /**
      * GET /api/public/pasabuy-schedules/{uuid}
-     * Response: `Schedule` including its attached `products`.
+     * Response: `Schedule`. Its `products` array only lists products already ordered —
+     * use `publicProductService.fetchCatalog()` for the full orderable catalog.
      */
     async fetchSchedule(uuid: string): Promise<any> {
         return await this.request(`/public/pasabuy-schedules/${uuid}`, 'GET')

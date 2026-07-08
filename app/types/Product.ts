@@ -7,7 +7,8 @@ export interface Product {
     image_url: string | null
     is_active: boolean
     default_price: string
+    default_product_status: 'none' | 'b1t1' | 'out_of_stock'
     category: Category | null
     last_confirmed_price?: string | null
-    last_promo_status?: 'none' | 'b1t1' | 'out_of_stock' | null
+    last_product_status?: 'none' | 'b1t1' | 'out_of_stock' | null
 }

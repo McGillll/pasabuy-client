@@ -180,6 +180,14 @@
                             class="w-full"
                         />
                     </UFormField>
+                    <UFormField label="Default product status">
+                        <USelect
+                            v-model="productForm.default_product_status"
+                            :items="productStatusOptions"
+                            value-key="value"
+                            class="w-full"
+                        />
+                    </UFormField>
                     <UFormField label="Image">
                         <UFileUpload v-model="productForm.image" accept="image/*" />
                     </UFormField>
@@ -250,6 +258,12 @@ const categoryFilterOptions = computed(() => [
     ...allCategories.value.map((category) => ({ label: category.name, value: category.uuid }))
 ])
 
+const productStatusOptions = [
+    { label: 'None', value: 'none' },
+    { label: 'B1T1', value: 'b1t1' },
+    { label: 'Out of stock', value: 'out_of_stock' }
+]
+
 const productColumns: TableColumn<Product>[] = [
     { id: 'image', header: '' },
     { id: 'product', header: 'Product' },
@@ -305,6 +319,7 @@ const productForm = reactive({
     description: '',
     is_active: true,
     default_price: null as number | null,
+    default_product_status: 'none' as 'none' | 'b1t1' | 'out_of_stock',
     category_id: null as string | null,
     image: null as File | null
 })
@@ -316,6 +331,7 @@ function openProductCreateModal() {
     productForm.description = ''
     productForm.is_active = true
     productForm.default_price = null
+    productForm.default_product_status = 'none'
     productForm.category_id = null
     productForm.image = null
     isProductModalOpen.value = true
@@ -327,6 +343,7 @@ function openProductEditModal(product: Product) {
     productForm.description = product.description ?? ''
     productForm.is_active = product.is_active
     productForm.default_price = Number(product.default_price)
+    productForm.default_product_status = product.default_product_status
     productForm.category_id = product.category?.uuid ?? null
     productForm.image = null
     isProductModalOpen.value = true
@@ -340,6 +357,7 @@ async function onSaveProduct() {
             description: productForm.description,
             is_active: productForm.is_active,
             default_price: productForm.default_price ?? 0,
+            default_product_status: productForm.default_product_status,
             category_uuid: productForm.category_id,
             image: productForm.image
         }

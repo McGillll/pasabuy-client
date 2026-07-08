@@ -9,7 +9,7 @@ export interface SchedulePayload {
 
 export interface ConfirmPricePayload {
     actual_price?: number
-    promo_status: 'none' | 'b1t1' | 'out_of_stock'
+    product_status: 'none' | 'b1t1' | 'out_of_stock'
 }
 
 export interface AdminOrderItemInput {
@@ -18,7 +18,8 @@ export interface AdminOrderItemInput {
 }
 
 /**
- * Admin pasabuy schedule CRUD + product sync + order listing.
+ * Admin pasabuy schedule CRUD + order listing + shopping checklist.
+ * Products are attached reactively (as customers order them), not curated here.
  * See api/rsc-doc/pasabuy-schedule-api.md and order-api.md for response shapes.
  */
 class PasabuyScheduleService extends BaseAPIService {
@@ -85,37 +86,50 @@ class PasabuyScheduleService extends BaseAPIService {
     }
 
     /**
-     * PUT /api/admin/pasabuy-schedules/{uuid}/products (sent as POST with `_method: 'PUT'` spoofing)
-     * Replaces the full set of products attached to the schedule — pricing always comes from
-     * each product's own `default_price`, so only the product identity is sent.
-     * FormData fields: indexed array per product — `products[i][product_uuid]` (string).
-     * Response: updated `Schedule` including its attached `products`.
-     */
-    async syncProducts(uuid: string, productUuids: string[]): Promise<any> {
-        const formData = new FormData()
-        formData.append('_method', 'PUT')
-        productUuids.forEach((productUuid, index) => {
-            formData.append(`products[${index}][product_uuid]`, productUuid)
-        })
-
-        return await this.request(`/admin/pasabuy-schedules/${uuid}/products`, 'POST', formData)
-    }
-
-    /**
      * PATCH /api/admin/pasabuy-schedules/{uuid}/schedule-products/{scheduleProductUuid}/confirm-price
      * (sent as POST with `_method: 'PATCH'` spoofing)
-     * Sets the seller's in-store actual price + promo status for one schedule product.
-     * FormData fields: actual_price (numeric string, required unless promo_status is out_of_stock),
-     * promo_status ('none'|'b1t1'|'out_of_stock', required).
+     * Sets the seller's in-store actual price + product status for one schedule product.
+     * FormData fields: actual_price (numeric string, required unless product_status is out_of_stock),
+     * product_status ('none'|'b1t1'|'out_of_stock', required).
      * Response: `{ schedule_product: ScheduleProduct, summary: { auto_applied, needs_confirmation, bonus_applied } }`.
      */
     async confirmProductPrice(uuid: string, scheduleProductUuid: string, payload: ConfirmPricePayload): Promise<any> {
         const formData = new FormData()
         formData.append('_method', 'PATCH')
         if (payload.actual_price !== undefined) formData.append('actual_price', String(payload.actual_price))
-        formData.append('promo_status', payload.promo_status)
+        formData.append('product_status', payload.product_status)
 
         return await this.request(`/admin/pasabuy-schedules/${uuid}/schedule-products/${scheduleProductUuid}/confirm-price`, 'POST', formData)
+    }
+
+    /**
+     * GET /api/admin/pasabuy-schedules/{uuid}/products/{productUuid}/buyers
+     * Response: `ProductBuyer[]` — every live buyer of one product on this schedule.
+     */
+    async fetchProductBuyers(uuid: string, productUuid: string): Promise<any> {
+        return await this.request(`/admin/pasabuy-schedules/${uuid}/products/${productUuid}/buyers`, 'GET')
+    }
+
+    /**
+     * GET /api/admin/pasabuy-schedules/{uuid}/checklist
+     * Response: `ChecklistItem[]` — empty until the schedule has been closed at least once.
+     */
+    async fetchChecklist(uuid: string): Promise<any> {
+        return await this.request(`/admin/pasabuy-schedules/${uuid}/checklist`, 'GET')
+    }
+
+    /**
+     * PATCH /api/admin/pasabuy-schedules/{uuid}/checklist/{productUuid}
+     * (sent as POST with `_method: 'PATCH'` spoofing)
+     * FormData fields: is_checked ('1'|'0', required).
+     * Response: updated `ChecklistItem`.
+     */
+    async toggleChecklistItem(uuid: string, productUuid: string, isChecked: boolean): Promise<any> {
+        const formData = new FormData()
+        formData.append('_method', 'PATCH')
+        formData.append('is_checked', isChecked ? '1' : '0')
+
+        return await this.request(`/admin/pasabuy-schedules/${uuid}/checklist/${productUuid}`, 'POST', formData)
     }
 
     /**

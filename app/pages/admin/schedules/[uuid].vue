@@ -8,7 +8,7 @@
             </div>
         </div>
 
-        <UTabs :items="tabs" class="w-full">
+        <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #details>
                 <UCard class="mt-4">
                     <div class="mb-4 flex flex-wrap items-center gap-3">
@@ -63,164 +63,76 @@
                 </UCard>
             </template>
 
-            <template #products>
-                <div class="mt-4 flex justify-end">
-                    <UButton :loading="savingProducts" @click="saveProducts">Save products</UButton>
-                </div>
-
-                <div class="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <UCard :ui="{ body: 'p-0 sm:p-0' }">
-                        <template #header>
-                            <div class="flex items-center justify-between gap-3">
-                                <h3 class="font-medium">Catalog</h3>
-                                <UInput v-model="productSearch" icon="i-lucide-search" placeholder="Search…" class="w-40 sm:w-56" />
-                            </div>
-                        </template>
-
-                        <div class="max-h-112 divide-y divide-default overflow-y-auto">
-                            <div v-for="product in availableProducts" :key="product.uuid" class="flex items-center gap-3 p-3">
-                                <img
-                                    v-if="product.image_url"
-                                    :src="product.image_url"
-                                    class="size-10 rounded-lg object-cover ring-1 ring-default"
-                                    alt=""
-                                >
-                                <div v-else class="flex items-center justify-center size-10 rounded-lg bg-elevated text-dimmed">
-                                    <UIcon name="i-lucide-image" class="size-4" />
-                                </div>
-                                <span class="flex-1 truncate font-medium text-highlighted">{{ product.name }}</span>
-                                <UButton
-                                    icon="i-lucide-plus"
-                                    size="xs"
-                                    color="neutral"
-                                    variant="soft"
-                                    @click="addProduct(product.uuid)"
-                                >
-                                    Add
-                                </UButton>
-                            </div>
-
-                            <div v-if="availableProducts.length === 0" class="flex flex-col items-center gap-3 py-10">
-                                <UIcon name="i-lucide-package-search" class="size-8 text-dimmed" />
-                                <p class="text-sm text-muted">
-                                    {{ catalog.length === 0 ? 'No products in your catalog yet.' : 'No matching products.' }}
-                                </p>
-                            </div>
-                        </div>
-                    </UCard>
-
-                    <UCard :ui="{ body: 'p-0 sm:p-0' }">
-                        <template #header>
-                            <div class="flex items-center justify-between gap-3">
-                                <h3 class="font-medium">In this schedule</h3>
-                                <span class="text-sm text-muted">{{ selectedProducts.length }} added</span>
-                            </div>
-                        </template>
-
-                        <div class="max-h-112 divide-y divide-default overflow-y-auto">
-                            <div v-for="{ product, scheduleProduct } in selectedProducts" :key="product.uuid" class="p-3">
-                                <div class="flex items-center gap-3">
-                                    <img
-                                        v-if="product.image_url"
-                                        :src="product.image_url"
-                                        class="size-10 rounded-lg object-cover ring-1 ring-default"
-                                        alt=""
-                                    >
-                                    <div v-else class="flex items-center justify-center size-10 rounded-lg bg-elevated text-dimmed">
-                                        <UIcon name="i-lucide-image" class="size-4" />
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <p class="truncate font-medium text-highlighted">{{ product.name }}</p>
-                                        <p class="text-sm text-muted">₱{{ product.default_price }}</p>
-                                    </div>
-                                    <UButton
-                                        icon="i-lucide-x"
-                                        size="xs"
-                                        color="error"
-                                        variant="ghost"
-                                        aria-label="Remove product"
-                                        @click="removeProduct(product.uuid)"
-                                    />
-                                </div>
-
-                                <div v-if="scheduleProduct && canConfirmPrice" class="mt-3 border-t border-default pt-3">
-                                    <div class="mb-2 flex items-center justify-between gap-2">
-                                        <span class="text-xs font-medium uppercase tracking-wide text-dimmed">In-store price</span>
-                                        <UBadge v-if="scheduleProduct.price_confirmed_at" color="success" variant="subtle" size="sm">
-                                            Confirmed
-                                        </UBadge>
-                                    </div>
-                                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-                                        <UFormField label="Actual price">
-                                            <UInput
-                                                v-model.number="getConfirmForm(scheduleProduct.uuid).actual_price"
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                placeholder="0.00"
-                                                :disabled="getConfirmForm(scheduleProduct.uuid).promo_status === 'out_of_stock'"
-                                                class="w-full"
-                                            >
-                                                <template #leading>
-                                                    <span class="text-sm text-dimmed">₱</span>
-                                                </template>
-                                            </UInput>
-                                        </UFormField>
-                                        <UFormField label="Promo">
-                                            <USelect
-                                                v-model="getConfirmForm(scheduleProduct.uuid).promo_status"
-                                                :items="promoStatusOptions"
-                                                value-key="value"
-                                                class="w-full"
-                                            />
-                                        </UFormField>
-                                        <UButton
-                                            size="sm"
-                                            :loading="getConfirmForm(scheduleProduct.uuid).saving"
-                                            @click="confirmPrice(scheduleProduct.uuid)"
-                                        >
-                                            Confirm
-                                        </UButton>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div v-if="selectedProducts.length === 0" class="flex flex-col items-center gap-3 py-10">
-                                <UIcon name="i-lucide-shopping-basket" class="size-8 text-dimmed" />
-                                <p class="text-sm text-muted">No products added yet.</p>
-                                <p class="text-xs text-dimmed">Add some from the catalog on the left.</p>
-                            </div>
-                        </div>
-                    </UCard>
-                </div>
-            </template>
-
             <template #summary>
-                <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
-                    <UTable :data="summary" :columns="summaryColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
-                        <template #category_name-cell="{ row }">
-                            <span class="text-sm text-muted">{{ row.original.category_name ?? '—' }}</span>
-                        </template>
-                        <template #default_price-cell="{ row }">
-                            ₱{{ row.original.default_price }}
-                        </template>
-                        <template #subtotal-cell="{ row }">
-                            ₱{{ row.original.subtotal }}
-                        </template>
-                        <template #empty>
-                            <div class="flex flex-col items-center gap-3 py-10">
-                                <UIcon name="i-lucide-clipboard-list" class="size-8 text-dimmed" />
-                                <p class="text-sm text-muted">No orders yet — the checklist fills in once customers order.</p>
-                            </div>
-                        </template>
-                    </UTable>
-                    <template v-if="summary.length > 0" #footer>
-                        <div class="flex items-center justify-between font-medium text-highlighted">
-                            <span>Grand total</span>
-                            <span>₱{{ summaryGrandTotal.toFixed(2) }}</span>
-                        </div>
+                <UTabs v-model="activeSummaryTab" :items="summaryTabs" class="w-full mt-4">
+                    <template #pricing>
+                        <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
+                            <UTable
+                                :data="summary"
+                                :columns="summaryColumns"
+                                :ui="{ tr: 'hover:bg-elevated/50 transition-colors cursor-pointer' }"
+                                @select="(_event, row) => openBuyersModal(row.original)"
+                            >
+                                <template #product_name-cell="{ row }">
+                                    <p class="font-medium text-highlighted">{{ row.original.product_name }}</p>
+                                    <p class="text-sm text-muted">{{ row.original.category_name ?? '—' }}</p>
+                                </template>
+                                <template #default_price-cell="{ row }">
+                                    ₱{{ row.original.default_price }}
+                                </template>
+                                <template #subtotal-cell="{ row }">
+                                    ₱{{ row.original.subtotal }}
+                                </template>
+                                <template #empty>
+                                    <div class="flex flex-col items-center gap-3 py-10">
+                                        <UIcon name="i-lucide-clipboard-list" class="size-8 text-dimmed" />
+                                        <p class="text-sm text-muted">No orders yet — the checklist fills in once customers order.</p>
+                                    </div>
+                                </template>
+                            </UTable>
+                            <template v-if="summary.length > 0" #footer>
+                                <div class="flex items-center justify-between font-medium text-highlighted">
+                                    <span>Grand total</span>
+                                    <span>₱{{ summaryGrandTotal.toFixed(2) }}</span>
+                                </div>
+                            </template>
+                        </UCard>
                     </template>
-                </UCard>
+
+                    <template #checklist>
+                        <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
+                            <UTable :data="checklistItems" :columns="checklistColumns" :loading="checklistLoading" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
+                                <template #is_checked-cell="{ row }">
+                                    <UCheckbox
+                                        :model-value="row.original.is_checked"
+                                        :disabled="togglingUuid === row.original.product_uuid"
+                                        @update:model-value="(value) => toggleChecklist(row.original, !!value)"
+                                    />
+                                </template>
+                                <template #product-cell="{ row }">
+                                    <p class="font-medium text-highlighted">{{ row.original.product_name }}</p>
+                                    <p class="text-sm text-muted">{{ row.original.category_name ?? '—' }}</p>
+                                </template>
+                                <template #adjustment-cell="{ row }">
+                                    <UBadge v-if="row.original.additional_quantity > 0" color="warning" variant="subtle" size="sm">
+                                        +{{ row.original.additional_quantity }} more
+                                    </UBadge>
+                                    <UBadge v-if="row.original.return_quantity > 0" color="error" variant="subtle" size="sm">
+                                        return {{ row.original.return_quantity }}
+                                    </UBadge>
+                                </template>
+                                <template #empty>
+                                    <div class="flex flex-col items-center gap-3 py-10">
+                                        <UIcon name="i-lucide-list-checks" class="size-8 text-dimmed" />
+                                        <p class="text-sm text-muted">
+                                            {{ schedule.status === 'draft' ? 'Close the schedule to generate the shopping checklist.' : 'Checklist will appear once you close the schedule.' }}
+                                        </p>
+                                    </div>
+                                </template>
+                            </UTable>
+                        </UCard>
+                    </template>
+                </UTabs>
             </template>
 
             <template #orders>
@@ -276,6 +188,66 @@
                 </UCard>
             </template>
         </UTabs>
+
+        <UModal
+            v-model:open="isBuyersModalOpen"
+            :title="selectedSummaryItem ? selectedSummaryItem.product_name : 'Buyers'"
+        >
+            <template #body>
+                <div class="space-y-4">
+                    <UTable :data="buyers" :columns="buyerColumns" :loading="buyersLoading">
+                        <template #status-cell="{ row }">
+                            <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
+                                {{ row.original.status }}
+                            </UBadge>
+                        </template>
+                        <template #empty>
+                            <div class="flex flex-col items-center gap-3 py-6">
+                                <UIcon name="i-lucide-users" class="size-8 text-dimmed" />
+                                <p class="text-sm text-muted">No buyers yet.</p>
+                            </div>
+                        </template>
+                    </UTable>
+
+                    <div v-if="canConfirmPrice" class="border-t border-default pt-4">
+                        <div class="mb-2 flex items-center justify-between gap-2">
+                            <span class="text-xs font-medium uppercase tracking-wide text-dimmed">In-store price</span>
+                            <UBadge v-if="selectedScheduleProduct?.price_confirmed_at" color="success" variant="subtle" size="sm">
+                                Confirmed
+                            </UBadge>
+                        </div>
+                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                            <UFormField label="Actual price">
+                                <UInput
+                                    v-model.number="confirmForm.actual_price"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    :disabled="confirmForm.product_status === 'out_of_stock'"
+                                    class="w-full"
+                                >
+                                    <template #leading>
+                                        <span class="text-sm text-dimmed">₱</span>
+                                    </template>
+                                </UInput>
+                            </UFormField>
+                            <UFormField label="Product status">
+                                <USelect
+                                    v-model="confirmForm.product_status"
+                                    :items="productStatusOptions"
+                                    value-key="value"
+                                    class="w-full"
+                                />
+                            </UFormField>
+                            <UButton size="sm" :loading="confirmForm.saving" @click="confirmSelectedPrice">
+                                Confirm
+                            </UButton>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </UModal>
 
         <UModal v-model:open="isOrderModalOpen" title="Order details">
             <template #body>
@@ -372,10 +344,8 @@
 
 <script setup lang="ts">
 import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
-import { productService } from '@/components/api/admin/ProductService'
 import APIError from '@/components/api/user/APIError'
-import type { Product } from '@/types/Product'
-import type { Schedule, ScheduleProduct, ScheduleSummaryItem } from '@/types/Schedule'
+import type { Schedule, ScheduleProduct, ScheduleSummaryItem, ChecklistItem, ProductBuyer } from '@/types/Schedule'
 import type { Order } from '@/types/Order'
 import type { TableColumn, TabsItem } from '@nuxt/ui'
 
@@ -386,7 +356,6 @@ const uuid = route.params.uuid as string
 const toast = useToast()
 
 const schedule = ref<Schedule | null>(null)
-const catalog = ref<Product[]>([])
 const orders = ref<Order[]>([])
 const summary = ref<ScheduleSummaryItem[]>([])
 const loading = ref(true)
@@ -402,9 +371,10 @@ const scheduleStatusColor: Record<Schedule['status'], 'neutral' | 'success' | 'w
     closed: 'warning'
 }
 
+const activeTab = ref('summary')
+
 const tabs = computed<TabsItem[]>(() => [
     { label: 'Details', icon: 'i-lucide-file-text', value: 'details', slot: 'details' },
-    { label: 'Products', icon: 'i-lucide-package', value: 'products', slot: 'products' },
     { label: 'Summary', icon: 'i-lucide-clipboard-list', value: 'summary', slot: 'summary' },
     {
         label: 'Orders',
@@ -414,6 +384,13 @@ const tabs = computed<TabsItem[]>(() => [
         badge: pendingOrderCount.value > 0 ? pendingOrderCount.value : undefined
     }
 ])
+
+const activeSummaryTab = ref('pricing')
+
+const summaryTabs: TabsItem[] = [
+    { label: 'Price & Totals', icon: 'i-lucide-receipt-text', value: 'pricing', slot: 'pricing' },
+    { label: 'Shopping Checklist', icon: 'i-lucide-list-checks', value: 'checklist', slot: 'checklist' }
+]
 
 const detailsForm = reactive({
     title: '',
@@ -430,66 +407,12 @@ function isoToDatetimeLocal(iso: string | null): string {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
-interface SelectionEntry {
-    selected: boolean
-}
-
-const selection = ref<Record<string, SelectionEntry>>({})
-const savingProducts = ref(false)
-const productSearch = ref('')
-
-const availableProducts = computed(() => {
-    const query = productSearch.value.trim().toLowerCase()
-    return catalog.value.filter((product) => {
-        if (selection.value[product.uuid]?.selected) return false
-        return !query || product.name.toLowerCase().includes(query)
-    })
-})
-
-const selectedProducts = computed(() =>
-    catalog.value.flatMap((product) => {
-        const entry = selection.value[product.uuid]
-        if (!entry?.selected) return []
-        const scheduleProduct = schedule.value?.products.find((sp) => sp.product.uuid === product.uuid) ?? null
-        return [{ product, scheduleProduct }]
-    })
-)
-
-interface ConfirmPriceForm {
-    actual_price: number | null
-    promo_status: 'none' | 'b1t1' | 'out_of_stock'
-    saving: boolean
-}
-
-const confirmForms = reactive<Record<string, ConfirmPriceForm>>({})
-const canConfirmPrice = computed(() => schedule.value?.status !== 'draft')
-const promoStatusOptions = [
+const productStatusOptions = [
     { label: 'None', value: 'none' },
     { label: 'B1T1', value: 'b1t1' },
     { label: 'Out of stock', value: 'out_of_stock' }
 ]
-
-function syncConfirmForms() {
-    for (const sp of schedule.value?.products ?? []) {
-        confirmForms[sp.uuid] = {
-            actual_price: sp.actual_price !== null ? Number(sp.actual_price) : null,
-            promo_status: sp.promo_status,
-            saving: false
-        }
-    }
-}
-
-function getConfirmForm(scheduleProductUuid: string): ConfirmPriceForm {
-    return confirmForms[scheduleProductUuid] ??= { actual_price: null, promo_status: 'none', saving: false }
-}
-
-function addProduct(productUuid: string) {
-    selection.value[productUuid]!.selected = true
-}
-
-function removeProduct(productUuid: string) {
-    selection.value[productUuid]!.selected = false
-}
+const canConfirmPrice = computed(() => schedule.value?.status !== 'draft')
 
 const publicLink = computed(() => {
     if (!import.meta.client) return ''
@@ -498,7 +421,6 @@ const publicLink = computed(() => {
 
 const summaryColumns: TableColumn<ScheduleSummaryItem>[] = [
     { accessorKey: 'product_name', header: 'Product' },
-    { id: 'category_name', header: 'Category' },
     { id: 'default_price', header: 'Price' },
     { accessorKey: 'total_quantity', header: 'Total qty' },
     { id: 'subtotal', header: 'Subtotal' }
@@ -506,18 +428,125 @@ const summaryColumns: TableColumn<ScheduleSummaryItem>[] = [
 
 const summaryGrandTotal = computed(() => summary.value.reduce((sum, item) => sum + Number(item.subtotal), 0))
 
+// ---- Buyers modal / price confirmation ----
+
+const isBuyersModalOpen = ref(false)
+const buyersLoading = ref(false)
+const buyers = ref<ProductBuyer[]>([])
+const selectedSummaryItem = ref<ScheduleSummaryItem | null>(null)
+const selectedScheduleProduct = computed(() =>
+    schedule.value?.products.find((sp) => sp.product.uuid === selectedSummaryItem.value?.product_uuid) ?? null
+)
+
+const buyerColumns: TableColumn<ProductBuyer>[] = [
+    { accessorKey: 'customer_name', header: 'Customer' },
+    { accessorKey: 'quantity', header: 'Qty' },
+    { accessorKey: 'subtotal', header: 'Subtotal' },
+    { id: 'status', header: 'Status' }
+]
+
+const confirmForm = reactive({
+    actual_price: null as number | null,
+    product_status: 'none' as 'none' | 'b1t1' | 'out_of_stock',
+    saving: false
+})
+
+async function openBuyersModal(item: ScheduleSummaryItem) {
+    selectedSummaryItem.value = item
+    isBuyersModalOpen.value = true
+
+    const scheduleProduct = schedule.value?.products.find((sp) => sp.product.uuid === item.product_uuid)
+    confirmForm.actual_price = scheduleProduct?.actual_price !== null && scheduleProduct?.actual_price !== undefined
+        ? Number(scheduleProduct.actual_price)
+        : null
+    confirmForm.product_status = scheduleProduct?.product_status ?? 'none'
+
+    buyersLoading.value = true
+    try {
+        const response = await pasabuyScheduleService.fetchProductBuyers(uuid, item.product_uuid)
+        buyers.value = response.data
+    } catch (error) {
+        toast.add({ title: 'Failed to load buyers', description: (error as APIError).message, color: 'error' })
+    } finally {
+        buyersLoading.value = false
+    }
+}
+
+async function confirmSelectedPrice() {
+    const scheduleProduct = selectedScheduleProduct.value
+    if (!scheduleProduct) return
+
+    confirmForm.saving = true
+    try {
+        const response = await pasabuyScheduleService.confirmProductPrice(uuid, scheduleProduct.uuid, {
+            actual_price: confirmForm.product_status === 'out_of_stock' ? undefined : (confirmForm.actual_price ?? undefined),
+            product_status: confirmForm.product_status
+        })
+
+        const updated = response.data.schedule_product as ScheduleProduct
+        const sp = schedule.value?.products.find((p) => p.uuid === scheduleProduct.uuid)
+        if (sp) Object.assign(sp, updated)
+
+        const priceSummary = response.data.summary as { auto_applied: number, needs_confirmation: number, bonus_applied: number }
+        const parts = [`${priceSummary.auto_applied} auto-updated`, `${priceSummary.needs_confirmation} need customer confirmation`]
+        if (priceSummary.bonus_applied > 0) parts.push(`${priceSummary.bonus_applied} got a B1T1 bonus`)
+
+        toast.add({ title: 'Price confirmed', description: parts.join(', '), color: 'success' })
+        await Promise.all([refreshOrders(), refreshSummary()])
+    } catch (error) {
+        toast.add({ title: 'Confirm failed', description: (error as APIError).message, color: 'error' })
+    } finally {
+        confirmForm.saving = false
+    }
+}
+
+// ---- Shopping checklist ----
+
+const checklistItems = ref<ChecklistItem[]>([])
+const checklistLoading = ref(false)
+const togglingUuid = ref<string | null>(null)
+
+const checklistColumns: TableColumn<ChecklistItem>[] = [
+    { id: 'is_checked', header: '' },
+    { id: 'product', header: 'Product' },
+    { accessorKey: 'quantity', header: 'Qty' },
+    { id: 'adjustment', header: '' }
+]
+
+async function loadChecklist() {
+    checklistLoading.value = true
+    try {
+        const response = await pasabuyScheduleService.fetchChecklist(uuid)
+        checklistItems.value = response.data
+    } catch (error) {
+        toast.add({ title: 'Failed to load checklist', description: (error as APIError).message, color: 'error' })
+    } finally {
+        checklistLoading.value = false
+    }
+}
+
+async function toggleChecklist(item: ChecklistItem, isChecked: boolean) {
+    togglingUuid.value = item.product_uuid
+    try {
+        const response = await pasabuyScheduleService.toggleChecklistItem(uuid, item.product_uuid, isChecked)
+        Object.assign(item, response.data)
+    } catch (error) {
+        toast.add({ title: 'Update failed', description: (error as APIError).message, color: 'error' })
+    } finally {
+        togglingUuid.value = null
+    }
+}
+
 async function loadAll() {
     loading.value = true
     try {
-        const [scheduleResponse, catalogResponse, ordersResponse, summaryResponse] = await Promise.all([
+        const [scheduleResponse, ordersResponse, summaryResponse] = await Promise.all([
             pasabuyScheduleService.fetchSchedule(uuid),
-            productService.fetchProducts({ per_page: 200 }),
             pasabuyScheduleService.fetchOrders(uuid),
             pasabuyScheduleService.fetchScheduleSummary(uuid)
         ])
 
         schedule.value = scheduleResponse.data
-        catalog.value = catalogResponse.data.data
         orders.value = ordersResponse.data
         summary.value = summaryResponse.data
 
@@ -525,13 +554,7 @@ async function loadAll() {
         detailsForm.description = schedule.value!.description ?? ''
         detailsForm.cutoffAt = isoToDatetimeLocal(schedule.value!.cutoff_at)
 
-        const initialSelection: typeof selection.value = {}
-        for (const product of catalog.value) {
-            const attached = schedule.value!.products.find((sp) => sp.product.uuid === product.uuid)
-            initialSelection[product.uuid] = { selected: !!attached }
-        }
-        selection.value = initialSelection
-        syncConfirmForms()
+        await loadChecklist()
     } catch (error) {
         toast.add({ title: 'Failed to load schedule', description: (error as APIError).message, color: 'error' })
     } finally {
@@ -569,6 +592,7 @@ async function closeSchedule() {
         const response = await pasabuyScheduleService.closeSchedule(uuid)
         schedule.value = { ...schedule.value!, ...response.data }
         toast.add({ title: 'Schedule closed', color: 'success' })
+        await loadChecklist()
     } catch (error) {
         toast.add({ title: 'Failed to close schedule', description: (error as APIError).message, color: 'error' })
     } finally {
@@ -591,55 +615,9 @@ async function reopenSchedule() {
     }
 }
 
-async function saveProducts() {
-    savingProducts.value = true
-    try {
-        const productUuids = Object.entries(selection.value)
-            .filter(([, entry]) => entry.selected)
-            .map(([product_uuid]) => product_uuid)
-
-        const response = await pasabuyScheduleService.syncProducts(uuid, productUuids)
-        schedule.value = response.data
-        syncConfirmForms()
-        toast.add({ title: 'Products updated', color: 'success' })
-    } catch (error) {
-        toast.add({ title: 'Update failed', description: (error as APIError).message, color: 'error' })
-    } finally {
-        savingProducts.value = false
-    }
-}
-
 async function refreshOrders() {
     const response = await pasabuyScheduleService.fetchOrders(uuid)
     orders.value = response.data
-}
-
-async function confirmPrice(scheduleProductUuid: string) {
-    const form = confirmForms[scheduleProductUuid]
-    if (!form) return
-
-    form.saving = true
-    try {
-        const response = await pasabuyScheduleService.confirmProductPrice(uuid, scheduleProductUuid, {
-            actual_price: form.promo_status === 'out_of_stock' ? undefined : (form.actual_price ?? undefined),
-            promo_status: form.promo_status
-        })
-
-        const updated = response.data.schedule_product as ScheduleProduct
-        const sp = schedule.value?.products.find((p) => p.uuid === scheduleProductUuid)
-        if (sp) Object.assign(sp, updated)
-
-        const priceSummary = response.data.summary as { auto_applied: number, needs_confirmation: number, bonus_applied: number }
-        const parts = [`${priceSummary.auto_applied} auto-updated`, `${priceSummary.needs_confirmation} need customer confirmation`]
-        if (priceSummary.bonus_applied > 0) parts.push(`${priceSummary.bonus_applied} got a B1T1 bonus`)
-
-        toast.add({ title: 'Price confirmed', description: parts.join(', '), color: 'success' })
-        await Promise.all([refreshOrders(), refreshSummary()])
-    } catch (error) {
-        toast.add({ title: 'Confirm failed', description: (error as APIError).message, color: 'error' })
-    } finally {
-        form.saving = false
-    }
 }
 
 async function copyLink() {

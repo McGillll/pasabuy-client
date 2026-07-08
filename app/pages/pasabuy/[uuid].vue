@@ -123,7 +123,7 @@
 
                 <template v-if="(!myOrder || editingOrder) && !orderResult">
                     <UInput
-                        v-if="schedule.products.length > 5"
+                        v-if="catalog.length > 5"
                         v-model="productSearch"
                         icon="i-lucide-search"
                         placeholder="Search items…"
@@ -142,19 +142,19 @@
 
                         <div class="divide-y divide-default">
                             <div
-                                v-for="sp in filteredProducts"
-                                :key="sp.uuid"
+                                v-for="product in filteredProducts"
+                                :key="product.uuid"
                                 class="flex items-center gap-4 p-4"
                             >
                                 <button
-                                    v-if="sp.product.image_url"
+                                    v-if="product.image_url"
                                     type="button"
                                     class="shrink-0 cursor-pointer"
                                     aria-label="Preview image"
-                                    @click="openPreview(sp.product)"
+                                    @click="openPreview(product)"
                                 >
                                     <img
-                                        :src="sp.product.image_url"
+                                        :src="product.image_url"
                                         class="size-14 rounded-lg object-cover transition hover:opacity-80"
                                         alt=""
                                     >
@@ -164,29 +164,24 @@
                                 </div>
 
                                 <div class="min-w-0 flex-1">
-                                    <p class="truncate font-medium text-highlighted">{{ sp.product.name }}</p>
+                                    <p class="truncate font-medium text-highlighted">{{ product.name }}</p>
                                     <div class="flex items-center gap-2">
-                                        <p class="text-sm text-muted">₱{{ displayPrice(sp) }}</p>
-                                        <span v-if="sp.price_confirmed_at" class="text-xs text-dimmed">confirmed</span>
-                                        <span v-else class="text-xs text-dimmed">estimated</span>
-                                        <UBadge v-if="sp.promo_status === 'b1t1'" color="success" variant="subtle" size="sm">B1T1</UBadge>
-                                        <UBadge v-else-if="sp.promo_status === 'out_of_stock'" color="error" variant="subtle" size="sm">
-                                            Out of stock
-                                        </UBadge>
+                                        <p class="text-sm text-muted">₱{{ product.default_price }}</p>
+                                        <span class="text-xs text-dimmed">estimated</span>
                                     </div>
-                                    <p v-if="quantities[sp.product.uuid]" class="text-sm font-medium text-primary">
-                                        Subtotal: ₱{{ (Number(displayPrice(sp)) * quantities[sp.product.uuid]!).toFixed(2) }}
+                                    <p v-if="quantities[product.uuid]" class="text-sm font-medium text-primary">
+                                        Subtotal: ₱{{ (Number(product.default_price) * quantities[product.uuid]!).toFixed(2) }}
                                     </p>
 
-                                    <div v-if="quantities[sp.product.uuid]" class="mt-2 flex flex-wrap items-center gap-2">
+                                    <div v-if="quantities[product.uuid]" class="mt-2 flex flex-wrap items-center gap-2">
                                         <UCheckbox
-                                            v-model="getPreference(sp.product.uuid).auto_buy_if_under_max"
+                                            v-model="getPreference(product.uuid).auto_buy_if_under_max"
                                             label="Auto-buy if under my max price"
                                             size="sm"
                                         />
                                         <UInput
-                                            v-if="getPreference(sp.product.uuid).auto_buy_if_under_max"
-                                            v-model.number="getPreference(sp.product.uuid).max_price"
+                                            v-if="getPreference(product.uuid).auto_buy_if_under_max"
+                                            v-model.number="getPreference(product.uuid).max_price"
                                             type="number"
                                             min="0"
                                             step="0.01"
@@ -207,17 +202,17 @@
                                         size="xs"
                                         color="neutral"
                                         variant="soft"
-                                        :disabled="!schedule.is_open || !quantities[sp.product.uuid]"
-                                        @click="decrement(sp)"
+                                        :disabled="!schedule.is_open || !quantities[product.uuid]"
+                                        @click="decrement(product)"
                                     />
-                                    <span class="w-6 text-center font-medium">{{ quantities[sp.product.uuid] || 0 }}</span>
+                                    <span class="w-6 text-center font-medium">{{ quantities[product.uuid] || 0 }}</span>
                                     <UButton
                                         icon="i-lucide-plus"
                                         size="xs"
                                         color="neutral"
                                         variant="soft"
                                         :disabled="!schedule.is_open"
-                                        @click="increment(sp)"
+                                        @click="increment(product)"
                                     />
                                 </div>
                             </div>
@@ -225,7 +220,7 @@
                             <div v-if="filteredProducts.length === 0" class="flex flex-col items-center gap-3 py-10">
                                 <UIcon name="i-lucide-package-search" class="size-8 text-dimmed" />
                                 <p class="text-sm text-muted">
-                                    {{ schedule.products.length === 0 ? 'No items available yet.' : 'No items match your search.' }}
+                                    {{ catalog.length === 0 ? 'No items available yet.' : 'No items match your search.' }}
                                 </p>
                             </div>
                         </div>
@@ -303,10 +298,11 @@
 
 <script setup lang="ts">
 import { publicPasabuyService } from '@/components/api/public/PublicPasabuyService'
+import { publicProductService } from '@/components/api/public/PublicProductService'
 import { customerOrderService } from '@/components/api/customer/CustomerOrderService'
 import APIError from '@/components/api/user/APIError'
 import type { Product } from '@/types/Product'
-import type { Schedule, ScheduleProduct } from '@/types/Schedule'
+import type { Schedule } from '@/types/Schedule'
 
 definePageMeta({ layout: false })
 
@@ -347,6 +343,7 @@ const toast = useToast()
 const { user, fetchCurrentUser } = useAuth()
 
 const schedule = ref<Schedule | null>(null)
+const catalog = ref<Product[]>([])
 const loading = ref(true)
 const notFound = ref(false)
 const productSearch = ref('')
@@ -377,27 +374,21 @@ const orderStatusColor: Record<string, 'neutral' | 'success' | 'error' | 'warnin
     cancelled: 'error'
 }
 
-function displayPrice(sp: ScheduleProduct): string {
-    return sp.actual_price ?? sp.product.default_price
-}
-
 const isLoggedIn = computed(() => !!user.value)
 const isApproved = computed(() => user.value?.is_approved === true)
 
 const showBottomBar = computed(() => !!schedule.value && !orderResult.value && (!myOrder.value || editingOrder.value))
 
 const filteredProducts = computed(() => {
-    if (!schedule.value) return []
     const query = productSearch.value.trim().toLowerCase()
-    if (!query) return schedule.value.products
-    return schedule.value.products.filter((sp) => sp.product.name.toLowerCase().includes(query))
+    if (!query) return catalog.value
+    return catalog.value.filter((product) => product.name.toLowerCase().includes(query))
 })
 
 const total = computed(() => {
-    if (!schedule.value) return 0
-    return schedule.value.products.reduce((sum, sp) => {
-        const qty = quantities.value[sp.product.uuid] || 0
-        return sum + qty * Number(displayPrice(sp))
+    return catalog.value.reduce((sum, product) => {
+        const qty = quantities.value[product.uuid] || 0
+        return sum + qty * Number(product.default_price)
     }, 0)
 })
 
@@ -415,11 +406,15 @@ function openPreview(product: Product) {
 async function load() {
     loading.value = true
     try {
-        const response = await publicPasabuyService.fetchSchedule(uuid)
-        schedule.value = response.data
-        for (const sp of schedule.value!.products) {
-            quantities.value[sp.product.uuid] = 0
-            getPreference(sp.product.uuid)
+        const [scheduleResponse, catalogResponse] = await Promise.all([
+            publicPasabuyService.fetchSchedule(uuid),
+            publicProductService.fetchCatalog({ per_page: 200 })
+        ])
+        schedule.value = scheduleResponse.data
+        catalog.value = catalogResponse.data.data
+        for (const product of catalog.value) {
+            quantities.value[product.uuid] = 0
+            getPreference(product.uuid)
         }
     } catch (error) {
         if (error instanceof APIError) {
@@ -518,8 +513,8 @@ async function cancelOrder() {
 
 function startEditOrder() {
     if (!myOrder.value) return
-    for (const sp of schedule.value?.products ?? []) {
-        quantities.value[sp.product.uuid] = 0
+    for (const product of catalog.value) {
+        quantities.value[product.uuid] = 0
     }
     for (const item of myOrder.value.items) {
         quantities.value[item.product_uuid] = item.quantity
@@ -535,14 +530,14 @@ function cancelEditOrder() {
     submitError.value = null
 }
 
-function increment(sp: ScheduleProduct) {
-    const current = quantities.value[sp.product.uuid] || 0
-    quantities.value[sp.product.uuid] = current + 1
+function increment(product: Product) {
+    const current = quantities.value[product.uuid] || 0
+    quantities.value[product.uuid] = current + 1
 }
 
-function decrement(sp: ScheduleProduct) {
-    const current = quantities.value[sp.product.uuid] || 0
-    quantities.value[sp.product.uuid] = Math.max(0, current - 1)
+function decrement(product: Product) {
+    const current = quantities.value[product.uuid] || 0
+    quantities.value[product.uuid] = Math.max(0, current - 1)
 }
 
 async function submitOrder() {
