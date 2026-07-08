@@ -32,27 +32,91 @@
                         </div>
                     </template>
 
+                    <UAlert
+                        v-if="myOrder.status === 'needs_confirmation'"
+                        color="warning"
+                        variant="subtle"
+                        icon="i-lucide-alert-triangle"
+                        title="Some items need your confirmation"
+                        description="The seller found a different price in-store. Review the items below."
+                        class="mb-4"
+                    />
+
                     <div class="divide-y divide-default">
-                        <div
-                            v-for="item in myOrder.items"
-                            :key="item.uuid"
-                            class="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
-                        >
-                            <div>
-                                <p class="font-medium text-highlighted">{{ item.product_name }}</p>
-                                <p class="text-sm text-muted">₱{{ item.product_price }} × {{ item.quantity }}</p>
+                        <div v-for="item in myOrder.items" :key="item.uuid" class="py-3 first:pt-0 last:pb-0">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <p class="font-medium text-highlighted">{{ item.product_name }}</p>
+                                        <UBadge v-if="item.is_bonus" color="success" variant="subtle" size="sm">FREE</UBadge>
+                                    </div>
+                                    <p class="text-sm text-muted">₱{{ item.actual_price ?? item.estimated_price }} × {{ item.quantity }}</p>
+                                </div>
+                                <p class="font-medium text-highlighted">₱{{ item.subtotal }}</p>
                             </div>
-                            <p class="font-medium text-highlighted">₱{{ item.subtotal }}</p>
+
+                            <div v-if="item.confirmation_status === 'pending'" class="mt-3 rounded-lg bg-warning/10 p-3">
+                                <p class="text-sm text-warning">
+                                    <template v-if="item.actual_price === null">Out of stock in-store.</template>
+                                    <template v-else>New price: ₱{{ item.actual_price }} (was ₱{{ item.estimated_price }})</template>
+                                </p>
+                                <div class="mt-2 flex flex-wrap items-center gap-2">
+                                    <UInput
+                                        v-if="item.actual_price !== null"
+                                        v-model.number="resolveQuantities[item.uuid]"
+                                        type="number"
+                                        min="1"
+                                        size="sm"
+                                        class="w-20"
+                                    />
+                                    <UButton
+                                        v-if="item.actual_price !== null"
+                                        size="xs"
+                                        color="success"
+                                        :loading="resolvingItem === item.uuid"
+                                        @click="acceptItem(item)"
+                                    >
+                                        Accept
+                                    </UButton>
+                                    <UButton
+                                        size="xs"
+                                        color="error"
+                                        variant="soft"
+                                        :loading="resolvingItem === item.uuid"
+                                        @click="removeItem(item)"
+                                    >
+                                        Remove
+                                    </UButton>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <template #footer>
                         <div class="flex items-center justify-between gap-3">
                             <p class="font-semibold text-highlighted">Total: ₱{{ myOrder.total_amount }}</p>
-                            <UButton v-if="myOrder.is_editable" variant="soft" icon="i-lucide-pencil" @click="startEditOrder">
-                                Edit order
-                            </UButton>
-                            <p v-else class="text-sm text-muted">This order can no longer be edited.</p>
+                            <div class="flex items-center gap-2">
+                                <UButton v-if="myOrder.is_editable" variant="soft" icon="i-lucide-pencil" @click="startEditOrder">
+                                    Edit order
+                                </UButton>
+                                <template v-if="myOrder.is_cancellable && !confirmingCancel">
+                                    <UButton color="error" variant="ghost" size="sm" @click="confirmingCancel = true">
+                                        Cancel order
+                                    </UButton>
+                                </template>
+                                <template v-else-if="myOrder.is_cancellable">
+                                    <span class="text-sm text-muted">Are you sure?</span>
+                                    <UButton color="error" size="sm" :loading="cancellingOrder" @click="cancelOrder">
+                                        Yes, cancel
+                                    </UButton>
+                                    <UButton color="neutral" variant="ghost" size="sm" @click="confirmingCancel = false">
+                                        No
+                                    </UButton>
+                                </template>
+                                <p v-if="!myOrder.is_editable && !myOrder.is_cancellable" class="text-sm text-muted">
+                                    This order can no longer be edited.
+                                </p>
+                            </div>
                         </div>
                     </template>
                 </UCard>
@@ -101,11 +165,37 @@
 
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate font-medium text-highlighted">{{ sp.product.name }}</p>
-                                    <p class="text-sm text-muted">₱{{ sp.price }}</p>
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-sm text-muted">₱{{ displayPrice(sp) }}</p>
+                                        <span v-if="sp.price_confirmed_at" class="text-xs text-dimmed">confirmed</span>
+                                        <span v-else class="text-xs text-dimmed">estimated</span>
+                                    </div>
                                     <p v-if="sp.max_quantity !== null" class="text-xs text-dimmed">Limit {{ sp.max_quantity }} per order</p>
                                     <p v-if="quantities[sp.product.uuid]" class="text-sm font-medium text-primary">
-                                        Subtotal: ₱{{ (Number(sp.price) * quantities[sp.product.uuid]!).toFixed(2) }}
+                                        Subtotal: ₱{{ (Number(displayPrice(sp)) * quantities[sp.product.uuid]!).toFixed(2) }}
                                     </p>
+
+                                    <div v-if="quantities[sp.product.uuid]" class="mt-2 flex flex-wrap items-center gap-2">
+                                        <UCheckbox
+                                            v-model="getPreference(sp.product.uuid).auto_buy_if_under_max"
+                                            label="Auto-buy if under my max price"
+                                            size="sm"
+                                        />
+                                        <UInput
+                                            v-if="getPreference(sp.product.uuid).auto_buy_if_under_max"
+                                            v-model.number="getPreference(sp.product.uuid).max_price"
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="Max price"
+                                            size="sm"
+                                            class="w-28"
+                                        >
+                                            <template #leading>
+                                                <span class="text-xs text-dimmed">₱</span>
+                                            </template>
+                                        </UInput>
+                                    </div>
                                 </div>
 
                                 <div class="flex shrink-0 items-center gap-2">
@@ -225,7 +315,10 @@ interface Product {
 
 interface ScheduleProduct {
     uuid: string
-    price: string
+    estimated_price: string
+    actual_price: string | null
+    promo_status: 'none' | 'b1t1' | 'out_of_stock'
+    price_confirmed_at: string | null
     max_quantity: number | null
     product: Product
 }
@@ -249,16 +342,23 @@ interface MyOrderItem {
     uuid: string
     product_uuid: string
     product_name: string
-    product_price: string
+    estimated_price: string
+    actual_price: string | null
+    is_bonus: boolean
+    confirmation_status: 'none' | 'pending' | 'accepted' | 'removed'
+    max_price: string | null
+    auto_buy_if_under_max: boolean
     quantity: number
     subtotal: string
 }
 
 interface MyOrder {
     uuid: string
-    status: 'pending' | 'confirmed' | 'cancelled'
+    status: 'pending' | 'needs_confirmation' | 'confirmed' | 'cancelled'
     total_amount: string
     is_editable: boolean
+    is_cancellable: boolean
+    needs_confirmation_count: number
     items: MyOrderItem[]
     pasabuy_schedule: { uuid: string } | null
 }
@@ -274,6 +374,17 @@ const notFound = ref(false)
 const productSearch = ref('')
 
 const quantities = ref<Record<string, number>>({})
+
+interface ItemPreference {
+    max_price: number | null
+    auto_buy_if_under_max: boolean
+}
+
+const preferences = ref<Record<string, ItemPreference>>({})
+
+function getPreference(productUuid: string): ItemPreference {
+    return preferences.value[productUuid] ??= { max_price: null, auto_buy_if_under_max: false }
+}
 const submitting = ref(false)
 const submitError = ref<string | null>(null)
 const orderResult = ref<OrderResult | null>(null)
@@ -281,10 +392,15 @@ const orderResult = ref<OrderResult | null>(null)
 const myOrder = ref<MyOrder | null>(null)
 const editingOrder = ref(false)
 
-const orderStatusColor: Record<string, 'neutral' | 'success' | 'error'> = {
+const orderStatusColor: Record<string, 'neutral' | 'success' | 'error' | 'warning'> = {
     pending: 'neutral',
+    needs_confirmation: 'warning',
     confirmed: 'success',
     cancelled: 'error'
+}
+
+function displayPrice(sp: ScheduleProduct): string {
+    return sp.actual_price ?? sp.estimated_price
 }
 
 const isLoggedIn = computed(() => !!user.value)
@@ -303,7 +419,7 @@ const total = computed(() => {
     if (!schedule.value) return 0
     return schedule.value.products.reduce((sum, sp) => {
         const qty = quantities.value[sp.product.uuid] || 0
-        return sum + qty * Number(sp.price)
+        return sum + qty * Number(displayPrice(sp))
     }, 0)
 })
 
@@ -330,6 +446,7 @@ async function load() {
         schedule.value = response.data
         for (const sp of schedule.value!.products) {
             quantities.value[sp.product.uuid] = 0
+            getPreference(sp.product.uuid)
         }
     } catch (error) {
         if (error instanceof APIError) {
@@ -361,8 +478,68 @@ async function loadMyOrder() {
         const response = await customerOrderService.fetchMyOrders({ per_page: 100 })
         const orders = response.data.data as MyOrder[]
         myOrder.value = orders.find((o) => o.pasabuy_schedule?.uuid === uuid && o.status !== 'cancelled') ?? null
+        syncResolveQuantities()
     } catch {
         // non-critical — fall back to showing a fresh ordering form
+    }
+}
+
+const resolveQuantities = ref<Record<string, number>>({})
+const resolvingItem = ref<string | null>(null)
+const confirmingCancel = ref(false)
+const cancellingOrder = ref(false)
+
+function syncResolveQuantities() {
+    for (const item of myOrder.value?.items ?? []) {
+        if (item.confirmation_status === 'pending') {
+            resolveQuantities.value[item.uuid] = item.quantity
+        }
+    }
+}
+
+async function acceptItem(item: MyOrderItem) {
+    if (!myOrder.value) return
+    resolvingItem.value = item.uuid
+    try {
+        const quantity = resolveQuantities.value[item.uuid] ?? item.quantity
+        const response = await customerOrderService.resolveItem(myOrder.value.uuid, item.uuid, 'accept', quantity)
+        myOrder.value = response.data
+        syncResolveQuantities()
+        toast.add({ title: 'Item confirmed', color: 'success' })
+    } catch (error) {
+        toast.add({ title: 'Failed to confirm', description: (error as APIError).message, color: 'error' })
+    } finally {
+        resolvingItem.value = null
+    }
+}
+
+async function removeItem(item: MyOrderItem) {
+    if (!myOrder.value) return
+    resolvingItem.value = item.uuid
+    try {
+        const response = await customerOrderService.resolveItem(myOrder.value.uuid, item.uuid, 'remove')
+        myOrder.value = response.data
+        syncResolveQuantities()
+        toast.add({ title: 'Item removed', color: 'success' })
+    } catch (error) {
+        toast.add({ title: 'Failed to remove item', description: (error as APIError).message, color: 'error' })
+    } finally {
+        resolvingItem.value = null
+    }
+}
+
+async function cancelOrder() {
+    if (!myOrder.value) return
+    cancellingOrder.value = true
+    try {
+        await customerOrderService.cancelOrder(myOrder.value.uuid)
+        myOrder.value = null
+        confirmingCancel.value = false
+        toast.add({ title: 'Order cancelled', color: 'success' })
+    } catch (error) {
+        toast.add({ title: 'Failed to cancel', description: (error as APIError).message, color: 'error' })
+    } finally {
+        cancellingOrder.value = false
     }
 }
 
@@ -373,6 +550,8 @@ function startEditOrder() {
     }
     for (const item of myOrder.value.items) {
         quantities.value[item.product_uuid] = item.quantity
+        getPreference(item.product_uuid).max_price = item.max_price !== null ? Number(item.max_price) : null
+        getPreference(item.product_uuid).auto_buy_if_under_max = item.auto_buy_if_under_max
     }
     submitError.value = null
     editingOrder.value = true
@@ -400,7 +579,15 @@ async function submitOrder() {
     try {
         const items = Object.entries(quantities.value)
             .filter(([, qty]) => qty > 0)
-            .map(([product_uuid, quantity]) => ({ product_uuid, quantity }))
+            .map(([product_uuid, quantity]) => {
+                const preference = getPreference(product_uuid)
+                return {
+                    product_uuid,
+                    quantity,
+                    max_price: preference.auto_buy_if_under_max && preference.max_price !== null ? preference.max_price : undefined,
+                    auto_buy_if_under_max: preference.auto_buy_if_under_max
+                }
+            })
 
         if (myOrder.value) {
             const response = await customerOrderService.updateMyOrder(myOrder.value.uuid, items)

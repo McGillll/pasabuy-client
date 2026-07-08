@@ -5,7 +5,7 @@
             <p class="mt-1 text-sm text-muted">A history of every pasabuy order you've placed.</p>
         </div>
 
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <UCard v-for="stat in stats" :key="stat.label">
                 <p class="text-xs text-muted">{{ stat.label }}</p>
                 <p class="text-2xl font-semibold text-highlighted">{{ stat.value }}</p>
@@ -74,8 +74,17 @@
                             class="flex items-center justify-between gap-3 p-3"
                         >
                             <div>
-                                <p class="font-medium text-highlighted">{{ item.product_name }}</p>
-                                <p class="text-sm text-muted">₱{{ item.product_price }} × {{ item.quantity }}</p>
+                                <div class="flex items-center gap-2">
+                                    <p class="font-medium text-highlighted">{{ item.product_name }}</p>
+                                    <UBadge v-if="item.is_bonus" color="success" variant="subtle" size="sm">FREE</UBadge>
+                                    <UBadge v-else-if="item.confirmation_status === 'pending'" color="warning" variant="subtle" size="sm">
+                                        Needs confirmation
+                                    </UBadge>
+                                    <UBadge v-else-if="item.confirmation_status === 'removed'" color="error" variant="subtle" size="sm">
+                                        Removed
+                                    </UBadge>
+                                </div>
+                                <p class="text-sm text-muted">₱{{ item.actual_price ?? item.estimated_price }} × {{ item.quantity }}</p>
                             </div>
                             <p class="font-medium text-highlighted">₱{{ item.subtotal }}</p>
                         </div>
@@ -84,6 +93,34 @@
                     <div class="flex items-center justify-between border-t border-default pt-3 font-medium text-highlighted">
                         <span>Total</span>
                         <span>₱{{ selectedOrder.total_amount }}</span>
+                    </div>
+
+                    <div v-if="selectedOrder.status === 'needs_confirmation'" class="text-sm text-muted">
+                        This order has items waiting on your confirmation —
+                        <NuxtLink
+                            v-if="selectedOrder.pasabuy_schedule"
+                            :to="`/pasabuy/${selectedOrder.pasabuy_schedule.uuid}`"
+                            class="text-primary hover:underline"
+                        >
+                            review it on the pasabuy page
+                        </NuxtLink>.
+                    </div>
+
+                    <div v-if="selectedOrder.is_cancellable" class="flex items-center justify-end gap-2">
+                        <template v-if="!confirmingCancel">
+                            <UButton color="error" variant="ghost" size="sm" @click="confirmingCancel = true">
+                                Cancel order
+                            </UButton>
+                        </template>
+                        <template v-else>
+                            <span class="text-sm text-muted">Are you sure?</span>
+                            <UButton color="error" size="sm" :loading="cancellingOrder" @click="cancelSelectedOrder">
+                                Yes, cancel
+                            </UButton>
+                            <UButton color="neutral" variant="ghost" size="sm" @click="confirmingCancel = false">
+                                No
+                            </UButton>
+                        </template>
                     </div>
                 </div>
             </template>
@@ -101,16 +138,21 @@ definePageMeta({ layout: 'customer', middleware: 'customer-auth' })
 interface OrderItem {
     uuid: string
     product_name: string
-    product_price: string
+    estimated_price: string
+    actual_price: string | null
+    is_bonus: boolean
+    confirmation_status: 'none' | 'pending' | 'accepted' | 'removed'
     quantity: number
     subtotal: string
 }
 
 interface Order {
     uuid: string
-    status: 'pending' | 'confirmed' | 'cancelled'
+    status: 'pending' | 'needs_confirmation' | 'confirmed' | 'cancelled'
     total_amount: string
     is_editable: boolean
+    is_cancellable: boolean
+    needs_confirmation_count: number
     pasabuy_schedule: { uuid: string; title: string } | null
     items: OrderItem[]
     created_at: string
@@ -131,8 +173,9 @@ const columns: TableColumn<Order>[] = [
     { id: 'actions', header: '' }
 ]
 
-const orderStatusColor: Record<string, 'neutral' | 'success' | 'error'> = {
+const orderStatusColor: Record<string, 'neutral' | 'success' | 'error' | 'warning'> = {
     pending: 'neutral',
+    needs_confirmation: 'warning',
     confirmed: 'success',
     cancelled: 'error'
 }
@@ -140,6 +183,7 @@ const orderStatusColor: Record<string, 'neutral' | 'success' | 'error'> = {
 const stats = computed(() => [
     { label: 'Total orders', value: total.value },
     { label: 'Pending', value: orders.value.filter((o) => o.status === 'pending').length },
+    { label: 'Needs your input', value: orders.value.filter((o) => o.status === 'needs_confirmation').length },
     { label: 'Confirmed', value: orders.value.filter((o) => o.status === 'confirmed').length }
 ])
 
@@ -164,10 +208,29 @@ watch(page, loadOrders)
 
 const isDetailOpen = ref(false)
 const selectedOrder = ref<Order | null>(null)
+const confirmingCancel = ref(false)
+const cancellingOrder = ref(false)
 
 function viewOrder(order: Order) {
     selectedOrder.value = order
+    confirmingCancel.value = false
     isDetailOpen.value = true
+}
+
+async function cancelSelectedOrder() {
+    if (!selectedOrder.value) return
+    cancellingOrder.value = true
+    try {
+        await customerOrderService.cancelOrder(selectedOrder.value.uuid)
+        confirmingCancel.value = false
+        isDetailOpen.value = false
+        toast.add({ title: 'Order cancelled', color: 'success' })
+        await loadOrders()
+    } catch (error) {
+        toast.add({ title: 'Failed to cancel', description: (error as APIError).message, color: 'error' })
+    } finally {
+        cancellingOrder.value = false
+    }
 }
 
 onMounted(loadOrders)
