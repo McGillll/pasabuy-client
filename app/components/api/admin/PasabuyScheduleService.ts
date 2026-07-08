@@ -9,8 +9,13 @@ export interface SchedulePayload {
 
 export interface ScheduleProductInput {
     product_uuid: string
-    price: number
+    estimated_price: number
     max_quantity: number | null
+}
+
+export interface ConfirmPricePayload {
+    actual_price?: number
+    promo_status: 'none' | 'b1t1' | 'out_of_stock'
 }
 
 /**
@@ -68,7 +73,7 @@ class PasabuyScheduleService extends BaseAPIService {
      * PUT /api/admin/pasabuy-schedules/{uuid}/products (sent as POST with `_method: 'PUT'` spoofing)
      * Replaces the full set of products attached to the schedule.
      * FormData fields: indexed array per product —
-     * `products[i][product_uuid]` (string), `products[i][price]` (numeric string),
+     * `products[i][product_uuid]` (string), `products[i][estimated_price]` (numeric string),
      * `products[i][max_quantity]` (numeric string, omitted when unlimited).
      * Response: updated `Schedule` including its attached `products`.
      */
@@ -77,13 +82,30 @@ class PasabuyScheduleService extends BaseAPIService {
         formData.append('_method', 'PUT')
         products.forEach((product, index) => {
             formData.append(`products[${index}][product_uuid]`, product.product_uuid)
-            formData.append(`products[${index}][price]`, String(product.price))
+            formData.append(`products[${index}][estimated_price]`, String(product.estimated_price))
             if (product.max_quantity !== null) {
                 formData.append(`products[${index}][max_quantity]`, String(product.max_quantity))
             }
         })
 
         return await this.request(`/admin/pasabuy-schedules/${uuid}/products`, 'POST', formData)
+    }
+
+    /**
+     * PATCH /api/admin/pasabuy-schedules/{uuid}/schedule-products/{scheduleProductUuid}/confirm-price
+     * (sent as POST with `_method: 'PATCH'` spoofing)
+     * Sets the seller's in-store actual price + promo status for one schedule product.
+     * FormData fields: actual_price (numeric string, required unless promo_status is out_of_stock),
+     * promo_status ('none'|'b1t1'|'out_of_stock', required).
+     * Response: `{ schedule_product: ScheduleProduct, summary: { auto_applied, needs_confirmation, bonus_applied } }`.
+     */
+    async confirmProductPrice(uuid: string, scheduleProductUuid: string, payload: ConfirmPricePayload): Promise<any> {
+        const formData = new FormData()
+        formData.append('_method', 'PATCH')
+        if (payload.actual_price !== undefined) formData.append('actual_price', String(payload.actual_price))
+        formData.append('promo_status', payload.promo_status)
+
+        return await this.request(`/admin/pasabuy-schedules/${uuid}/schedule-products/${scheduleProductUuid}/confirm-price`, 'POST', formData)
     }
 
     /**

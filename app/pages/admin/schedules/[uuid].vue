@@ -115,7 +115,7 @@
                         </template>
 
                         <div class="max-h-112 divide-y divide-default overflow-y-auto">
-                            <div v-for="{ product, entry } in selectedProducts" :key="product.uuid" class="p-3">
+                            <div v-for="{ product, entry, scheduleProduct } in selectedProducts" :key="product.uuid" class="p-3">
                                 <div class="flex items-center gap-3">
                                     <img
                                         v-if="product.image_url"
@@ -138,9 +138,9 @@
                                     />
                                 </div>
                                 <div class="mt-3 grid grid-cols-2 gap-3">
-                                    <UFormField label="Price">
+                                    <UFormField label="Estimated price">
                                         <UInput
-                                            v-model.number="entry.price"
+                                            v-model.number="entry.estimated_price"
                                             type="number"
                                             min="0"
                                             step="0.01"
@@ -164,6 +164,47 @@
                                         />
                                     </UFormField>
                                 </div>
+
+                                <div v-if="scheduleProduct && canConfirmPrice" class="mt-3 border-t border-default pt-3">
+                                    <div class="mb-2 flex items-center justify-between gap-2">
+                                        <span class="text-xs font-medium uppercase tracking-wide text-dimmed">In-store price</span>
+                                        <UBadge v-if="scheduleProduct.price_confirmed_at" color="success" variant="subtle" size="sm">
+                                            Confirmed
+                                        </UBadge>
+                                    </div>
+                                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                                        <UFormField label="Actual price">
+                                            <UInput
+                                                v-model.number="getConfirmForm(scheduleProduct.uuid).actual_price"
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                placeholder="0.00"
+                                                :disabled="getConfirmForm(scheduleProduct.uuid).promo_status === 'out_of_stock'"
+                                                class="w-full"
+                                            >
+                                                <template #leading>
+                                                    <span class="text-sm text-dimmed">₱</span>
+                                                </template>
+                                            </UInput>
+                                        </UFormField>
+                                        <UFormField label="Promo">
+                                            <USelect
+                                                v-model="getConfirmForm(scheduleProduct.uuid).promo_status"
+                                                :items="promoStatusOptions"
+                                                value-key="value"
+                                                class="w-full"
+                                            />
+                                        </UFormField>
+                                        <UButton
+                                            size="sm"
+                                            :loading="getConfirmForm(scheduleProduct.uuid).saving"
+                                            @click="confirmPrice(scheduleProduct.uuid)"
+                                        >
+                                            Confirm
+                                        </UButton>
+                                    </div>
+                                </div>
                             </div>
 
                             <div v-if="selectedProducts.length === 0" class="flex flex-col items-center gap-3 py-10">
@@ -186,27 +227,29 @@
                         </template>
                         <template #actions-cell="{ row }">
                             <div class="flex items-center justify-end gap-2">
-                                <UButton
-                                    v-if="row.original.status === 'pending' && isClosed"
-                                    size="xs"
-                                    color="success"
-                                    variant="soft"
-                                    @click="setOrderStatus(row.original, 'confirmed')"
-                                >
-                                    Confirm
-                                </UButton>
-                                <span v-else-if="row.original.status === 'pending'" class="text-xs text-dimmed">
-                                    Close schedule to confirm
+                                <template v-if="row.original.status === 'pending'">
+                                    <UButton
+                                        v-if="isClosed"
+                                        size="xs"
+                                        color="success"
+                                        variant="soft"
+                                        @click="setOrderStatus(row.original, 'confirmed')"
+                                    >
+                                        Confirm
+                                    </UButton>
+                                    <span v-else class="text-xs text-dimmed">Close schedule to confirm</span>
+                                    <UButton
+                                        size="xs"
+                                        color="error"
+                                        variant="soft"
+                                        @click="setOrderStatus(row.original, 'cancelled')"
+                                    >
+                                        Cancel
+                                    </UButton>
+                                </template>
+                                <span v-else-if="row.original.status === 'needs_confirmation'" class="text-xs text-dimmed">
+                                    Waiting on customer
                                 </span>
-                                <UButton
-                                    v-if="row.original.status === 'pending'"
-                                    size="xs"
-                                    color="error"
-                                    variant="soft"
-                                    @click="setOrderStatus(row.original, 'cancelled')"
-                                >
-                                    Cancel
-                                </UButton>
                                 <UButton
                                     icon="i-lucide-eye"
                                     size="xs"
@@ -248,8 +291,17 @@
                             class="flex items-center justify-between gap-3 p-3"
                         >
                             <div>
-                                <p class="font-medium text-highlighted">{{ item.product_name }}</p>
-                                <p class="text-sm text-muted">₱{{ item.product_price }} × {{ item.quantity }}</p>
+                                <div class="flex items-center gap-2">
+                                    <p class="font-medium text-highlighted">{{ item.product_name }}</p>
+                                    <UBadge v-if="item.is_bonus" color="success" variant="subtle" size="sm">FREE</UBadge>
+                                    <UBadge v-else-if="item.confirmation_status === 'pending'" color="warning" variant="subtle" size="sm">
+                                        Needs confirmation
+                                    </UBadge>
+                                    <UBadge v-else-if="item.confirmation_status === 'removed'" color="error" variant="subtle" size="sm">
+                                        Removed
+                                    </UBadge>
+                                </div>
+                                <p class="text-sm text-muted">₱{{ item.actual_price ?? item.estimated_price }} × {{ item.quantity }}</p>
                             </div>
                             <p class="font-medium text-highlighted">₱{{ item.subtotal }}</p>
                         </div>
@@ -283,7 +335,10 @@ interface Product {
 
 interface ScheduleProduct {
     uuid: string
-    price: string
+    estimated_price: string
+    actual_price: string | null
+    promo_status: 'none' | 'b1t1' | 'out_of_stock'
+    price_confirmed_at: string | null
     max_quantity: number | null
     product: Product
 }
@@ -301,7 +356,12 @@ interface Schedule {
 interface OrderItem {
     uuid: string
     product_name: string
-    product_price: string
+    estimated_price: string
+    actual_price: string | null
+    is_bonus: boolean
+    confirmation_status: 'none' | 'pending' | 'accepted' | 'removed'
+    max_price: string | null
+    auto_buy_if_under_max: boolean
     quantity: number
     subtotal: string
 }
@@ -310,8 +370,10 @@ interface Order {
     uuid: string
     customer_name: string
     customer_contact: string
-    status: 'pending' | 'confirmed' | 'cancelled'
+    status: 'pending' | 'needs_confirmation' | 'confirmed' | 'cancelled'
     total_amount: string
+    is_cancellable: boolean
+    needs_confirmation_count: number
     items: OrderItem[]
     created_at: string
 }
@@ -325,7 +387,9 @@ const catalog = ref<Product[]>([])
 const orders = ref<Order[]>([])
 const loading = ref(true)
 
-const pendingOrderCount = computed(() => orders.value.filter((o) => o.status === 'pending').length)
+const pendingOrderCount = computed(() =>
+    orders.value.filter((o) => o.status === 'pending' || o.status === 'needs_confirmation').length
+)
 const isClosed = computed(() => schedule.value?.status === 'closed')
 
 const tabs = computed<TabsItem[]>(() => [
@@ -357,7 +421,7 @@ function isoToDatetimeLocal(iso: string | null): string {
 
 interface SelectionEntry {
     selected: boolean
-    price: number | null
+    estimated_price: number | null
     max_quantity: number | null
 }
 
@@ -376,9 +440,39 @@ const availableProducts = computed(() => {
 const selectedProducts = computed(() =>
     catalog.value.flatMap((product) => {
         const entry = selection.value[product.uuid]
-        return entry?.selected ? [{ product, entry }] : []
+        if (!entry?.selected) return []
+        const scheduleProduct = schedule.value?.products.find((sp) => sp.product.uuid === product.uuid) ?? null
+        return [{ product, entry, scheduleProduct }]
     })
 )
+
+interface ConfirmPriceForm {
+    actual_price: number | null
+    promo_status: 'none' | 'b1t1' | 'out_of_stock'
+    saving: boolean
+}
+
+const confirmForms = reactive<Record<string, ConfirmPriceForm>>({})
+const canConfirmPrice = computed(() => schedule.value?.status !== 'draft')
+const promoStatusOptions = [
+    { label: 'None', value: 'none' },
+    { label: 'B1T1', value: 'b1t1' },
+    { label: 'Out of stock', value: 'out_of_stock' }
+]
+
+function syncConfirmForms() {
+    for (const sp of schedule.value?.products ?? []) {
+        confirmForms[sp.uuid] = {
+            actual_price: sp.actual_price !== null ? Number(sp.actual_price) : null,
+            promo_status: sp.promo_status,
+            saving: false
+        }
+    }
+}
+
+function getConfirmForm(scheduleProductUuid: string): ConfirmPriceForm {
+    return confirmForms[scheduleProductUuid] ??= { actual_price: null, promo_status: 'none', saving: false }
+}
 
 function addProduct(productUuid: string) {
     selection.value[productUuid]!.selected = true
@@ -416,11 +510,12 @@ async function loadAll() {
             const attached = schedule.value!.products.find((sp) => sp.product.uuid === product.uuid)
             initialSelection[product.uuid] = {
                 selected: !!attached,
-                price: attached ? Number(attached.price) : null,
+                estimated_price: attached ? Number(attached.estimated_price) : null,
                 max_quantity: attached ? attached.max_quantity : null
             }
         }
         selection.value = initialSelection
+        syncConfirmForms()
     } catch (error) {
         toast.add({ title: 'Failed to load schedule', description: (error as APIError).message, color: 'error' })
     } finally {
@@ -453,17 +548,51 @@ async function saveProducts() {
             .filter(([, entry]) => entry.selected)
             .map(([product_uuid, entry]) => ({
                 product_uuid,
-                price: entry.price ?? 0,
+                estimated_price: entry.estimated_price ?? 0,
                 max_quantity: entry.max_quantity
             }))
 
         const response = await pasabuyScheduleService.syncProducts(uuid, products)
         schedule.value = response.data
+        syncConfirmForms()
         toast.add({ title: 'Products updated', color: 'success' })
     } catch (error) {
         toast.add({ title: 'Update failed', description: (error as APIError).message, color: 'error' })
     } finally {
         savingProducts.value = false
+    }
+}
+
+async function refreshOrders() {
+    const response = await pasabuyScheduleService.fetchOrders(uuid)
+    orders.value = response.data
+}
+
+async function confirmPrice(scheduleProductUuid: string) {
+    const form = confirmForms[scheduleProductUuid]
+    if (!form) return
+
+    form.saving = true
+    try {
+        const response = await pasabuyScheduleService.confirmProductPrice(uuid, scheduleProductUuid, {
+            actual_price: form.promo_status === 'out_of_stock' ? undefined : (form.actual_price ?? undefined),
+            promo_status: form.promo_status
+        })
+
+        const updated = response.data.schedule_product as ScheduleProduct
+        const sp = schedule.value?.products.find((p) => p.uuid === scheduleProductUuid)
+        if (sp) Object.assign(sp, updated)
+
+        const summary = response.data.summary as { auto_applied: number, needs_confirmation: number, bonus_applied: number }
+        const parts = [`${summary.auto_applied} auto-updated`, `${summary.needs_confirmation} need customer confirmation`]
+        if (summary.bonus_applied > 0) parts.push(`${summary.bonus_applied} got a B1T1 bonus`)
+
+        toast.add({ title: 'Price confirmed', description: parts.join(', '), color: 'success' })
+        await refreshOrders()
+    } catch (error) {
+        toast.add({ title: 'Confirm failed', description: (error as APIError).message, color: 'error' })
+    } finally {
+        form.saving = false
     }
 }
 
@@ -502,8 +631,9 @@ const orderColumns: TableColumn<Order>[] = [
     { id: 'actions', header: '' }
 ]
 
-const orderStatusColor: Record<string, 'neutral' | 'success' | 'error'> = {
+const orderStatusColor: Record<string, 'neutral' | 'success' | 'error' | 'warning'> = {
     pending: 'neutral',
+    needs_confirmation: 'warning',
     confirmed: 'success',
     cancelled: 'error'
 }
