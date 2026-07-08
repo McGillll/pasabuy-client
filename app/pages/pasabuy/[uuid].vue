@@ -169,6 +169,10 @@
                                         <p class="text-sm text-muted">₱{{ displayPrice(sp) }}</p>
                                         <span v-if="sp.price_confirmed_at" class="text-xs text-dimmed">confirmed</span>
                                         <span v-else class="text-xs text-dimmed">estimated</span>
+                                        <UBadge v-if="sp.promo_status === 'b1t1'" color="success" variant="subtle" size="sm">B1T1</UBadge>
+                                        <UBadge v-else-if="sp.promo_status === 'out_of_stock'" color="error" variant="subtle" size="sm">
+                                            Out of stock
+                                        </UBadge>
                                     </div>
                                     <p v-if="sp.max_quantity !== null" class="text-xs text-dimmed">Limit {{ sp.max_quantity }} per order</p>
                                     <p v-if="quantities[sp.product.uuid]" class="text-sm font-medium text-primary">
