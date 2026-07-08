@@ -13,7 +13,7 @@ export interface Schedule {
     title: string
     description: string | null
     cutoff_at: string | null
-    status: 'draft' | 'open' | 'closed'
+    status: 'open' | 'closed' | 'finished'
     is_open: boolean
     products: ScheduleProduct[]
     created_at: string

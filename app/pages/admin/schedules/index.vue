@@ -33,7 +33,7 @@
                 <template #actions-cell="{ row }">
                     <div class="flex justify-end gap-2">
                         <UButton
-                            v-if="row.original.status !== 'closed'"
+                            v-if="row.original.status === 'open'"
                             size="sm"
                             color="neutral"
                             variant="ghost"
@@ -157,10 +157,10 @@ async function onCreate() {
     }
 }
 
-const statusColor: Record<string, 'neutral' | 'success' | 'error'> = {
-    draft: 'neutral',
+const statusColor: Record<string, 'neutral' | 'success' | 'warning'> = {
     open: 'success',
-    closed: 'error'
+    closed: 'warning',
+    finished: 'neutral'
 }
 
 function formatDate(iso: string): string {

@@ -103,7 +103,7 @@ definePageMeta({ layout: 'admin', middleware: 'auth' })
 interface Schedule {
     uuid: string
     title: string
-    status: 'draft' | 'open' | 'closed'
+    status: 'open' | 'closed' | 'finished'
     is_open: boolean
     created_at: string
 }
@@ -131,16 +131,16 @@ const totalProducts = ref(0)
 const schedules = ref<Schedule[]>([])
 const pendingOrders = ref<PendingOrder[]>([])
 
-const statusColor: Record<string, 'neutral' | 'success' | 'error'> = {
-    draft: 'neutral',
+const statusColor: Record<string, 'neutral' | 'success' | 'warning'> = {
     open: 'success',
-    closed: 'error'
+    closed: 'warning',
+    finished: 'neutral'
 }
 
 const stats = computed(() => [
     { label: 'Total products', value: totalProducts.value, icon: 'i-lucide-package' },
     { label: 'Open schedules', value: schedules.value.filter((s) => s.status === 'open').length, icon: 'i-lucide-calendar-clock' },
-    { label: 'Draft schedules', value: schedules.value.filter((s) => s.status === 'draft').length, icon: 'i-lucide-file-edit' },
+    { label: 'Finished schedules', value: schedules.value.filter((s) => s.status === 'finished').length, icon: 'i-lucide-check-circle' },
     { label: 'Pending orders', value: pendingOrders.value.length, icon: 'i-lucide-clock-alert' }
 ])
 

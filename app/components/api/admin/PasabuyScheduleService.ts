@@ -4,7 +4,7 @@ export interface SchedulePayload {
     title: string
     description?: string
     cutoff_at?: string | null
-    status?: 'draft' | 'open' | 'closed'
+    status?: 'open' | 'closed' | 'finished'
 }
 
 export interface ConfirmPricePayload {
@@ -43,7 +43,7 @@ class PasabuyScheduleService extends BaseAPIService {
     /**
      * POST /api/admin/pasabuy-schedules
      * FormData fields: title (string, required), description (string, optional),
-     * cutoff_at (string, optional), status ('draft'|'open'|'closed', optional).
+     * cutoff_at (string, optional), status ('open'|'closed'|'finished', optional).
      * Response: created `Schedule`.
      */
     async createSchedule(payload: SchedulePayload): Promise<any> {
@@ -83,6 +83,14 @@ class PasabuyScheduleService extends BaseAPIService {
      */
     async reopenSchedule(uuid: string): Promise<any> {
         return await this.request(`/admin/pasabuy-schedules/${uuid}/reopen`, 'POST', new FormData())
+    }
+
+    /**
+     * POST /api/admin/pasabuy-schedules/{uuid}/finish
+     * No body fields. Response: updated `Schedule` (status: 'finished', terminal).
+     */
+    async finishSchedule(uuid: string): Promise<any> {
+        return await this.request(`/admin/pasabuy-schedules/${uuid}/finish`, 'POST', new FormData())
     }
 
     /**

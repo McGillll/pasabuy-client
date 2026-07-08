@@ -35,6 +35,16 @@
                         >
                             Reopen schedule
                         </UButton>
+                        <UButton
+                            v-if="schedule.status === 'closed'"
+                            size="sm"
+                            color="success"
+                            variant="soft"
+                            :loading="changingStatus"
+                            @click="finishSchedule"
+                        >
+                            Mark finished
+                        </UButton>
                     </div>
 
                     <UAlert
@@ -46,17 +56,26 @@
                         description="Reopen it above to edit the title, description, or cutoff."
                         class="max-w-lg mb-4"
                     />
+                    <UAlert
+                        v-if="isFinished"
+                        color="success"
+                        variant="subtle"
+                        icon="i-lucide-check-circle"
+                        title="This schedule is finished"
+                        description="This batch is fully settled — details can no longer be edited."
+                        class="max-w-lg mb-4"
+                    />
                     <form class="max-w-lg space-y-4" @submit.prevent="saveDetails">
                         <UFormField label="Title" required>
-                            <UInput v-model="detailsForm.title" :disabled="isClosed" class="w-full" />
+                            <UInput v-model="detailsForm.title" :disabled="isLocked" class="w-full" />
                         </UFormField>
                         <UFormField label="Description">
-                            <UTextarea v-model="detailsForm.description" :disabled="isClosed" class="w-full" />
+                            <UTextarea v-model="detailsForm.description" :disabled="isLocked" class="w-full" />
                         </UFormField>
                         <UFormField label="Cutoff (optional)">
-                            <UInput v-model="detailsForm.cutoffAt" type="datetime-local" :disabled="isClosed" class="w-full" />
+                            <UInput v-model="detailsForm.cutoffAt" type="datetime-local" :disabled="isLocked" class="w-full" />
                         </UFormField>
-                        <UButton type="submit" :loading="savingDetails" :disabled="isClosed">
+                        <UButton type="submit" :loading="savingDetails" :disabled="isLocked">
                             Save details
                         </UButton>
                     </form>
@@ -125,7 +144,7 @@
                                     <div class="flex flex-col items-center gap-3 py-10">
                                         <UIcon name="i-lucide-list-checks" class="size-8 text-dimmed" />
                                         <p class="text-sm text-muted">
-                                            {{ schedule.status === 'draft' ? 'Close the schedule to generate the shopping checklist.' : 'Checklist will appear once you close the schedule.' }}
+                                            Close the schedule to generate the shopping checklist.
                                         </p>
                                     </div>
                                 </template>
@@ -364,11 +383,13 @@ const pendingOrderCount = computed(() =>
     orders.value.filter((o) => o.status === 'pending' || o.status === 'needs_confirmation').length
 )
 const isClosed = computed(() => schedule.value?.status === 'closed')
+const isFinished = computed(() => schedule.value?.status === 'finished')
+const isLocked = computed(() => isClosed.value || isFinished.value)
 
 const scheduleStatusColor: Record<Schedule['status'], 'neutral' | 'success' | 'warning'> = {
-    draft: 'neutral',
     open: 'success',
-    closed: 'warning'
+    closed: 'warning',
+    finished: 'neutral'
 }
 
 const activeTab = ref('summary')
@@ -412,7 +433,7 @@ const productStatusOptions = [
     { label: 'B1T1', value: 'b1t1' },
     { label: 'Out of stock', value: 'out_of_stock' }
 ]
-const canConfirmPrice = computed(() => schedule.value?.status !== 'draft')
+const canConfirmPrice = computed(() => schedule.value?.status !== 'finished')
 
 const publicLink = computed(() => {
     if (!import.meta.client) return ''
@@ -610,6 +631,21 @@ async function reopenSchedule() {
         toast.add({ title: 'Schedule reopened', color: 'success' })
     } catch (error) {
         toast.add({ title: 'Failed to reopen schedule', description: (error as APIError).message, color: 'error' })
+    } finally {
+        changingStatus.value = false
+    }
+}
+
+async function finishSchedule() {
+    if (!confirm('Mark this schedule as finished? This cannot be undone.')) return
+
+    changingStatus.value = true
+    try {
+        const response = await pasabuyScheduleService.finishSchedule(uuid)
+        schedule.value = { ...schedule.value!, ...response.data }
+        toast.add({ title: 'Schedule finished', color: 'success' })
+    } catch (error) {
+        toast.add({ title: 'Failed to finish schedule', description: (error as APIError).message, color: 'error' })
     } finally {
         changingStatus.value = false
     }
