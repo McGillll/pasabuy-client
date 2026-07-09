@@ -3,8 +3,6 @@ import BaseAPIService from '@/components/api/BaseAPIService'
 export interface CustomerOrderItemInput {
     product_uuid: string
     quantity: number
-    max_price?: number
-    auto_buy_if_under_max?: boolean
 }
 
 /**
@@ -14,8 +12,7 @@ export interface CustomerOrderItemInput {
 class CustomerOrderService extends BaseAPIService {
     /**
      * POST /api/customer/pasabuy-schedules/{scheduleUuid}/orders
-     * FormData fields: items indexed array — `items[i][product_uuid]` (string), `items[i][quantity]` (numeric string),
-     * `items[i][max_price]` (numeric string, optional), `items[i][auto_buy_if_under_max]` ('1'|'0', optional).
+     * FormData fields: items indexed array — `items[i][product_uuid]` (string), `items[i][quantity]` (numeric string).
      * customer_name/customer_contact are snapshotted server-side from the logged-in account, not sent here.
      * Response: created `Order`.
      */
@@ -59,7 +56,7 @@ class CustomerOrderService extends BaseAPIService {
 
     /**
      * PATCH /api/customer/orders/{uuid}/cancel (sent as POST with `_method: 'PATCH'` spoofing)
-     * Cancels the order outright. Only allowed while status is 'pending' or 'needs_confirmation'.
+     * Cancels the order outright. Only allowed while status is 'pending'.
      * Response: updated `Order`.
      */
     async cancelOrder(uuid: string): Promise<any> {
@@ -69,30 +66,10 @@ class CustomerOrderService extends BaseAPIService {
         return await this.request(`/customer/orders/${uuid}/cancel`, 'POST', formData)
     }
 
-    /**
-     * PATCH /api/customer/orders/{uuid}/items/{itemUuid}/resolve (sent as POST with `_method: 'PATCH'` spoofing)
-     * Resolves one item flagged for confirmation (order status 'needs_confirmation').
-     * FormData fields: action ('accept'|'remove', required), quantity (numeric string, optional —
-     * only meaningful with 'accept'; defaults to the item's current quantity if omitted).
-     * Response: updated `Order`.
-     */
-    async resolveItem(orderUuid: string, itemUuid: string, action: 'accept' | 'remove', quantity?: number): Promise<any> {
-        const formData = new FormData()
-        formData.append('_method', 'PATCH')
-        formData.append('action', action)
-        if (quantity !== undefined) formData.append('quantity', String(quantity))
-
-        return await this.request(`/customer/orders/${orderUuid}/items/${itemUuid}/resolve`, 'POST', formData)
-    }
-
     private appendItems(formData: FormData, items: CustomerOrderItemInput[]) {
         items.forEach((item, index) => {
             formData.append(`items[${index}][product_uuid]`, item.product_uuid)
             formData.append(`items[${index}][quantity]`, String(item.quantity))
-            if (item.max_price !== undefined) formData.append(`items[${index}][max_price]`, String(item.max_price))
-            if (item.auto_buy_if_under_max !== undefined) {
-                formData.append(`items[${index}][auto_buy_if_under_max]`, item.auto_buy_if_under_max ? '1' : '0')
-            }
         })
     }
 }

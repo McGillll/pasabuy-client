@@ -10,7 +10,7 @@
             <template #products>
                 <div class="mt-4 space-y-4">
                     <div class="flex flex-col sm:flex-row gap-2">
-                        <UInput v-model="productSearch" icon="i-lucide-search" placeholder="Search products…" class="w-full sm:w-72" />
+                        <SearchInput v-model="productSearch" placeholder="Search products…" />
                         <USelect
                             v-model="productCategoryFilter"
                             :items="categoryFilterOptions"
@@ -51,12 +51,10 @@
                                 <span class="font-medium text-highlighted">₱{{ row.original.default_price }}</span>
                             </template>
                             <template #is_active-cell="{ row }">
-                                <UBadge :color="row.original.is_active ? 'success' : 'neutral'" variant="subtle">
-                                    <span class="flex items-center gap-1.5">
-                                        <span class="size-1.5 rounded-full bg-current" />
-                                        {{ row.original.is_active ? 'Active' : 'Inactive' }}
-                                    </span>
-                                </UBadge>
+                                <StatusBadge
+                                    :color="row.original.is_active ? 'success' : 'neutral'"
+                                    :label="row.original.is_active ? 'Active' : 'Inactive'"
+                                />
                             </template>
                             <template #actions-cell="{ row }">
                                 <div class="flex justify-end gap-1">
@@ -79,11 +77,12 @@
                                 </div>
                             </template>
                             <template #empty>
-                                <div class="flex flex-col items-center gap-3 py-10">
-                                    <UIcon name="i-lucide-package-search" class="size-8 text-dimmed" />
-                                    <p class="text-sm text-muted">No products found.</p>
-                                    <UButton size="sm" icon="i-lucide-plus" @click="openProductCreateModal">Add your first product</UButton>
-                                </div>
+                                <TableEmptyState
+                                    icon="i-lucide-package-search"
+                                    message="No products found."
+                                    action-label="Add your first product"
+                                    @action="openProductCreateModal"
+                                />
                             </template>
                         </UTable>
                     </UCard>
@@ -96,7 +95,7 @@
 
             <template #categories>
                 <div class="mt-4 space-y-4">
-                    <UInput v-model="categorySearch" icon="i-lucide-search" placeholder="Search categories…" class="w-full sm:w-72" />
+                    <SearchInput v-model="categorySearch" placeholder="Search categories…" />
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
                         <UTable
@@ -112,12 +111,10 @@
                                 </p>
                             </template>
                             <template #is_active-cell="{ row }">
-                                <UBadge :color="row.original.is_active ? 'success' : 'neutral'" variant="subtle">
-                                    <span class="flex items-center gap-1.5">
-                                        <span class="size-1.5 rounded-full bg-current" />
-                                        {{ row.original.is_active ? 'Active' : 'Inactive' }}
-                                    </span>
-                                </UBadge>
+                                <StatusBadge
+                                    :color="row.original.is_active ? 'success' : 'neutral'"
+                                    :label="row.original.is_active ? 'Active' : 'Inactive'"
+                                />
                             </template>
                             <template #actions-cell="{ row }">
                                 <div class="flex justify-end gap-1">
@@ -140,11 +137,12 @@
                                 </div>
                             </template>
                             <template #empty>
-                                <div class="flex flex-col items-center gap-3 py-10">
-                                    <UIcon name="i-lucide-tags" class="size-8 text-dimmed" />
-                                    <p class="text-sm text-muted">No categories found.</p>
-                                    <UButton size="sm" icon="i-lucide-plus" @click="openCategoryCreateModal">Add your first category</UButton>
-                                </div>
+                                <TableEmptyState
+                                    icon="i-lucide-tags"
+                                    message="No categories found."
+                                    action-label="Add your first category"
+                                    @action="openCategoryCreateModal"
+                                />
                             </template>
                         </UTable>
                     </UCard>
@@ -216,19 +214,15 @@
             </template>
         </UModal>
 
-        <UModal v-model:open="confirmDialog.open" :title="confirmDialog.title">
-            <template #body>
-                <p class="text-sm text-muted">{{ confirmDialog.description }}</p>
-                <div class="mt-4 flex justify-end gap-2">
-                    <UButton color="neutral" variant="soft" @click="confirmDialog.open = false">
-                        Cancel
-                    </UButton>
-                    <UButton :color="confirmDialog.color" :loading="confirming" @click="confirmDialogAccept">
-                        {{ confirmDialog.confirmLabel }}
-                    </UButton>
-                </div>
-            </template>
-        </UModal>
+        <ConfirmDialogModal
+            v-model:open="confirmDialog.open"
+            :title="confirmDialog.title"
+            :description="confirmDialog.description"
+            :color="confirmDialog.color"
+            :confirm-label="confirmDialog.confirmLabel"
+            :loading="confirming"
+            @confirm="confirmDialogAccept"
+        />
     </div>
 </template>
 
@@ -391,37 +385,7 @@ async function onSaveProduct() {
     }
 }
 
-const confirming = ref(false)
-
-const confirmDialog = reactive({
-    open: false,
-    title: '',
-    description: '',
-    color: 'primary' as 'primary' | 'success' | 'error',
-    confirmLabel: 'Confirm',
-    action: null as (() => Promise<void>) | null
-})
-
-function askConfirm(options: { title: string, description: string, color?: 'primary' | 'success' | 'error', confirmLabel?: string, action: () => Promise<void> }) {
-    confirmDialog.title = options.title
-    confirmDialog.description = options.description
-    confirmDialog.color = options.color ?? 'primary'
-    confirmDialog.confirmLabel = options.confirmLabel ?? 'Confirm'
-    confirmDialog.action = options.action
-    confirmDialog.open = true
-}
-
-async function confirmDialogAccept() {
-    const action = confirmDialog.action
-    if (!action) return
-    confirming.value = true
-    try {
-        await action()
-    } finally {
-        confirming.value = false
-    }
-    confirmDialog.open = false
-}
+const { confirmDialog, confirming, askConfirm, confirmDialogAccept } = useConfirmDialog()
 
 function onDeleteProduct(product: Product) {
     askConfirm({

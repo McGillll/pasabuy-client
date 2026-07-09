@@ -1,0 +1,32 @@
+<template>
+    <div class="dark relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-950 px-4 py-12">
+        <div class="pointer-events-none absolute inset-0 bg-linear-to-br from-slate-950 via-slate-900 to-slate-950" />
+        <div class="pointer-events-none absolute -top-32 -left-32 size-112 rounded-full bg-primary/30 blur-3xl" />
+        <div class="pointer-events-none absolute -bottom-32 -right-32 size-112 rounded-full bg-primary/20 blur-3xl" />
+        <div class="pointer-events-none absolute top-1/2 left-1/2 size-144 -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-500/10 blur-3xl" />
+
+        <div class="relative w-full max-w-sm">
+            <div class="flex flex-col items-center gap-3 mb-8">
+                <div class="flex items-center justify-center size-14 rounded-2xl bg-primary text-inverted font-bold text-2xl shadow-lg shadow-primary/30">
+                    P
+                </div>
+                <div class="text-center">
+                    <h1 class="text-xl font-semibold text-white">Pasabuy</h1>
+                    <p class="text-sm text-white/60">{{ subtitle }}</p>
+                </div>
+            </div>
+
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
+                <slot />
+            </div>
+
+            <slot name="footer" />
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+defineProps<{
+    subtitle: string
+}>()
+</script>

@@ -28,70 +28,13 @@
                     <template #header>
                         <div class="flex items-center justify-between">
                             <h2 class="font-medium">Your order</h2>
-                            <UBadge :color="orderStatusColor[myOrder.status]" variant="subtle">{{ myOrder.status }}</UBadge>
+                            <OrderStatusBadge :status="myOrder.status" />
                         </div>
                     </template>
 
-                    <UAlert
-                        v-if="myOrder.status === 'needs_confirmation'"
-                        color="warning"
-                        variant="subtle"
-                        icon="i-lucide-alert-triangle"
-                        title="Some items need your confirmation"
-                        description="The seller found a different price in-store. Review the items below."
-                        class="mb-4"
-                    />
-
                     <div class="divide-y divide-default">
-                        <div v-for="item in myOrder.items" :key="item.uuid" class="py-3 first:pt-0 last:pb-0">
-                            <div class="flex items-center justify-between gap-3">
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <p class="font-medium text-highlighted">{{ item.product_name }}</p>
-                                        <UBadge v-if="item.is_bonus" color="success" variant="subtle" size="sm">FREE</UBadge>
-                                        <UBadge v-else-if="item.confirmation_status === 'out_of_stock'" color="error" variant="subtle" size="sm">
-                                            Out of stock
-                                        </UBadge>
-                                        <UBadge v-else-if="item.confirmation_status === 'removed'" color="error" variant="subtle" size="sm">
-                                            Removed
-                                        </UBadge>
-                                    </div>
-                                    <p class="text-sm text-muted">₱{{ item.actual_price ?? item.estimated_price }} × {{ item.quantity }}</p>
-                                </div>
-                                <p class="font-medium text-highlighted">₱{{ item.subtotal }}</p>
-                            </div>
-
-                            <div v-if="item.confirmation_status === 'pending'" class="mt-3 rounded-lg bg-warning/10 p-3">
-                                <p class="text-sm text-warning">
-                                    New price: ₱{{ item.actual_price }} (was ₱{{ item.estimated_price }})
-                                </p>
-                                <div class="mt-2 flex flex-wrap items-center gap-2">
-                                    <UInput
-                                        v-model.number="resolveQuantities[item.uuid]"
-                                        type="number"
-                                        min="1"
-                                        size="sm"
-                                        class="w-20"
-                                    />
-                                    <UButton
-                                        size="xs"
-                                        color="success"
-                                        :loading="resolvingItem === item.uuid"
-                                        @click="acceptItem(item)"
-                                    >
-                                        Accept
-                                    </UButton>
-                                    <UButton
-                                        size="xs"
-                                        color="error"
-                                        variant="soft"
-                                        :loading="resolvingItem === item.uuid"
-                                        @click="removeItem(item)"
-                                    >
-                                        Remove
-                                    </UButton>
-                                </div>
-                            </div>
+                        <div v-for="group in myOrderGroupedItems" :key="group.item.uuid" class="py-3 first:pt-0 last:pb-0">
+                            <OrderLineItem :group="group" />
                         </div>
                     </div>
 
@@ -102,20 +45,7 @@
                                 <UButton v-if="myOrder.is_editable" variant="soft" icon="i-lucide-pencil" @click="startEditOrder">
                                     Edit order
                                 </UButton>
-                                <template v-if="myOrder.is_cancellable && !confirmingCancel">
-                                    <UButton color="error" variant="ghost" size="sm" @click="confirmingCancel = true">
-                                        Cancel order
-                                    </UButton>
-                                </template>
-                                <template v-else-if="myOrder.is_cancellable">
-                                    <span class="text-sm text-muted">Are you sure?</span>
-                                    <UButton color="error" size="sm" :loading="cancellingOrder" @click="cancelOrder">
-                                        Yes, cancel
-                                    </UButton>
-                                    <UButton color="neutral" variant="ghost" size="sm" @click="confirmingCancel = false">
-                                        No
-                                    </UButton>
-                                </template>
+                                <CancelOrderControl v-if="myOrder.is_cancellable" :loading="cancellingOrder" @confirm="cancelOrder" />
                                 <p v-if="!myOrder.is_editable && !myOrder.is_cancellable" class="text-sm text-muted">
                                     This order can no longer be edited.
                                 </p>
@@ -200,23 +130,28 @@
                                 </div>
 
                                 <div class="flex shrink-0 items-center gap-2">
-                                    <UButton
-                                        icon="i-lucide-minus"
-                                        size="xs"
-                                        color="neutral"
-                                        variant="soft"
-                                        :disabled="!schedule.is_open || !quantities[product.uuid]"
-                                        @click="decrement(product)"
-                                    />
-                                    <span class="w-6 text-center font-medium">{{ quantities[product.uuid] || 0 }}</span>
-                                    <UButton
-                                        icon="i-lucide-plus"
-                                        size="xs"
-                                        color="neutral"
-                                        variant="soft"
-                                        :disabled="!schedule.is_open"
-                                        @click="increment(product)"
-                                    />
+                                    <span v-if="product.default_product_status === 'out_of_stock'" class="text-sm font-medium text-error">
+                                        Out of stock
+                                    </span>
+                                    <template v-else>
+                                        <UButton
+                                            icon="i-lucide-minus"
+                                            size="xs"
+                                            color="neutral"
+                                            variant="soft"
+                                            :disabled="!schedule.is_open || !quantities[product.uuid]"
+                                            @click="decrement(product)"
+                                        />
+                                        <span class="w-6 text-center font-medium">{{ quantities[product.uuid] || 0 }}</span>
+                                        <UButton
+                                            icon="i-lucide-plus"
+                                            size="xs"
+                                            color="neutral"
+                                            variant="soft"
+                                            :disabled="!schedule.is_open"
+                                            @click="increment(product)"
+                                        />
+                                    </template>
                                 </div>
                             </div>
 
@@ -316,7 +251,6 @@ interface MyOrder {
     total_amount: string
     is_editable: boolean
     is_cancellable: boolean
-    needs_confirmation_count: number
     items: MyOrderItem[]
     pasabuy_schedule: { uuid: string } | null
 }
@@ -349,17 +283,12 @@ const submitError = ref<string | null>(null)
 const myOrder = ref<MyOrder | null>(null)
 const editingOrder = ref(false)
 
-const orderStatusColor: Record<string, 'neutral' | 'success' | 'error' | 'warning'> = {
-    pending: 'neutral',
-    needs_confirmation: 'warning',
-    confirmed: 'success',
-    cancelled: 'error'
-}
-
 const isLoggedIn = computed(() => !!user.value)
 const isApproved = computed(() => user.value?.is_approved === true)
 
 const showBottomBar = computed(() => !!schedule.value && (!myOrder.value || editingOrder.value))
+
+const myOrderGroupedItems = computed(() => groupOrderItems(myOrder.value?.items ?? []))
 
 const filteredProducts = computed(() => {
     const query = productSearch.value.trim().toLowerCase()
@@ -428,55 +357,12 @@ async function loadMyOrder() {
         const response = await customerOrderService.fetchMyOrders({ per_page: 100 })
         const orders = response.data.data as MyOrder[]
         myOrder.value = orders.find((o) => o.pasabuy_schedule?.uuid === uuid && o.status !== 'cancelled') ?? null
-        syncResolveQuantities()
     } catch {
         // non-critical — fall back to showing a fresh ordering form
     }
 }
 
-const resolveQuantities = ref<Record<string, number>>({})
-const resolvingItem = ref<string | null>(null)
-const confirmingCancel = ref(false)
 const cancellingOrder = ref(false)
-
-function syncResolveQuantities() {
-    for (const item of myOrder.value?.items ?? []) {
-        if (item.confirmation_status === 'pending') {
-            resolveQuantities.value[item.uuid] = item.quantity
-        }
-    }
-}
-
-async function acceptItem(item: MyOrderItem) {
-    if (!myOrder.value) return
-    resolvingItem.value = item.uuid
-    try {
-        const quantity = resolveQuantities.value[item.uuid] ?? item.quantity
-        const response = await customerOrderService.resolveItem(myOrder.value.uuid, item.uuid, 'accept', quantity)
-        myOrder.value = response.data
-        syncResolveQuantities()
-        toast.add({ title: 'Item confirmed', color: 'success' })
-    } catch (error) {
-        toast.add({ title: 'Failed to confirm', description: (error as APIError).message, color: 'error' })
-    } finally {
-        resolvingItem.value = null
-    }
-}
-
-async function removeItem(item: MyOrderItem) {
-    if (!myOrder.value) return
-    resolvingItem.value = item.uuid
-    try {
-        const response = await customerOrderService.resolveItem(myOrder.value.uuid, item.uuid, 'remove')
-        myOrder.value = response.data
-        syncResolveQuantities()
-        toast.add({ title: 'Item removed', color: 'success' })
-    } catch (error) {
-        toast.add({ title: 'Failed to remove item', description: (error as APIError).message, color: 'error' })
-    } finally {
-        resolvingItem.value = null
-    }
-}
 
 async function cancelOrder() {
     if (!myOrder.value) return
@@ -484,7 +370,6 @@ async function cancelOrder() {
     try {
         await customerOrderService.cancelOrder(myOrder.value.uuid)
         myOrder.value = null
-        confirmingCancel.value = false
         toast.add({ title: 'Order cancelled', color: 'success' })
     } catch (error) {
         toast.add({ title: 'Failed to cancel', description: (error as APIError).message, color: 'error' })
@@ -554,11 +439,20 @@ async function submitOrder() {
     }
 }
 
+let pollHandle: ReturnType<typeof setInterval> | undefined
+
 onMounted(async () => {
     await restoreSession()
     await load()
     if (isLoggedIn.value && isApproved.value) {
         await loadMyOrder()
+        pollHandle = setInterval(() => {
+            if (!editingOrder.value) loadMyOrder()
+        }, 30000)
     }
+})
+
+onUnmounted(() => {
+    if (pollHandle) clearInterval(pollHandle)
 })
 </script>

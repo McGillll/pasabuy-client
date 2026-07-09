@@ -82,7 +82,7 @@
                     class="flex items-center justify-between py-3 first:pt-0 last:pb-0 hover:text-highlighted"
                 >
                     <span class="text-sm">{{ schedule.title }}</span>
-                    <UBadge :color="statusColor[schedule.status]" variant="subtle">{{ schedule.status }}</UBadge>
+                    <UBadge :color="scheduleStatusColor[schedule.status]" variant="subtle">{{ schedule.status }}</UBadge>
                 </NuxtLink>
                 <p v-if="!loading && recentSchedules.length === 0" class="text-sm text-muted py-6 text-center">
                     No schedules yet.
@@ -130,12 +130,6 @@ const actingOn = ref<string | null>(null)
 const totalProducts = ref(0)
 const schedules = ref<Schedule[]>([])
 const pendingOrders = ref<PendingOrder[]>([])
-
-const statusColor: Record<string, 'neutral' | 'success' | 'warning'> = {
-    open: 'success',
-    closed: 'warning',
-    finished: 'neutral'
-}
 
 const stats = computed(() => [
     { label: 'Total products', value: totalProducts.value, icon: 'i-lucide-package' },

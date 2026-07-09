@@ -16,7 +16,7 @@
                         {{ order.pasabuy_schedule.title }}
                     </NuxtLink>
                 </div>
-                <UBadge :color="orderStatusColor[order.status]" variant="subtle">{{ order.status }}</UBadge>
+                <OrderStatusBadge :status="order.status" />
             </div>
 
             <UAlert
@@ -28,35 +28,10 @@
                 description="The seller will reach out to confirm."
             />
 
-            <UAlert
-                v-if="order.status === 'needs_confirmation'"
-                color="warning"
-                variant="subtle"
-                icon="i-lucide-alert-triangle"
-                title="Some items need your confirmation"
-                description="The seller found a different price in-store. Review the items below."
-            />
-
             <UCard :ui="{ body: 'p-0 sm:p-0' }">
                 <div class="divide-y divide-default">
-                    <div v-for="item in order.items" :key="item.uuid" class="flex items-center justify-between gap-3 p-4">
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <p class="font-medium text-highlighted">{{ item.product_name }}</p>
-                                <UBadge v-if="item.is_bonus" color="success" variant="subtle" size="sm">FREE</UBadge>
-                                <UBadge v-else-if="item.confirmation_status === 'pending'" color="warning" variant="subtle" size="sm">
-                                    Needs confirmation
-                                </UBadge>
-                                <UBadge v-else-if="item.confirmation_status === 'out_of_stock'" color="error" variant="subtle" size="sm">
-                                    Out of stock
-                                </UBadge>
-                                <UBadge v-else-if="item.confirmation_status === 'removed'" color="error" variant="subtle" size="sm">
-                                    Removed
-                                </UBadge>
-                            </div>
-                            <p class="text-sm text-muted">₱{{ item.actual_price ?? item.estimated_price }} × {{ item.quantity }}</p>
-                        </div>
-                        <p class="font-medium text-highlighted">₱{{ item.subtotal }}</p>
+                    <div v-for="group in groupedItems" :key="group.item.uuid" class="p-4">
+                        <OrderLineItem :group="group" />
                     </div>
                 </div>
 
@@ -82,20 +57,7 @@
                     >
                         Edit order
                     </UButton>
-                    <template v-if="order.is_cancellable && !confirmingCancel">
-                        <UButton color="error" variant="ghost" size="sm" @click="confirmingCancel = true">
-                            Cancel order
-                        </UButton>
-                    </template>
-                    <template v-else-if="order.is_cancellable">
-                        <span class="text-sm text-muted">Are you sure?</span>
-                        <UButton color="error" size="sm" :loading="cancelling" @click="cancelOrder">
-                            Yes, cancel
-                        </UButton>
-                        <UButton color="neutral" variant="ghost" size="sm" @click="confirmingCancel = false">
-                            No
-                        </UButton>
-                    </template>
+                    <CancelOrderControl v-if="order.is_cancellable" :loading="cancelling" @confirm="cancelOrder" />
                 </div>
             </div>
         </template>
@@ -110,6 +72,7 @@ definePageMeta({ layout: 'customer', middleware: 'customer-auth' })
 
 interface OrderItem {
     uuid: string
+    product_uuid: string
     product_name: string
     estimated_price: string
     actual_price: string | null
@@ -137,31 +100,36 @@ const justPlaced = computed(() => route.query.placed === '1')
 const order = ref<Order | null>(null)
 const loading = ref(true)
 const notFound = ref(false)
-const confirmingCancel = ref(false)
 const cancelling = ref(false)
 
-const orderStatusColor: Record<string, 'neutral' | 'success' | 'error' | 'warning'> = {
-    pending: 'neutral',
-    needs_confirmation: 'warning',
-    confirmed: 'success',
-    cancelled: 'error'
-}
+const groupedItems = computed(() => groupOrderItems(order.value?.items ?? []))
 
-async function loadOrder() {
-    loading.value = true
+async function loadOrder(silent = false) {
+    if (!silent) loading.value = true
     try {
         const response = await customerOrderService.fetchMyOrder(uuid)
         order.value = response.data
     } catch (error) {
         if (error instanceof APIError) {
             notFound.value = true
-        } else {
+        } else if (!silent) {
             throw error
         }
     } finally {
-        loading.value = false
+        if (!silent) loading.value = false
     }
 }
+
+let pollHandle: ReturnType<typeof setInterval> | undefined
+
+onMounted(async () => {
+    await loadOrder()
+    pollHandle = setInterval(() => loadOrder(true), 30000)
+})
+
+onUnmounted(() => {
+    if (pollHandle) clearInterval(pollHandle)
+})
 
 async function cancelOrder() {
     if (!order.value) return
@@ -169,7 +137,6 @@ async function cancelOrder() {
     try {
         const response = await customerOrderService.cancelOrder(order.value.uuid)
         order.value = response.data
-        confirmingCancel.value = false
         toast.add({ title: 'Order cancelled', color: 'success' })
     } catch (error) {
         toast.add({ title: 'Failed to cancel', description: (error as APIError).message, color: 'error' })
@@ -177,6 +144,4 @@ async function cancelOrder() {
         cancelling.value = false
     }
 }
-
-onMounted(loadOrder)
 </script>

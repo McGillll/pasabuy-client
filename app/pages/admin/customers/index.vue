@@ -7,7 +7,7 @@
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #approved>
                 <div class="mt-4 space-y-4">
-                    <UInput v-model="search" icon="i-lucide-search" placeholder="Search customers…" class="w-full sm:w-72" />
+                    <SearchInput v-model="search" placeholder="Search customers…" />
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
                         <UTable
@@ -43,10 +43,7 @@
                                 </div>
                             </template>
                             <template #empty>
-                                <div class="flex flex-col items-center gap-3 py-10">
-                                    <UIcon name="i-lucide-users" class="size-8 text-dimmed" />
-                                    <p class="text-sm text-muted">No approved customers found.</p>
-                                </div>
+                                <TableEmptyState icon="i-lucide-users" message="No approved customers found." />
                             </template>
                         </UTable>
                     </UCard>
@@ -87,10 +84,7 @@
                                 </div>
                             </template>
                             <template #empty>
-                                <div class="flex flex-col items-center gap-3 py-10">
-                                    <UIcon name="i-lucide-user-check" class="size-8 text-dimmed" />
-                                    <p class="text-sm text-muted">No pending registrations.</p>
-                                </div>
+                                <TableEmptyState icon="i-lucide-user-check" message="No pending registrations." />
                             </template>
                         </UTable>
                     </UCard>
@@ -126,28 +120,21 @@
                         <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
                     </template>
                     <template #empty>
-                        <div class="flex flex-col items-center gap-3 py-10">
-                            <UIcon name="i-lucide-receipt" class="size-8 text-dimmed" />
-                            <p class="text-sm text-muted">No orders yet.</p>
-                        </div>
+                        <TableEmptyState icon="i-lucide-receipt" message="No orders yet." />
                     </template>
                 </UTable>
             </template>
         </UModal>
 
-        <UModal v-model:open="confirmDialog.open" :title="confirmDialog.title">
-            <template #body>
-                <p class="text-sm text-muted">{{ confirmDialog.description }}</p>
-                <div class="mt-4 flex justify-end gap-2">
-                    <UButton color="neutral" variant="soft" @click="confirmDialog.open = false">
-                        Cancel
-                    </UButton>
-                    <UButton :color="confirmDialog.color" :loading="actingOn !== null" @click="confirmDialogAccept">
-                        {{ confirmDialog.confirmLabel }}
-                    </UButton>
-                </div>
-            </template>
-        </UModal>
+        <ConfirmDialogModal
+            v-model:open="confirmDialog.open"
+            :title="confirmDialog.title"
+            :description="confirmDialog.description"
+            :color="confirmDialog.color"
+            :confirm-label="confirmDialog.confirmLabel"
+            :loading="confirming"
+            @confirm="confirmDialogAccept"
+        />
     </div>
 </template>
 
@@ -279,16 +266,6 @@ const orderColumns: TableColumn<Order>[] = [
     { accessorKey: 'created_at', header: 'Date' }
 ]
 
-const orderStatusColor: Record<string, 'neutral' | 'success' | 'error'> = {
-    pending: 'neutral',
-    confirmed: 'success',
-    cancelled: 'error'
-}
-
-function formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-}
-
 async function viewOrders(customer: Customer) {
     selectedCustomer.value = customer
     isOrdersModalOpen.value = true
@@ -318,30 +295,7 @@ async function approveCustomer(customer: Customer) {
     }
 }
 
-const confirmDialog = reactive({
-    open: false,
-    title: '',
-    description: '',
-    color: 'primary' as 'primary' | 'success' | 'error',
-    confirmLabel: 'Confirm',
-    action: null as (() => Promise<void>) | null
-})
-
-function askConfirm(options: { title: string, description: string, color?: 'primary' | 'success' | 'error', confirmLabel?: string, action: () => Promise<void> }) {
-    confirmDialog.title = options.title
-    confirmDialog.description = options.description
-    confirmDialog.color = options.color ?? 'primary'
-    confirmDialog.confirmLabel = options.confirmLabel ?? 'Confirm'
-    confirmDialog.action = options.action
-    confirmDialog.open = true
-}
-
-async function confirmDialogAccept() {
-    const action = confirmDialog.action
-    if (!action) return
-    await action()
-    confirmDialog.open = false
-}
+const { confirmDialog, confirming, askConfirm, confirmDialogAccept } = useConfirmDialog()
 
 function revokeCustomer(customer: Customer) {
     askConfirm({

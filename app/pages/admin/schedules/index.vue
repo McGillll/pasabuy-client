@@ -6,7 +6,7 @@
         </div>
 
         <div class="flex flex-col sm:flex-row gap-2">
-            <UInput v-model="search" icon="i-lucide-search" placeholder="Search schedules…" class="w-full sm:w-72" />
+            <SearchInput v-model="search" placeholder="Search schedules…" />
             <div class="flex gap-2">
                 <USelect
                     v-model="monthFilter"
@@ -38,12 +38,7 @@
                     </NuxtLink>
                 </template>
                 <template #status-cell="{ row }">
-                    <UBadge :color="statusColor[row.original.status]" variant="subtle">
-                        <span class="flex items-center gap-1.5">
-                            <span class="size-1.5 rounded-full bg-current" />
-                            {{ row.original.status }}
-                        </span>
-                    </UBadge>
+                    <StatusBadge :color="scheduleStatusColor[row.original.status]" :label="row.original.status" />
                 </template>
                 <template #pasabuy_schedule_date-cell="{ row }">
                     <span class="text-muted">{{ row.original.pasabuy_schedule_date ? formatDate(row.original.pasabuy_schedule_date) : '—' }}</span>
@@ -73,11 +68,12 @@
                     </div>
                 </template>
                 <template #empty>
-                    <div class="flex flex-col items-center gap-3 py-10">
-                        <UIcon name="i-lucide-calendar-search" class="size-8 text-dimmed" />
-                        <p class="text-sm text-muted">No schedules found.</p>
-                        <UButton size="sm" icon="i-lucide-plus" @click="openCreateModal">Create your first schedule</UButton>
-                    </div>
+                    <TableEmptyState
+                        icon="i-lucide-calendar-search"
+                        message="No schedules found."
+                        action-label="Create your first schedule"
+                        @action="openCreateModal"
+                    />
                 </template>
             </UTable>
         </UCard>
@@ -103,19 +99,15 @@
             </template>
         </UModal>
 
-        <UModal v-model:open="confirmDialog.open" :title="confirmDialog.title">
-            <template #body>
-                <p class="text-sm text-muted">{{ confirmDialog.description }}</p>
-                <div class="mt-4 flex justify-end gap-2">
-                    <UButton color="neutral" variant="soft" @click="confirmDialog.open = false">
-                        Cancel
-                    </UButton>
-                    <UButton :color="confirmDialog.color" :loading="closingUuid !== null" @click="confirmDialogAccept">
-                        {{ confirmDialog.confirmLabel }}
-                    </UButton>
-                </div>
-            </template>
-        </UModal>
+        <ConfirmDialogModal
+            v-model:open="confirmDialog.open"
+            :title="confirmDialog.title"
+            :description="confirmDialog.description"
+            :color="confirmDialog.color"
+            :confirm-label="confirmDialog.confirmLabel"
+            :loading="confirming"
+            @confirm="confirmDialogAccept"
+        />
     </div>
 </template>
 
@@ -238,42 +230,9 @@ async function onCreate() {
     }
 }
 
-const statusColor: Record<string, 'neutral' | 'success' | 'warning'> = {
-    open: 'success',
-    closed: 'warning',
-    finished: 'neutral'
-}
-
-function formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-}
-
 const closingUuid = ref<string | null>(null)
 
-const confirmDialog = reactive({
-    open: false,
-    title: '',
-    description: '',
-    color: 'primary' as 'primary' | 'success' | 'error',
-    confirmLabel: 'Confirm',
-    action: null as (() => Promise<void>) | null
-})
-
-function askConfirm(options: { title: string, description: string, color?: 'primary' | 'success' | 'error', confirmLabel?: string, action: () => Promise<void> }) {
-    confirmDialog.title = options.title
-    confirmDialog.description = options.description
-    confirmDialog.color = options.color ?? 'primary'
-    confirmDialog.confirmLabel = options.confirmLabel ?? 'Confirm'
-    confirmDialog.action = options.action
-    confirmDialog.open = true
-}
-
-async function confirmDialogAccept() {
-    const action = confirmDialog.action
-    if (!action) return
-    await action()
-    confirmDialog.open = false
-}
+const { confirmDialog, confirming, askConfirm, confirmDialogAccept } = useConfirmDialog()
 
 function closeSchedule(scheduleRow: Schedule) {
     askConfirm({

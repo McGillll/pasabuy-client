@@ -114,10 +114,7 @@
                                     ₱{{ row.original.subtotal }}
                                 </template>
                                 <template #empty>
-                                    <div class="flex flex-col items-center gap-3 py-10">
-                                        <UIcon name="i-lucide-clipboard-list" class="size-8 text-dimmed" />
-                                        <p class="text-sm text-muted">No orders yet — the checklist fills in once customers order.</p>
-                                    </div>
+                                    <TableEmptyState icon="i-lucide-clipboard-list" message="No orders yet — the checklist fills in once customers order." />
                                 </template>
                             </UTable>
                             <template v-if="summary.length > 0" #footer>
@@ -152,12 +149,7 @@
                                     </UBadge>
                                 </template>
                                 <template #empty>
-                                    <div class="flex flex-col items-center gap-3 py-10">
-                                        <UIcon name="i-lucide-list-checks" class="size-8 text-dimmed" />
-                                        <p class="text-sm text-muted">
-                                            Close the schedule to generate the shopping checklist.
-                                        </p>
-                                    </div>
+                                    <TableEmptyState icon="i-lucide-list-checks" message="Close the schedule to generate the shopping checklist." />
                                 </template>
                             </UTable>
                         </UCard>
@@ -209,10 +201,7 @@
                             </div>
                         </template>
                         <template #empty>
-                            <div class="flex flex-col items-center gap-3 py-10">
-                                <UIcon name="i-lucide-receipt" class="size-8 text-dimmed" />
-                                <p class="text-sm text-muted">No orders yet.</p>
-                            </div>
+                            <TableEmptyState icon="i-lucide-receipt" message="No orders yet." />
                         </template>
                     </UTable>
                 </UCard>
@@ -232,10 +221,7 @@
                             </UBadge>
                         </template>
                         <template #empty>
-                            <div class="flex flex-col items-center gap-3 py-6">
-                                <UIcon name="i-lucide-users" class="size-8 text-dimmed" />
-                                <p class="text-sm text-muted">No buyers yet.</p>
-                            </div>
+                            <TableEmptyState icon="i-lucide-users" message="No buyers yet." padding="py-6" />
                         </template>
                     </UTable>
 
@@ -342,27 +328,34 @@
 
                     <div v-else class="divide-y divide-default rounded-lg border border-default">
                         <div
-                            v-for="item in viewingOrder.items"
-                            :key="item.uuid"
-                            class="flex items-center justify-between gap-3 p-3"
+                            v-for="group in viewingOrderGroupedItems"
+                            :key="group.item.uuid"
+                            class="flex items-start justify-between gap-3 p-3"
                         >
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <p class="font-medium text-highlighted">{{ item.product_name }}</p>
-                                    <UBadge v-if="item.is_bonus" color="success" variant="subtle" size="sm">FREE</UBadge>
-                                    <UBadge v-else-if="item.confirmation_status === 'pending'" color="warning" variant="subtle" size="sm">
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <p class="font-medium text-highlighted">{{ group.item.product_name }}</p>
+                                    <UBadge v-if="group.bonus" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
+                                    <UBadge v-else-if="group.item.confirmation_status === 'pending'" color="warning" variant="subtle" size="sm">
                                         Needs confirmation
                                     </UBadge>
-                                    <UBadge v-else-if="item.confirmation_status === 'out_of_stock'" color="error" variant="subtle" size="sm">
+                                    <UBadge v-else-if="group.item.confirmation_status === 'out_of_stock'" color="error" variant="subtle" size="sm">
                                         Out of stock
                                     </UBadge>
-                                    <UBadge v-else-if="item.confirmation_status === 'removed'" color="error" variant="subtle" size="sm">
+                                    <UBadge v-else-if="group.item.confirmation_status === 'removed'" color="error" variant="subtle" size="sm">
                                         Removed
                                     </UBadge>
                                 </div>
-                                <p class="text-sm text-muted">₱{{ item.actual_price ?? item.estimated_price }} × {{ item.quantity }}</p>
+                                <p class="mt-0.5 text-sm text-muted">₱{{ group.item.actual_price ?? group.item.estimated_price }} × {{ group.item.quantity }}</p>
+                                <p
+                                    v-if="group.bonus"
+                                    class="mt-1.5 inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"
+                                >
+                                    <UIcon name="i-lucide-sparkles" class="size-3" />
+                                    +{{ group.bonus.quantity }} free
+                                </p>
                             </div>
-                            <p class="font-medium text-highlighted">₱{{ item.subtotal }}</p>
+                            <p class="shrink-0 pt-0.5 font-medium text-highlighted">₱{{ group.item.subtotal }}</p>
                         </div>
                     </div>
 
@@ -376,19 +369,15 @@
             </template>
         </UModal>
 
-        <UModal v-model:open="confirmDialog.open" :title="confirmDialog.title">
-            <template #body>
-                <p class="text-sm text-muted">{{ confirmDialog.description }}</p>
-                <div class="mt-4 flex justify-end gap-2">
-                    <UButton color="neutral" variant="soft" @click="confirmDialog.open = false">
-                        Cancel
-                    </UButton>
-                    <UButton :color="confirmDialog.color" :loading="changingStatus" @click="confirmDialogAccept">
-                        {{ confirmDialog.confirmLabel }}
-                    </UButton>
-                </div>
-            </template>
-        </UModal>
+        <ConfirmDialogModal
+            v-model:open="confirmDialog.open"
+            :title="confirmDialog.title"
+            :description="confirmDialog.description"
+            :color="confirmDialog.color"
+            :confirm-label="confirmDialog.confirmLabel"
+            :loading="confirming"
+            @confirm="confirmDialogAccept"
+        />
     </div>
 </template>
 
@@ -416,12 +405,6 @@ const pendingOrderCount = computed(() =>
 const isClosed = computed(() => schedule.value?.status === 'closed')
 const isFinished = computed(() => schedule.value?.status === 'finished')
 const isLocked = computed(() => isClosed.value || isFinished.value)
-
-const scheduleStatusColor: Record<Schedule['status'], 'neutral' | 'success' | 'warning'> = {
-    open: 'success',
-    closed: 'warning',
-    finished: 'neutral'
-}
 
 const activeTab = ref('summary')
 
@@ -644,30 +627,7 @@ async function saveDetails() {
     }
 }
 
-const confirmDialog = reactive({
-    open: false,
-    title: '',
-    description: '',
-    color: 'primary' as 'primary' | 'success' | 'error',
-    confirmLabel: 'Confirm',
-    action: null as (() => Promise<void>) | null
-})
-
-function askConfirm(options: { title: string, description: string, color?: 'primary' | 'success' | 'error', confirmLabel?: string, action: () => Promise<void> }) {
-    confirmDialog.title = options.title
-    confirmDialog.description = options.description
-    confirmDialog.color = options.color ?? 'primary'
-    confirmDialog.confirmLabel = options.confirmLabel ?? 'Confirm'
-    confirmDialog.action = options.action
-    confirmDialog.open = true
-}
-
-async function confirmDialogAccept() {
-    const action = confirmDialog.action
-    if (!action) return
-    await action()
-    confirmDialog.open = false
-}
+const { confirmDialog, confirming, askConfirm, confirmDialogAccept } = useConfirmDialog()
 
 function closeSchedule() {
     askConfirm({
@@ -754,6 +714,7 @@ async function setOrderStatus(order: Order, status: 'confirmed' | 'cancelled') {
 const isOrderModalOpen = ref(false)
 const viewingOrder = ref<Order | null>(null)
 const canEditOrderItems = computed(() => isClosed.value)
+const viewingOrderGroupedItems = computed(() => groupOrderItems(viewingOrder.value?.items ?? []))
 
 interface EditableItem {
     product_uuid: string
@@ -820,10 +781,6 @@ async function saveOrderItems() {
     }
 }
 
-function formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-}
-
 const orderColumns: TableColumn<Order>[] = [
     { accessorKey: 'customer_name', header: 'Customer' },
     { accessorKey: 'customer_contact', header: 'Contact' },
@@ -831,13 +788,6 @@ const orderColumns: TableColumn<Order>[] = [
     { accessorKey: 'status', header: 'Status' },
     { id: 'actions', header: '' }
 ]
-
-const orderStatusColor: Record<string, 'neutral' | 'success' | 'error' | 'warning'> = {
-    pending: 'neutral',
-    needs_confirmation: 'warning',
-    confirmed: 'success',
-    cancelled: 'error'
-}
 
 onMounted(loadAll)
 </script>

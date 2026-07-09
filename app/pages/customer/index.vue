@@ -29,9 +29,7 @@
                     </NuxtLink>
                 </template>
                 <template #status-cell="{ row }">
-                    <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
-                        {{ row.original.status }}
-                    </UBadge>
+                    <OrderStatusBadge :status="row.original.status" />
                 </template>
                 <template #created_at-cell="{ row }">
                     <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
@@ -61,35 +59,13 @@
             <template #body>
                 <div v-if="selectedOrder" class="space-y-4">
                     <div class="flex items-center justify-between">
-                        <UBadge :color="orderStatusColor[selectedOrder.status]" variant="subtle">
-                            {{ selectedOrder.status }}
-                        </UBadge>
+                        <OrderStatusBadge :status="selectedOrder.status" />
                         <span class="text-sm text-muted">{{ formatDate(selectedOrder.created_at) }}</span>
                     </div>
 
                     <div class="divide-y divide-default rounded-lg border border-default">
-                        <div
-                            v-for="item in selectedOrder.items"
-                            :key="item.uuid"
-                            class="flex items-center justify-between gap-3 p-3"
-                        >
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <p class="font-medium text-highlighted">{{ item.product_name }}</p>
-                                    <UBadge v-if="item.is_bonus" color="success" variant="subtle" size="sm">FREE</UBadge>
-                                    <UBadge v-else-if="item.confirmation_status === 'pending'" color="warning" variant="subtle" size="sm">
-                                        Needs confirmation
-                                    </UBadge>
-                                    <UBadge v-else-if="item.confirmation_status === 'out_of_stock'" color="error" variant="subtle" size="sm">
-                                        Out of stock
-                                    </UBadge>
-                                    <UBadge v-else-if="item.confirmation_status === 'removed'" color="error" variant="subtle" size="sm">
-                                        Removed
-                                    </UBadge>
-                                </div>
-                                <p class="text-sm text-muted">₱{{ item.actual_price ?? item.estimated_price }} × {{ item.quantity }}</p>
-                            </div>
-                            <p class="font-medium text-highlighted">₱{{ item.subtotal }}</p>
+                        <div v-for="group in selectedOrderGroupedItems" :key="group.item.uuid" class="p-3">
+                            <OrderLineItem :group="group" />
                         </div>
                     </div>
 
@@ -98,32 +74,8 @@
                         <span>₱{{ selectedOrder.total_amount }}</span>
                     </div>
 
-                    <div v-if="selectedOrder.status === 'needs_confirmation'" class="text-sm text-muted">
-                        This order has items waiting on your confirmation —
-                        <NuxtLink
-                            v-if="selectedOrder.pasabuy_schedule"
-                            :to="`/pasabuy/${selectedOrder.pasabuy_schedule.uuid}`"
-                            class="text-primary hover:underline"
-                        >
-                            review it on the pasabuy page
-                        </NuxtLink>.
-                    </div>
-
                     <div v-if="selectedOrder.is_cancellable" class="flex items-center justify-end gap-2">
-                        <template v-if="!confirmingCancel">
-                            <UButton color="error" variant="ghost" size="sm" @click="confirmingCancel = true">
-                                Cancel order
-                            </UButton>
-                        </template>
-                        <template v-else>
-                            <span class="text-sm text-muted">Are you sure?</span>
-                            <UButton color="error" size="sm" :loading="cancellingOrder" @click="cancelSelectedOrder">
-                                Yes, cancel
-                            </UButton>
-                            <UButton color="neutral" variant="ghost" size="sm" @click="confirmingCancel = false">
-                                No
-                            </UButton>
-                        </template>
+                        <CancelOrderControl :loading="cancellingOrder" @confirm="cancelSelectedOrder" />
                     </div>
                 </div>
             </template>
@@ -140,6 +92,7 @@ definePageMeta({ layout: 'customer', middleware: 'customer-auth' })
 
 interface OrderItem {
     uuid: string
+    product_uuid: string
     product_name: string
     estimated_price: string
     actual_price: string | null
@@ -155,7 +108,6 @@ interface Order {
     total_amount: string
     is_editable: boolean
     is_cancellable: boolean
-    needs_confirmation_count: number
     pasabuy_schedule: { uuid: string; title: string } | null
     items: OrderItem[]
     created_at: string
@@ -176,23 +128,11 @@ const columns: TableColumn<Order>[] = [
     { id: 'actions', header: '' }
 ]
 
-const orderStatusColor: Record<string, 'neutral' | 'success' | 'error' | 'warning'> = {
-    pending: 'neutral',
-    needs_confirmation: 'warning',
-    confirmed: 'success',
-    cancelled: 'error'
-}
-
 const stats = computed(() => [
     { label: 'Total orders', value: total.value },
-    { label: 'Pending', value: orders.value.filter((o) => o.status === 'pending').length },
-    { label: 'Needs your input', value: orders.value.filter((o) => o.status === 'needs_confirmation').length },
+    { label: 'Pending', value: orders.value.filter((o) => o.status === 'pending' || o.status === 'needs_confirmation').length },
     { label: 'Confirmed', value: orders.value.filter((o) => o.status === 'confirmed').length }
 ])
-
-function formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-}
 
 async function loadOrders() {
     loading.value = true
@@ -211,12 +151,12 @@ watch(page, loadOrders)
 
 const isDetailOpen = ref(false)
 const selectedOrder = ref<Order | null>(null)
-const confirmingCancel = ref(false)
 const cancellingOrder = ref(false)
+
+const selectedOrderGroupedItems = computed(() => groupOrderItems(selectedOrder.value?.items ?? []))
 
 function viewOrder(order: Order) {
     selectedOrder.value = order
-    confirmingCancel.value = false
     isDetailOpen.value = true
 }
 
@@ -225,7 +165,6 @@ async function cancelSelectedOrder() {
     cancellingOrder.value = true
     try {
         await customerOrderService.cancelOrder(selectedOrder.value.uuid)
-        confirmingCancel.value = false
         isDetailOpen.value = false
         toast.add({ title: 'Order cancelled', color: 'success' })
         await loadOrders()
