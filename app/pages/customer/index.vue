@@ -97,14 +97,14 @@ interface OrderItem {
     estimated_price: string
     actual_price: string | null
     is_bonus: boolean
-    confirmation_status: 'none' | 'pending' | 'accepted' | 'removed' | 'out_of_stock'
+    is_out_of_stock: boolean
     quantity: number
     subtotal: string
 }
 
 interface Order {
     uuid: string
-    status: 'pending' | 'needs_confirmation' | 'confirmed' | 'cancelled'
+    status: 'pending' | 'confirmed' | 'cancelled'
     total_amount: string
     is_editable: boolean
     is_cancellable: boolean
@@ -130,7 +130,7 @@ const columns: TableColumn<Order>[] = [
 
 const stats = computed(() => [
     { label: 'Total orders', value: total.value },
-    { label: 'Pending', value: orders.value.filter((o) => o.status === 'pending' || o.status === 'needs_confirmation').length },
+    { label: 'Pending', value: orders.value.filter((o) => o.status === 'pending').length },
     { label: 'Confirmed', value: orders.value.filter((o) => o.status === 'confirmed').length }
 ])
 

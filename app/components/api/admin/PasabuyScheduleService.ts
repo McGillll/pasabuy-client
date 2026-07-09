@@ -102,7 +102,7 @@ class PasabuyScheduleService extends BaseAPIService {
      * Sets the seller's in-store actual price + product status for one schedule product.
      * FormData fields: actual_price (numeric string, required unless product_status is out_of_stock),
      * product_status ('none'|'b1t1'|'out_of_stock', required).
-     * Response: `{ schedule_product: ScheduleProduct, summary: { auto_applied, needs_confirmation, bonus_applied } }`.
+     * Response: `{ schedule_product: ScheduleProduct, summary: { auto_applied, bonus_applied, out_of_stock } }`.
      */
     async confirmProductPrice(uuid: string, scheduleProductUuid: string, payload: ConfirmPricePayload): Promise<any> {
         const formData = new FormData()

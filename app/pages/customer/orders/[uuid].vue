@@ -77,14 +77,14 @@ interface OrderItem {
     estimated_price: string
     actual_price: string | null
     is_bonus: boolean
-    confirmation_status: 'none' | 'pending' | 'accepted' | 'removed' | 'out_of_stock'
+    is_out_of_stock: boolean
     quantity: number
     subtotal: string
 }
 
 interface Order {
     uuid: string
-    status: 'pending' | 'needs_confirmation' | 'confirmed' | 'cancelled'
+    status: 'pending' | 'confirmed' | 'cancelled'
     total_amount: string
     is_editable: boolean
     is_cancellable: boolean

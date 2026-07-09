@@ -187,9 +187,6 @@
                                         Cancel
                                     </UButton>
                                 </template>
-                                <span v-else-if="row.original.status === 'needs_confirmation'" class="text-xs text-dimmed">
-                                    Waiting on customer
-                                </span>
                                 <UButton
                                     icon="i-lucide-eye"
                                     size="xs"
@@ -336,14 +333,8 @@
                                 <div class="flex flex-wrap items-center gap-2">
                                     <p class="font-medium text-highlighted">{{ group.item.product_name }}</p>
                                     <UBadge v-if="group.bonus" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
-                                    <UBadge v-else-if="group.item.confirmation_status === 'pending'" color="warning" variant="subtle" size="sm">
-                                        Needs confirmation
-                                    </UBadge>
-                                    <UBadge v-else-if="group.item.confirmation_status === 'out_of_stock'" color="error" variant="subtle" size="sm">
+                                    <UBadge v-else-if="group.item.is_out_of_stock" color="error" variant="subtle" size="sm">
                                         Out of stock
-                                    </UBadge>
-                                    <UBadge v-else-if="group.item.confirmation_status === 'removed'" color="error" variant="subtle" size="sm">
-                                        Removed
                                     </UBadge>
                                 </div>
                                 <p class="mt-0.5 text-sm text-muted">₱{{ group.item.actual_price ?? group.item.estimated_price }} × {{ group.item.quantity }}</p>
@@ -400,7 +391,7 @@ const summary = ref<ScheduleSummaryItem[]>([])
 const loading = ref(true)
 
 const pendingOrderCount = computed(() =>
-    orders.value.filter((o) => o.status === 'pending' || o.status === 'needs_confirmation').length
+    orders.value.filter((o) => o.status === 'pending').length
 )
 const isClosed = computed(() => schedule.value?.status === 'closed')
 const isFinished = computed(() => schedule.value?.status === 'finished')
@@ -523,9 +514,10 @@ async function confirmSelectedPrice() {
         const sp = schedule.value?.products.find((p) => p.uuid === scheduleProduct.uuid)
         if (sp) Object.assign(sp, updated)
 
-        const priceSummary = response.data.summary as { auto_applied: number, needs_confirmation: number, bonus_applied: number }
-        const parts = [`${priceSummary.auto_applied} auto-updated`, `${priceSummary.needs_confirmation} need customer confirmation`]
+        const priceSummary = response.data.summary as { auto_applied: number, bonus_applied: number, out_of_stock: number }
+        const parts = [`${priceSummary.auto_applied} auto-updated`]
         if (priceSummary.bonus_applied > 0) parts.push(`${priceSummary.bonus_applied} got a B1T1 bonus`)
+        if (priceSummary.out_of_stock > 0) parts.push(`${priceSummary.out_of_stock} out of stock`)
 
         toast.add({ title: 'Price confirmed', description: parts.join(', '), color: 'success' })
         await Promise.all([refreshOrders(), refreshSummary()])

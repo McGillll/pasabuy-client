@@ -105,28 +105,6 @@
                                     <p v-if="quantities[product.uuid]" class="text-sm font-medium text-primary">
                                         Subtotal: ₱{{ (Number(product.default_price) * quantities[product.uuid]!).toFixed(2) }}
                                     </p>
-
-                                    <div v-if="quantities[product.uuid]" class="mt-2 flex flex-wrap items-center gap-2">
-                                        <UCheckbox
-                                            v-model="getPreference(product.uuid).auto_buy_if_under_max"
-                                            label="Auto-buy if under my max price"
-                                            size="sm"
-                                        />
-                                        <UInput
-                                            v-if="getPreference(product.uuid).auto_buy_if_under_max"
-                                            v-model.number="getPreference(product.uuid).max_price"
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            placeholder="Max price"
-                                            size="sm"
-                                            class="w-28"
-                                        >
-                                            <template #leading>
-                                                <span class="text-xs text-dimmed">₱</span>
-                                            </template>
-                                        </UInput>
-                                    </div>
                                 </div>
 
                                 <div class="flex shrink-0 items-center gap-2">
@@ -238,16 +216,14 @@ interface MyOrderItem {
     estimated_price: string
     actual_price: string | null
     is_bonus: boolean
-    confirmation_status: 'none' | 'pending' | 'accepted' | 'removed' | 'out_of_stock'
-    max_price: string | null
-    auto_buy_if_under_max: boolean
+    is_out_of_stock: boolean
     quantity: number
     subtotal: string
 }
 
 interface MyOrder {
     uuid: string
-    status: 'pending' | 'needs_confirmation' | 'confirmed' | 'cancelled'
+    status: 'pending' | 'confirmed' | 'cancelled'
     total_amount: string
     is_editable: boolean
     is_cancellable: boolean
@@ -268,16 +244,6 @@ const productSearch = ref('')
 
 const quantities = ref<Record<string, number>>({})
 
-interface ItemPreference {
-    max_price: number | null
-    auto_buy_if_under_max: boolean
-}
-
-const preferences = ref<Record<string, ItemPreference>>({})
-
-function getPreference(productUuid: string): ItemPreference {
-    return preferences.value[productUuid] ??= { max_price: null, auto_buy_if_under_max: false }
-}
 const submitting = ref(false)
 const submitError = ref<string | null>(null)
 const myOrder = ref<MyOrder | null>(null)
@@ -325,7 +291,6 @@ async function load() {
         catalog.value = catalogResponse.data.data
         for (const product of catalog.value) {
             quantities.value[product.uuid] = 0
-            getPreference(product.uuid)
         }
     } catch (error) {
         if (error instanceof APIError) {
@@ -385,8 +350,6 @@ function startEditOrder() {
     }
     for (const item of myOrder.value.items) {
         quantities.value[item.product_uuid] = item.quantity
-        getPreference(item.product_uuid).max_price = item.max_price !== null ? Number(item.max_price) : null
-        getPreference(item.product_uuid).auto_buy_if_under_max = item.auto_buy_if_under_max
     }
     submitError.value = null
     editingOrder.value = true
@@ -413,15 +376,7 @@ async function submitOrder() {
     try {
         const items = Object.entries(quantities.value)
             .filter(([, qty]) => qty > 0)
-            .map(([product_uuid, quantity]) => {
-                const preference = getPreference(product_uuid)
-                return {
-                    product_uuid,
-                    quantity,
-                    max_price: preference.auto_buy_if_under_max && preference.max_price !== null ? preference.max_price : undefined,
-                    auto_buy_if_under_max: preference.auto_buy_if_under_max
-                }
-            })
+            .map(([product_uuid, quantity]) => ({ product_uuid, quantity }))
 
         if (myOrder.value) {
             const response = await customerOrderService.updateMyOrder(myOrder.value.uuid, items)
