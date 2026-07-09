@@ -93,7 +93,15 @@
                                 @select="(_event, row) => openBuyersModal(row.original)"
                             >
                                 <template #product_name-cell="{ row }">
-                                    <p class="font-medium text-highlighted">{{ row.original.product_name }}</p>
+                                    <div class="flex items-center gap-2">
+                                        <p class="font-medium text-highlighted">{{ row.original.product_name }}</p>
+                                        <UBadge v-if="getScheduleProductStatus(row.original.product_uuid) === 'b1t1'" color="warning" variant="subtle" size="sm">
+                                            B1T1
+                                        </UBadge>
+                                        <UBadge v-else-if="getScheduleProductStatus(row.original.product_uuid) === 'out_of_stock'" color="error" variant="subtle" size="sm">
+                                            Out of stock
+                                        </UBadge>
+                                    </div>
                                     <p class="text-sm text-muted">{{ row.original.category_name ?? '—' }}</p>
                                 </template>
                                 <template #default_price-cell="{ row }">
@@ -129,7 +137,7 @@
                                     />
                                 </template>
                                 <template #product-cell="{ row }">
-                                    <p class="font-medium text-highlighted">{{ row.original.product_name }}</p>
+                                    <p class="font-medium text-highlighted" :class="{ 'line-through text-muted': row.original.is_checked }">{{ row.original.product_name }}</p>
                                     <p class="text-sm text-muted">{{ row.original.category_name ?? '—' }}</p>
                                 </template>
                                 <template #adjustment-cell="{ row }">
@@ -289,7 +297,10 @@
                                 class="flex items-center gap-3 rounded-lg border border-default p-3"
                             >
                                 <span class="flex-1 truncate font-medium text-highlighted">{{ editItem.product_name }}</span>
-                                <UInput v-model.number="editItem.quantity" type="number" min="1" size="sm" class="w-20" />
+                                <UBadge v-if="getScheduleProductStatus(editItem.product_uuid) === 'out_of_stock'" color="error" variant="subtle" size="sm">
+                                    Out of stock
+                                </UBadge>
+                                <UInput v-else v-model.number="editItem.quantity" type="number" min="1" size="sm" class="w-20" />
                                 <UButton
                                     icon="i-lucide-x"
                                     size="xs"
@@ -742,6 +753,10 @@ interface EditableItem {
 const editableItems = ref<EditableItem[]>([])
 const itemToAdd = ref<string | undefined>(undefined)
 const savingOrderItems = ref(false)
+
+function getScheduleProductStatus(productUuid: string) {
+    return schedule.value?.products.find((sp) => sp.product.uuid === productUuid)?.product_status
+}
 
 const addableProductOptions = computed(() => {
     const usedUuids = new Set(editableItems.value.map((item) => item.product_uuid))
