@@ -177,9 +177,7 @@
                             </NuxtLink>
                         </template>
                         <template #status-cell="{ row }">
-                            <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
-                                {{ row.original.status }}
-                            </UBadge>
+                            <OrderStatusBadge :status="row.original.status" />
                         </template>
                         <template #created_at-cell="{ row }">
                             <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>

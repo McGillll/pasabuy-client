@@ -1,5 +1,5 @@
 <template>
-    <div class="space-y-6">
+    <div class="mx-auto max-w-2xl space-y-6">
         <div v-if="loading" class="text-center text-muted">Loading…</div>
 
         <UAlert v-else-if="notFound" color="error" variant="subtle" title="Order not found" description="This order doesn't exist or isn't yours." />
@@ -43,12 +43,12 @@
                 </template>
             </UCard>
 
-            <div class="flex items-center justify-between gap-3">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <UButton color="neutral" variant="soft" icon="i-lucide-receipt" to="/customer">
                     All orders
                 </UButton>
 
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <UButton
                         v-if="order.is_editable && order.pasabuy_schedule"
                         variant="soft"

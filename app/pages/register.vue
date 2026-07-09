@@ -22,10 +22,10 @@
             <UForm :state="state" :validate="validate" class="flex flex-col gap-5" @submit="onSubmit">
                 <div class="grid grid-cols-2 gap-3">
                     <UFormField label="First name" name="first_name" required>
-                        <UInput v-model="state.first_name" size="xl" class="w-full" />
+                        <UInput v-model="state.first_name" placeholder="Jane" icon="i-lucide-user" size="xl" class="w-full" />
                     </UFormField>
                     <UFormField label="Last name" name="last_name" required>
-                        <UInput v-model="state.last_name" size="xl" class="w-full" />
+                        <UInput v-model="state.last_name" placeholder="Dela Cruz" icon="i-lucide-user" size="xl" class="w-full" />
                     </UFormField>
                 </div>
 
@@ -80,7 +80,7 @@
         </template>
 
         <template #footer>
-            <p class="mt-6 text-center text-sm text-white/60">
+            <p class="mt-6 text-center text-sm text-dimmed">
                 Already have an account?
                 <NuxtLink :to="loginLink" class="text-primary hover:underline">Sign in</NuxtLink>
             </p>

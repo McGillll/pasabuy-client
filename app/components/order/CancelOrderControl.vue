@@ -6,10 +6,10 @@
     </template>
     <template v-else>
         <span class="text-sm text-muted">Are you sure?</span>
-        <UButton color="error" size="sm" :loading="loading" @click="() => emit('confirm')">
+        <UButton color="error" :loading="loading" @click="() => emit('confirm')">
             Yes, cancel
         </UButton>
-        <UButton color="neutral" variant="ghost" size="sm" @click="() => { confirming = false }">
+        <UButton color="neutral" variant="soft" @click="() => { confirming = false }">
             No
         </UButton>
     </template>

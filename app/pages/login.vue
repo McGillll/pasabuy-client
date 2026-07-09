@@ -54,7 +54,7 @@
         </UForm>
 
         <template #footer>
-            <p class="mt-6 text-center text-xs text-white/40">
+            <p class="mt-6 text-center text-xs text-dimmed">
                 &copy; {{ currentYear }} Pasabuy. All rights reserved.
             </p>
         </template>

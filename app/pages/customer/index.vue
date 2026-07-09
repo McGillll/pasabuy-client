@@ -151,7 +151,8 @@ const columns: TableColumn<Order>[] = [
 const stats = computed(() => [
     { label: 'Total orders', value: total.value },
     { label: 'Pending', value: orders.value.filter((o) => o.status === 'pending').length },
-    { label: 'Confirmed', value: orders.value.filter((o) => o.status === 'confirmed').length }
+    { label: 'Confirmed', value: orders.value.filter((o) => o.status === 'confirmed').length },
+    { label: 'Cancelled', value: orders.value.filter((o) => o.status === 'cancelled').length }
 ])
 
 async function loadOrders() {

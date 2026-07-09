@@ -1,6 +1,7 @@
 <template>
-    <div class="min-h-screen bg-default px-4 py-8" :class="{ 'pb-32': showBottomBar }">
-        <div class="mx-auto max-w-2xl space-y-6">
+    <div class="min-h-screen bg-default px-4 py-8" :class="{ 'pb-32 lg:pb-8': showBottomBar }">
+        <div class="mx-auto max-w-2xl space-y-6 lg:max-w-5xl lg:grid lg:grid-cols-[1fr_320px] lg:items-start lg:gap-8 lg:space-y-0">
+        <div class="space-y-6">
             <div v-if="loading" class="text-center text-muted">Loading…</div>
 
             <UAlert v-else-if="notFound" color="error" variant="subtle" title="Pasabuy not found" description="This link doesn't point to a valid pasabuy." />
@@ -10,6 +11,16 @@
                     <div>
                         <h1 class="text-2xl font-semibold text-highlighted">{{ schedule.title }}</h1>
                         <p v-if="schedule.description" class="mt-1 text-muted">{{ schedule.description }}</p>
+                        <div v-if="schedule.cutoff_at || schedule.pasabuy_schedule_date" class="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted">
+                            <span v-if="schedule.cutoff_at" class="inline-flex items-center gap-1.5">
+                                <UIcon name="i-lucide-alarm-clock" class="size-4 text-dimmed" />
+                                Order by {{ formatDate(schedule.cutoff_at) }}
+                            </span>
+                            <span v-if="schedule.pasabuy_schedule_date" class="inline-flex items-center gap-1.5">
+                                <UIcon name="i-lucide-truck" class="size-4 text-dimmed" />
+                                Delivery on {{ formatDate(schedule.pasabuy_schedule_date) }}
+                            </span>
+                        </div>
                     </div>
                     <UButton v-if="isLoggedIn" size="sm" color="neutral" variant="soft" icon="i-lucide-receipt" to="/customer">
                         My Orders
@@ -117,6 +128,7 @@
                                             size="xs"
                                             color="neutral"
                                             variant="soft"
+                                            :aria-label="`Decrease quantity for ${product.name}`"
                                             :disabled="!schedule.is_open || !quantities[product.uuid]"
                                             @click="decrement(product)"
                                         />
@@ -126,6 +138,7 @@
                                             size="xs"
                                             color="neutral"
                                             variant="soft"
+                                            :aria-label="`Increase quantity for ${product.name}`"
                                             :disabled="!schedule.is_open"
                                             @click="increment(product)"
                                         />
@@ -146,7 +159,48 @@
             </template>
         </div>
 
-        <div v-if="showBottomBar" class="fixed inset-x-0 bottom-0 border-t border-default bg-default/95 backdrop-blur-sm">
+        <aside v-if="showBottomBar" class="hidden lg:sticky lg:top-8 lg:block">
+            <UCard>
+                <template #header>
+                    <h2 class="font-medium">Order summary</h2>
+                </template>
+
+                <template v-if="!isLoggedIn">
+                    <p class="text-sm text-muted">Log in to place an order.</p>
+                    <div class="mt-3 flex gap-2">
+                        <UButton color="neutral" variant="soft" :to="`/register?redirect=${encodeURIComponent(route.fullPath)}`">
+                            Sign up
+                        </UButton>
+                        <UButton :to="`/customer/login?redirect=${encodeURIComponent(route.fullPath)}`">
+                            Log in
+                        </UButton>
+                    </div>
+                </template>
+
+                <template v-else-if="!isApproved">
+                    <p class="text-sm text-warning">Your account is pending admin approval before you can order.</p>
+                </template>
+
+                <template v-else>
+                    <UAlert v-if="submitError" color="error" variant="subtle" :title="submitError" class="mb-3" />
+                    <p class="text-xs text-muted">{{ itemCount }} item{{ itemCount === 1 ? '' : 's' }}</p>
+                    <p class="text-2xl font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
+                    <UButton
+                        block
+                        class="mt-3"
+                        size="lg"
+                        :loading="submitting"
+                        :disabled="!schedule?.is_open || !hasItems"
+                        @click="submitOrder"
+                    >
+                        {{ editingOrder ? 'Update order' : 'Place order' }}
+                    </UButton>
+                </template>
+            </UCard>
+        </aside>
+        </div>
+
+        <div v-if="showBottomBar" class="fixed inset-x-0 bottom-0 border-t border-default bg-default/95 backdrop-blur-sm lg:hidden">
             <div class="mx-auto max-w-2xl space-y-3 px-4 py-3">
                 <template v-if="!isLoggedIn">
                     <div class="flex items-center justify-between gap-3">

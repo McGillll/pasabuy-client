@@ -1,5 +1,21 @@
 <template>
-    <div v-if="schedule" class="space-y-6">
+    <div v-if="loading" class="space-y-6">
+        <USkeleton class="h-7 w-64" />
+        <USkeleton class="h-10 w-full max-w-md" />
+        <USkeleton class="h-10 w-full" />
+        <USkeleton class="h-64 w-full" />
+    </div>
+
+    <UAlert
+        v-else-if="!schedule"
+        color="neutral"
+        variant="subtle"
+        icon="i-lucide-search-x"
+        title="Schedule not found"
+        description="This schedule may have been deleted, or the link is incorrect."
+    />
+
+    <div v-else class="space-y-6">
         <div>
             <h1 class="text-xl font-semibold text-highlighted">{{ schedule.title }}</h1>
             <div class="mt-2 flex items-center gap-2">
@@ -208,9 +224,7 @@
                     <div class="hidden sm:block">
                         <UTable :data="orders" :columns="orderColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
                             <template #status-cell="{ row }">
-                                <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
-                                    {{ row.original.status }}
-                                </UBadge>
+                                <OrderStatusBadge :status="row.original.status" />
                             </template>
                             <template #actions-cell="{ row }">
                                 <div class="flex items-center justify-end gap-2">
@@ -265,9 +279,7 @@
                             </template>
                             <template #meta>
                                 <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
-                                <UBadge :color="orderStatusColor[order.status]" variant="subtle">
-                                    {{ order.status }}
-                                </UBadge>
+                                <OrderStatusBadge :status="order.status" />
                             </template>
                             <template #actions>
                                 <template v-if="order.status === 'pending'">
@@ -307,9 +319,7 @@
                     <div class="hidden sm:block">
                         <UTable :data="buyers" :columns="buyerColumns" :loading="buyersLoading">
                             <template #status-cell="{ row }">
-                                <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
-                                    {{ row.original.status }}
-                                </UBadge>
+                                <OrderStatusBadge :status="row.original.status" />
                             </template>
                             <template #empty>
                                 <TableEmptyState icon="i-lucide-users" message="No buyers yet." padding="py-6" />
@@ -324,9 +334,7 @@
                             <template #meta>
                                 <span class="text-muted">Qty {{ buyer.quantity }}</span>
                                 <span class="font-medium text-highlighted">₱{{ buyer.subtotal }}</span>
-                                <UBadge :color="orderStatusColor[buyer.status]" variant="subtle">
-                                    {{ buyer.status }}
-                                </UBadge>
+                                <OrderStatusBadge :status="buyer.status" />
                             </template>
                         </ListCard>
                         <TableEmptyState v-if="buyers.length === 0" icon="i-lucide-users" message="No buyers yet." padding="py-6" />
@@ -380,9 +388,7 @@
                             <p class="font-medium text-highlighted">{{ viewingOrder.customer_name }}</p>
                             <p class="text-sm text-muted">{{ viewingOrder.customer_contact }}</p>
                         </div>
-                        <UBadge :color="orderStatusColor[viewingOrder.status]" variant="subtle">
-                            {{ viewingOrder.status }}
-                        </UBadge>
+                        <OrderStatusBadge :status="viewingOrder.status" />
                     </div>
 
                     <div class="divide-y divide-default rounded-lg border border-default">

@@ -1,7 +1,7 @@
 <template>
     <div class="min-h-screen bg-default">
         <header class="border-b border-default">
-            <div class="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
+            <div class="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
                 <div class="flex items-center gap-2">
                     <div class="flex items-center justify-center size-8 rounded-lg bg-primary text-inverted font-bold">
                         P
@@ -17,7 +17,7 @@
             </div>
         </header>
 
-        <main class="mx-auto max-w-2xl px-4 py-6">
+        <main class="mx-auto max-w-4xl px-4 py-6">
             <slot />
         </main>
     </div>

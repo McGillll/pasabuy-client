@@ -54,12 +54,12 @@
         </UForm>
 
         <template #footer>
-            <p class="mt-6 text-center text-sm text-white/60">
+            <p class="mt-6 text-center text-sm text-dimmed">
                 New customer?
                 <NuxtLink :to="registerLink" class="text-primary hover:underline">Create an account</NuxtLink>
             </p>
 
-            <p class="mt-4 text-center text-xs text-white/40">
+            <p class="mt-4 text-center text-xs text-dimmed">
                 &copy; {{ currentYear }} Pasabuy. All rights reserved.
             </p>
         </template>

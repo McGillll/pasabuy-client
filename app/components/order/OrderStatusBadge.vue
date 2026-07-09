@@ -1,5 +1,5 @@
 <template>
-    <UBadge :color="customerOrderStatusColor[status]" variant="subtle">{{ customerOrderStatusLabel[status] }}</UBadge>
+    <StatusBadge :color="customerOrderStatusColor[status]" :label="customerOrderStatusLabel[status]" />
 </template>
 
 <script setup lang="ts">

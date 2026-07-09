@@ -122,7 +122,7 @@
                     class="flex items-center justify-between py-3 first:pt-0 last:pb-0 hover:text-highlighted"
                 >
                     <span class="text-sm">{{ schedule.title }}</span>
-                    <UBadge :color="scheduleStatusColor[schedule.status]" variant="subtle">{{ schedule.status }}</UBadge>
+                    <StatusBadge :color="scheduleStatusColor[schedule.status]" :label="schedule.status" />
                 </NuxtLink>
                 <p v-if="!loading && recentSchedules.length === 0" class="text-sm text-muted py-6 text-center">
                     No schedules yet.
