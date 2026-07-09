@@ -134,6 +134,20 @@
                 </UTable>
             </template>
         </UModal>
+
+        <UModal v-model:open="confirmDialog.open" :title="confirmDialog.title">
+            <template #body>
+                <p class="text-sm text-muted">{{ confirmDialog.description }}</p>
+                <div class="mt-4 flex justify-end gap-2">
+                    <UButton color="neutral" variant="soft" @click="confirmDialog.open = false">
+                        Cancel
+                    </UButton>
+                    <UButton :color="confirmDialog.color" :loading="actingOn !== null" @click="confirmDialogAccept">
+                        {{ confirmDialog.confirmLabel }}
+                    </UButton>
+                </div>
+            </template>
+        </UModal>
     </div>
 </template>
 
@@ -304,21 +318,52 @@ async function approveCustomer(customer: Customer) {
     }
 }
 
-async function revokeCustomer(customer: Customer) {
-    if (!confirm(`Revoke approval for ${customer.first_name} ${customer.last_name}?`)) return
+const confirmDialog = reactive({
+    open: false,
+    title: '',
+    description: '',
+    color: 'primary' as 'primary' | 'success' | 'error',
+    confirmLabel: 'Confirm',
+    action: null as (() => Promise<void>) | null
+})
 
-    actingOn.value = customer.uuid
-    try {
-        await customerService.rejectCustomer(customer.uuid)
-        approvedCustomers.value = approvedCustomers.value.filter((c) => c.uuid !== customer.uuid)
-        approvedTotal.value = Math.max(0, approvedTotal.value - 1)
-        await loadPending()
-        toast.add({ title: 'Approval revoked', color: 'success' })
-    } catch (error) {
-        toast.add({ title: 'Update failed', description: (error as APIError).message, color: 'error' })
-    } finally {
-        actingOn.value = null
-    }
+function askConfirm(options: { title: string, description: string, color?: 'primary' | 'success' | 'error', confirmLabel?: string, action: () => Promise<void> }) {
+    confirmDialog.title = options.title
+    confirmDialog.description = options.description
+    confirmDialog.color = options.color ?? 'primary'
+    confirmDialog.confirmLabel = options.confirmLabel ?? 'Confirm'
+    confirmDialog.action = options.action
+    confirmDialog.open = true
+}
+
+async function confirmDialogAccept() {
+    const action = confirmDialog.action
+    if (!action) return
+    await action()
+    confirmDialog.open = false
+}
+
+function revokeCustomer(customer: Customer) {
+    askConfirm({
+        title: 'Revoke approval?',
+        description: `Revoke approval for ${customer.first_name} ${customer.last_name}?`,
+        confirmLabel: 'Revoke',
+        color: 'error',
+        action: async () => {
+            actingOn.value = customer.uuid
+            try {
+                await customerService.rejectCustomer(customer.uuid)
+                approvedCustomers.value = approvedCustomers.value.filter((c) => c.uuid !== customer.uuid)
+                approvedTotal.value = Math.max(0, approvedTotal.value - 1)
+                await loadPending()
+                toast.add({ title: 'Approval revoked', color: 'success' })
+            } catch (error) {
+                toast.add({ title: 'Update failed', description: (error as APIError).message, color: 'error' })
+            } finally {
+                actingOn.value = null
+            }
+        }
+    })
 }
 
 onMounted(() => {

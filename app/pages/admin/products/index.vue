@@ -215,6 +215,20 @@
                 </form>
             </template>
         </UModal>
+
+        <UModal v-model:open="confirmDialog.open" :title="confirmDialog.title">
+            <template #body>
+                <p class="text-sm text-muted">{{ confirmDialog.description }}</p>
+                <div class="mt-4 flex justify-end gap-2">
+                    <UButton color="neutral" variant="soft" @click="confirmDialog.open = false">
+                        Cancel
+                    </UButton>
+                    <UButton :color="confirmDialog.color" :loading="confirming" @click="confirmDialogAccept">
+                        {{ confirmDialog.confirmLabel }}
+                    </UButton>
+                </div>
+            </template>
+        </UModal>
     </div>
 </template>
 
@@ -377,16 +391,50 @@ async function onSaveProduct() {
     }
 }
 
-async function onDeleteProduct(product: Product) {
-    if (!confirm(`Delete "${product.name}"?`)) return
+const confirming = ref(false)
 
+const confirmDialog = reactive({
+    open: false,
+    title: '',
+    description: '',
+    color: 'primary' as 'primary' | 'success' | 'error',
+    confirmLabel: 'Confirm',
+    action: null as (() => Promise<void>) | null
+})
+
+function askConfirm(options: { title: string, description: string, color?: 'primary' | 'success' | 'error', confirmLabel?: string, action: () => Promise<void> }) {
+    confirmDialog.title = options.title
+    confirmDialog.description = options.description
+    confirmDialog.color = options.color ?? 'primary'
+    confirmDialog.confirmLabel = options.confirmLabel ?? 'Confirm'
+    confirmDialog.action = options.action
+    confirmDialog.open = true
+}
+
+async function confirmDialogAccept() {
+    const action = confirmDialog.action
+    if (!action) return
+    confirming.value = true
     try {
-        await productService.deleteProduct(product.uuid)
-        toast.add({ title: 'Product deleted', color: 'success' })
-        await loadProducts()
-    } catch (error) {
-        toast.add({ title: 'Delete failed', description: (error as APIError).message, color: 'error' })
+        await action()
+    } finally {
+        confirming.value = false
     }
+    confirmDialog.open = false
+}
+
+function onDeleteProduct(product: Product) {
+    askConfirm({
+        title: 'Delete product?',
+        description: `Delete "${product.name}"?`,
+        confirmLabel: 'Delete',
+        color: 'error',
+        action: async () => {
+            await productService.deleteProduct(product.uuid)
+            toast.add({ title: 'Product deleted', color: 'success' })
+            await loadProducts()
+        }
+    })
 }
 
 // ---- Categories ----
@@ -473,17 +521,19 @@ async function onSaveCategory() {
     }
 }
 
-async function onDeleteCategory(category: Category) {
-    if (!confirm(`Delete "${category.name}"?`)) return
-
-    try {
-        await productCategoryService.deleteCategory(category.uuid)
-        toast.add({ title: 'Category deleted', color: 'success' })
-        await loadCategories()
-        await loadCategoryOptions()
-    } catch (error) {
-        toast.add({ title: 'Delete failed', description: (error as APIError).message, color: 'error' })
-    }
+function onDeleteCategory(category: Category) {
+    askConfirm({
+        title: 'Delete category?',
+        description: `Delete "${category.name}"?`,
+        confirmLabel: 'Delete',
+        color: 'error',
+        action: async () => {
+            await productCategoryService.deleteCategory(category.uuid)
+            toast.add({ title: 'Category deleted', color: 'success' })
+            await loadCategories()
+            await loadCategoryOptions()
+        }
+    })
 }
 
 onMounted(() => {
