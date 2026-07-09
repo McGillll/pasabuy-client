@@ -4,7 +4,7 @@ export interface SchedulePayload {
     title: string
     description?: string
     cutoff_at?: string | null
-    pasabuy_schedule_date?: string | null
+    pasabuy_schedule_date: string
     status?: 'open' | 'closed' | 'finished'
 }
 
@@ -44,7 +44,7 @@ class PasabuyScheduleService extends BaseAPIService {
     /**
      * POST /api/admin/pasabuy-schedules
      * FormData fields: title (string, required), description (string, optional),
-     * cutoff_at (string, optional), pasabuy_schedule_date (date string, optional — the date
+     * cutoff_at (string, optional), pasabuy_schedule_date (date string, required — the date
      * the seller physically goes to the store, distinct from cutoff_at and created_at),
      * status ('open'|'closed'|'finished', optional).
      * Response: created `Schedule`.
@@ -196,7 +196,7 @@ class PasabuyScheduleService extends BaseAPIService {
         formData.append('title', payload.title)
         if (payload.description) formData.append('description', payload.description)
         if (payload.cutoff_at) formData.append('cutoff_at', payload.cutoff_at)
-        if (payload.pasabuy_schedule_date) formData.append('pasabuy_schedule_date', payload.pasabuy_schedule_date)
+        formData.append('pasabuy_schedule_date', payload.pasabuy_schedule_date)
         if (payload.status) formData.append('status', payload.status)
 
         return formData

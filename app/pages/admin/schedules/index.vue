@@ -95,8 +95,8 @@
                     <UFormField label="Description">
                         <UTextarea v-model="form.description" class="w-full" />
                     </UFormField>
-                    <UFormField label="Pasabuy date" hint="The date you'll go to the store">
-                        <UInput v-model="form.pasabuy_schedule_date" type="date" class="w-full" />
+                    <UFormField label="Pasabuy date" hint="The date you'll go to the store" required>
+                        <UInput v-model="form.pasabuy_schedule_date" type="date" required class="w-full" />
                     </UFormField>
                     <UButton type="submit" block :loading="saving">Create</UButton>
                 </form>
@@ -217,12 +217,17 @@ function openCreateModal() {
 }
 
 async function onCreate() {
+    if (!form.pasabuy_schedule_date) {
+        toast.add({ title: 'Pasabuy date is required', color: 'error' })
+        return
+    }
+
     saving.value = true
     try {
         const response = await pasabuyScheduleService.createSchedule({
             title: form.title,
             description: form.description,
-            pasabuy_schedule_date: form.pasabuy_schedule_date || null
+            pasabuy_schedule_date: form.pasabuy_schedule_date
         })
         isModalOpen.value = false
         await navigateTo(`/admin/schedules/${response.data.uuid}`)
@@ -284,7 +289,7 @@ function closeSchedule(scheduleRow: Schedule) {
                     title: detail.data.title,
                     description: detail.data.description,
                     cutoff_at: detail.data.cutoff_at,
-                    pasabuy_schedule_date: detail.data.pasabuy_schedule_date,
+                    pasabuy_schedule_date: detail.data.pasabuy_schedule_date ?? detail.data.created_at.slice(0, 10),
                     status: 'closed'
                 })
                 scheduleRow.status = 'closed'

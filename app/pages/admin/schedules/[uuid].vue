@@ -75,8 +75,8 @@
                         <UFormField label="Cutoff (optional)">
                             <UInput v-model="detailsForm.cutoffAt" type="datetime-local" :disabled="isLocked" class="w-full" />
                         </UFormField>
-                        <UFormField label="Pasabuy date" hint="The date you'll go to the store">
-                            <UInput v-model="detailsForm.pasabuyScheduleDate" type="date" :disabled="isLocked" class="w-full" />
+                        <UFormField label="Pasabuy date" hint="The date you'll go to the store" required>
+                            <UInput v-model="detailsForm.pasabuyScheduleDate" type="date" required :disabled="isLocked" class="w-full" />
                         </UFormField>
                         <UButton type="submit" :loading="savingDetails" :disabled="isLocked">
                             Save details
@@ -622,13 +622,18 @@ async function refreshSummary() {
 }
 
 async function saveDetails() {
+    if (!detailsForm.pasabuyScheduleDate) {
+        toast.add({ title: 'Pasabuy date is required', color: 'error' })
+        return
+    }
+
     savingDetails.value = true
     try {
         const response = await pasabuyScheduleService.updateSchedule(uuid, {
             title: detailsForm.title,
             description: detailsForm.description,
             cutoff_at: detailsForm.cutoffAt || null,
-            pasabuy_schedule_date: detailsForm.pasabuyScheduleDate || null
+            pasabuy_schedule_date: detailsForm.pasabuyScheduleDate
         })
         schedule.value = { ...schedule.value!, ...response.data }
         toast.add({ title: 'Schedule updated', color: 'success' })
