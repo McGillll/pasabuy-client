@@ -24,7 +24,7 @@
                     description="Ordering is no longer available for this pasabuy."
                 />
 
-                <UCard v-if="myOrder && !editingOrder && !orderResult">
+                <UCard v-if="myOrder && !editingOrder">
                     <template #header>
                         <div class="flex items-center justify-between">
                             <h2 class="font-medium">Your order</h2>
@@ -49,6 +49,12 @@
                                     <div class="flex items-center gap-2">
                                         <p class="font-medium text-highlighted">{{ item.product_name }}</p>
                                         <UBadge v-if="item.is_bonus" color="success" variant="subtle" size="sm">FREE</UBadge>
+                                        <UBadge v-else-if="item.confirmation_status === 'out_of_stock'" color="error" variant="subtle" size="sm">
+                                            Out of stock
+                                        </UBadge>
+                                        <UBadge v-else-if="item.confirmation_status === 'removed'" color="error" variant="subtle" size="sm">
+                                            Removed
+                                        </UBadge>
                                     </div>
                                     <p class="text-sm text-muted">₱{{ item.actual_price ?? item.estimated_price }} × {{ item.quantity }}</p>
                                 </div>
@@ -57,12 +63,10 @@
 
                             <div v-if="item.confirmation_status === 'pending'" class="mt-3 rounded-lg bg-warning/10 p-3">
                                 <p class="text-sm text-warning">
-                                    <template v-if="item.actual_price === null">Out of stock in-store.</template>
-                                    <template v-else>New price: ₱{{ item.actual_price }} (was ₱{{ item.estimated_price }})</template>
+                                    New price: ₱{{ item.actual_price }} (was ₱{{ item.estimated_price }})
                                 </p>
                                 <div class="mt-2 flex flex-wrap items-center gap-2">
                                     <UInput
-                                        v-if="item.actual_price !== null"
                                         v-model.number="resolveQuantities[item.uuid]"
                                         type="number"
                                         min="1"
@@ -70,7 +74,6 @@
                                         class="w-20"
                                     />
                                     <UButton
-                                        v-if="item.actual_price !== null"
                                         size="xs"
                                         color="success"
                                         :loading="resolvingItem === item.uuid"
@@ -121,7 +124,7 @@
                     </template>
                 </UCard>
 
-                <template v-if="(!myOrder || editingOrder) && !orderResult">
+                <template v-if="!myOrder || editingOrder">
                     <UInput
                         v-if="catalog.length > 5"
                         v-model="productSearch"
@@ -227,19 +230,6 @@
                     </UCard>
                 </template>
 
-                <UCard v-if="orderResult">
-                    <div class="flex flex-col items-center gap-3 py-6 text-center">
-                        <div class="flex size-12 items-center justify-center rounded-full bg-success/10 text-success">
-                            <UIcon name="i-lucide-check" class="size-6" />
-                        </div>
-                        <div>
-                            <p class="font-medium text-highlighted">Order placed!</p>
-                            <p class="mt-1 text-sm text-muted">
-                                Thanks, {{ orderResult.customer_name }}! Your total is ₱{{ orderResult.total_amount }}. The seller will reach out to confirm.
-                            </p>
-                        </div>
-                    </div>
-                </UCard>
             </template>
         </div>
 
@@ -306,12 +296,6 @@ import type { Schedule } from '@/types/Schedule'
 
 definePageMeta({ layout: false })
 
-interface OrderResult {
-    uuid: string
-    customer_name: string
-    total_amount: string
-}
-
 interface MyOrderItem {
     uuid: string
     product_uuid: string
@@ -319,7 +303,7 @@ interface MyOrderItem {
     estimated_price: string
     actual_price: string | null
     is_bonus: boolean
-    confirmation_status: 'none' | 'pending' | 'accepted' | 'removed'
+    confirmation_status: 'none' | 'pending' | 'accepted' | 'removed' | 'out_of_stock'
     max_price: string | null
     auto_buy_if_under_max: boolean
     quantity: number
@@ -362,8 +346,6 @@ function getPreference(productUuid: string): ItemPreference {
 }
 const submitting = ref(false)
 const submitError = ref<string | null>(null)
-const orderResult = ref<OrderResult | null>(null)
-
 const myOrder = ref<MyOrder | null>(null)
 const editingOrder = ref(false)
 
@@ -377,7 +359,7 @@ const orderStatusColor: Record<string, 'neutral' | 'success' | 'error' | 'warnin
 const isLoggedIn = computed(() => !!user.value)
 const isApproved = computed(() => user.value?.is_approved === true)
 
-const showBottomBar = computed(() => !!schedule.value && !orderResult.value && (!myOrder.value || editingOrder.value))
+const showBottomBar = computed(() => !!schedule.value && (!myOrder.value || editingOrder.value))
 
 const filteredProducts = computed(() => {
     const query = productSearch.value.trim().toLowerCase()
@@ -563,7 +545,7 @@ async function submitOrder() {
             toast.add({ title: 'Order updated', color: 'success' })
         } else {
             const response = await customerOrderService.placeOrder(uuid, items)
-            orderResult.value = response.data
+            await navigateTo(`/customer/orders/${response.data.uuid}?placed=1`)
         }
     } catch (error) {
         submitError.value = error instanceof APIError ? error.message : 'Something went wrong. Please try again.'

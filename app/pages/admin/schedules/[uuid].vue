@@ -339,6 +339,9 @@
                                     <UBadge v-else-if="item.confirmation_status === 'pending'" color="warning" variant="subtle" size="sm">
                                         Needs confirmation
                                     </UBadge>
+                                    <UBadge v-else-if="item.confirmation_status === 'out_of_stock'" color="error" variant="subtle" size="sm">
+                                        Out of stock
+                                    </UBadge>
                                     <UBadge v-else-if="item.confirmation_status === 'removed'" color="error" variant="subtle" size="sm">
                                         Removed
                                     </UBadge>
@@ -355,6 +358,20 @@
                     </div>
 
                     <p class="text-xs text-dimmed">Placed {{ formatDate(viewingOrder.created_at) }}</p>
+                </div>
+            </template>
+        </UModal>
+
+        <UModal v-model:open="confirmDialog.open" :title="confirmDialog.title">
+            <template #body>
+                <p class="text-sm text-muted">{{ confirmDialog.description }}</p>
+                <div class="mt-4 flex justify-end gap-2">
+                    <UButton color="neutral" variant="soft" @click="confirmDialog.open = false">
+                        Cancel
+                    </UButton>
+                    <UButton :color="confirmDialog.color" :loading="changingStatus" @click="confirmDialogAccept">
+                        {{ confirmDialog.confirmLabel }}
+                    </UButton>
                 </div>
             </template>
         </UModal>
@@ -605,50 +622,91 @@ async function saveDetails() {
     }
 }
 
-async function closeSchedule() {
-    if (!confirm('Close this schedule? Customers will no longer be able to order or edit their orders.')) return
+const confirmDialog = reactive({
+    open: false,
+    title: '',
+    description: '',
+    color: 'primary' as 'primary' | 'success' | 'error',
+    confirmLabel: 'Confirm',
+    action: null as (() => Promise<void>) | null
+})
 
-    changingStatus.value = true
-    try {
-        const response = await pasabuyScheduleService.closeSchedule(uuid)
-        schedule.value = { ...schedule.value!, ...response.data }
-        toast.add({ title: 'Schedule closed', color: 'success' })
-        await loadChecklist()
-    } catch (error) {
-        toast.add({ title: 'Failed to close schedule', description: (error as APIError).message, color: 'error' })
-    } finally {
-        changingStatus.value = false
-    }
+function askConfirm(options: { title: string, description: string, color?: 'primary' | 'success' | 'error', confirmLabel?: string, action: () => Promise<void> }) {
+    confirmDialog.title = options.title
+    confirmDialog.description = options.description
+    confirmDialog.color = options.color ?? 'primary'
+    confirmDialog.confirmLabel = options.confirmLabel ?? 'Confirm'
+    confirmDialog.action = options.action
+    confirmDialog.open = true
 }
 
-async function reopenSchedule() {
-    if (!confirm('Reopen this schedule for customer orders?')) return
-
-    changingStatus.value = true
-    try {
-        const response = await pasabuyScheduleService.reopenSchedule(uuid)
-        schedule.value = { ...schedule.value!, ...response.data }
-        toast.add({ title: 'Schedule reopened', color: 'success' })
-    } catch (error) {
-        toast.add({ title: 'Failed to reopen schedule', description: (error as APIError).message, color: 'error' })
-    } finally {
-        changingStatus.value = false
-    }
+async function confirmDialogAccept() {
+    const action = confirmDialog.action
+    if (!action) return
+    await action()
+    confirmDialog.open = false
 }
 
-async function finishSchedule() {
-    if (!confirm('Mark this schedule as finished? This cannot be undone.')) return
+function closeSchedule() {
+    askConfirm({
+        title: 'Close schedule?',
+        description: 'Customers will no longer be able to order or edit their orders.',
+        confirmLabel: 'Close schedule',
+        action: async () => {
+            changingStatus.value = true
+            try {
+                const response = await pasabuyScheduleService.closeSchedule(uuid)
+                schedule.value = { ...schedule.value!, ...response.data }
+                toast.add({ title: 'Schedule closed', color: 'success' })
+                await loadChecklist()
+            } catch (error) {
+                toast.add({ title: 'Failed to close schedule', description: (error as APIError).message, color: 'error' })
+            } finally {
+                changingStatus.value = false
+            }
+        }
+    })
+}
 
-    changingStatus.value = true
-    try {
-        const response = await pasabuyScheduleService.finishSchedule(uuid)
-        schedule.value = { ...schedule.value!, ...response.data }
-        toast.add({ title: 'Schedule finished', color: 'success' })
-    } catch (error) {
-        toast.add({ title: 'Failed to finish schedule', description: (error as APIError).message, color: 'error' })
-    } finally {
-        changingStatus.value = false
-    }
+function reopenSchedule() {
+    askConfirm({
+        title: 'Reopen schedule?',
+        description: 'Customers will be able to order and edit their orders again.',
+        confirmLabel: 'Reopen schedule',
+        action: async () => {
+            changingStatus.value = true
+            try {
+                const response = await pasabuyScheduleService.reopenSchedule(uuid)
+                schedule.value = { ...schedule.value!, ...response.data }
+                toast.add({ title: 'Schedule reopened', color: 'success' })
+            } catch (error) {
+                toast.add({ title: 'Failed to reopen schedule', description: (error as APIError).message, color: 'error' })
+            } finally {
+                changingStatus.value = false
+            }
+        }
+    })
+}
+
+function finishSchedule() {
+    askConfirm({
+        title: 'Mark schedule as finished?',
+        description: 'This cannot be undone.',
+        color: 'success',
+        confirmLabel: 'Mark finished',
+        action: async () => {
+            changingStatus.value = true
+            try {
+                const response = await pasabuyScheduleService.finishSchedule(uuid)
+                schedule.value = { ...schedule.value!, ...response.data }
+                toast.add({ title: 'Schedule finished', color: 'success' })
+            } catch (error) {
+                toast.add({ title: 'Failed to finish schedule', description: (error as APIError).message, color: 'error' })
+            } finally {
+                changingStatus.value = false
+            }
+        }
+    })
 }
 
 async function refreshOrders() {

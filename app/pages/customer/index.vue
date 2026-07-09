@@ -80,6 +80,9 @@
                                     <UBadge v-else-if="item.confirmation_status === 'pending'" color="warning" variant="subtle" size="sm">
                                         Needs confirmation
                                     </UBadge>
+                                    <UBadge v-else-if="item.confirmation_status === 'out_of_stock'" color="error" variant="subtle" size="sm">
+                                        Out of stock
+                                    </UBadge>
                                     <UBadge v-else-if="item.confirmation_status === 'removed'" color="error" variant="subtle" size="sm">
                                         Removed
                                     </UBadge>
@@ -141,7 +144,7 @@ interface OrderItem {
     estimated_price: string
     actual_price: string | null
     is_bonus: boolean
-    confirmation_status: 'none' | 'pending' | 'accepted' | 'removed'
+    confirmation_status: 'none' | 'pending' | 'accepted' | 'removed' | 'out_of_stock'
     quantity: number
     subtotal: string
 }
