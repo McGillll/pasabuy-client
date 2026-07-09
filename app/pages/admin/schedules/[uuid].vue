@@ -11,49 +11,13 @@
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #details>
                 <UCard class="mt-4">
-                    <div class="mb-4 flex flex-wrap items-center gap-3">
-                        <UBadge :color="scheduleStatusColor[schedule.status]" variant="subtle" size="lg">
-                            {{ schedule.status }}
-                        </UBadge>
-                        <UButton
-                            v-if="schedule.status === 'open'"
-                            size="sm"
-                            color="neutral"
-                            variant="soft"
-                            :loading="changingStatus"
-                            @click="closeSchedule"
-                        >
-                            Close schedule
-                        </UButton>
-                        <UButton
-                            v-if="schedule.status === 'closed'"
-                            size="sm"
-                            color="neutral"
-                            variant="soft"
-                            :loading="changingStatus"
-                            @click="reopenSchedule"
-                        >
-                            Reopen schedule
-                        </UButton>
-                        <UButton
-                            v-if="schedule.status === 'closed'"
-                            size="sm"
-                            color="success"
-                            variant="soft"
-                            :loading="changingStatus"
-                            @click="finishSchedule"
-                        >
-                            Mark finished
-                        </UButton>
-                    </div>
-
                     <UAlert
                         v-if="isClosed"
                         color="neutral"
                         variant="subtle"
                         icon="i-lucide-lock"
                         title="This schedule is closed"
-                        description="Reopen it above to edit the title, description, or cutoff."
+                        description="Reopen it below to edit the title, description, or cutoff."
                         class="max-w-lg mb-4"
                     />
                     <UAlert
@@ -82,6 +46,18 @@
                             Save details
                         </UButton>
                     </form>
+
+                    <div class="my-6 border-t border-default" />
+
+                    <div class="max-w-lg">
+                        <p class="mb-2 text-xs font-medium uppercase tracking-wide text-dimmed">Schedule status</p>
+                        <UTabs
+                            :model-value="schedule.status"
+                            :items="statusTabs"
+                            :ui="{ trigger: 'grow' }"
+                            @update:model-value="handleStatusTabChange"
+                        />
+                    </div>
                 </UCard>
             </template>
 
@@ -244,7 +220,7 @@
                                             size="xs"
                                             color="success"
                                             variant="soft"
-                                            @click="setOrderStatus(row.original, 'confirmed')"
+                                            @click="confirmOrder(row.original)"
                                         >
                                             Confirm
                                         </UButton>
@@ -274,7 +250,13 @@
                         </UTable>
                     </div>
                     <div class="sm:hidden divide-y divide-default">
-                        <ListCard v-for="order in orders" :key="order.uuid" :tone="orderStatusColor[order.status]">
+                        <ListCard
+                            v-for="order in orders"
+                            :key="order.uuid"
+                            clickable
+                            :tone="orderStatusColor[order.status]"
+                            @click="viewOrder(order)"
+                        >
                             <template #title>
                                 <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
                             </template>
@@ -296,7 +278,7 @@
                                         color="success"
                                         variant="ghost"
                                         aria-label="Confirm order"
-                                        @click.stop="setOrderStatus(order, 'confirmed')"
+                                        @click.stop="confirmOrder(order)"
                                     />
                                     <UButton
                                         icon="i-lucide-x"
@@ -307,14 +289,7 @@
                                         @click.stop="cancelOrder(order)"
                                     />
                                 </template>
-                                <UButton
-                                    icon="i-lucide-chevron-right"
-                                    size="sm"
-                                    color="neutral"
-                                    variant="ghost"
-                                    aria-label="View order"
-                                    @click.stop="viewOrder(order)"
-                                />
+                                <UIcon name="i-lucide-chevron-right" class="size-4 text-dimmed" />
                             </template>
                         </ListCard>
                         <TableEmptyState v-if="orders.length === 0" icon="i-lucide-receipt" message="No orders yet." />
@@ -410,86 +385,120 @@
                         </UBadge>
                     </div>
 
-                    <template v-if="canEditOrderItems">
-                        <div class="space-y-2">
-                            <div
-                                v-for="editItem in editableItems"
-                                :key="editItem.product_uuid"
-                                class="flex items-center gap-3 rounded-lg border border-default p-3"
-                            >
-                                <span class="flex-1 truncate font-medium text-highlighted">{{ editItem.product_name }}</span>
-                                <UBadge v-if="getScheduleProductStatus(editItem.product_uuid) === 'out_of_stock'" color="error" variant="subtle" size="sm">
+                    <div class="divide-y divide-default rounded-lg border border-default">
+                        <div
+                            v-for="group in displayGroups"
+                            :key="group.item.uuid"
+                            class="flex items-start justify-between gap-3 p-3"
+                        >
+                            <template v-if="canEditOrderItems && editingProductUuid === group.item.product_uuid">
+                                <span class="flex-1 truncate font-medium text-highlighted">{{ group.item.product_name }}</span>
+                                <UBadge v-if="getScheduleProductStatus(group.item.product_uuid) === 'out_of_stock'" color="error" variant="subtle" size="sm">
                                     Out of stock
                                 </UBadge>
-                                <UInput v-else v-model.number="editItem.quantity" type="number" min="1" size="sm" class="w-20" />
+                                <UInput
+                                    v-else
+                                    v-model.number="findEditableItem(group.item.product_uuid)!.quantity"
+                                    type="number"
+                                    min="1"
+                                    size="sm"
+                                    class="w-20"
+                                />
                                 <UButton
                                     icon="i-lucide-x"
                                     size="xs"
                                     color="error"
                                     variant="ghost"
                                     aria-label="Remove item"
-                                    @click="removeEditableItem(editItem.product_uuid)"
-                                />
-                            </div>
-
-                            <div class="flex items-center gap-2">
-                                <USelect
-                                    v-model="itemToAdd"
-                                    :items="addableProductOptions"
-                                    value-key="value"
-                                    placeholder="Add a product…"
-                                    class="flex-1"
+                                    @click="removeEditableItem(group.item.product_uuid!); editingProductUuid = null"
                                 />
                                 <UButton
-                                    icon="i-lucide-plus"
-                                    size="sm"
+                                    icon="i-lucide-check"
+                                    size="xs"
                                     color="neutral"
-                                    variant="soft"
-                                    :disabled="!itemToAdd"
-                                    @click="addEditableItem"
-                                >
-                                    Add
-                                </UButton>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-end">
-                            <UButton :loading="savingOrderItems" @click="saveOrderItems">Save changes</UButton>
-                        </div>
-                    </template>
-
-                    <div v-else class="divide-y divide-default rounded-lg border border-default">
-                        <div
-                            v-for="group in viewingOrderGroupedItems"
-                            :key="group.item.uuid"
-                            class="flex items-start justify-between gap-3 p-3"
-                        >
-                            <div class="min-w-0">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <p class="font-medium text-highlighted">{{ group.item.product_name }}</p>
-                                    <UBadge v-if="group.bonus" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
+                                    variant="ghost"
+                                    aria-label="Done editing"
+                                    @click="editingProductUuid = null"
+                                />
+                            </template>
+                            <template v-else>
+                                <div class="min-w-0">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <p class="font-medium text-highlighted">{{ group.item.product_name }}</p>
+                                        <UBadge v-if="group.bonus" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
+                                    </div>
+                                    <p class="mt-0.5 text-sm text-muted">₱{{ group.item.actual_price ?? group.item.estimated_price }} × {{ group.item.quantity }}</p>
+                                    <p
+                                        v-if="group.bonus"
+                                        class="mt-1.5 inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"
+                                    >
+                                        <UIcon name="i-lucide-sparkles" class="size-3" />
+                                        +{{ group.bonus.quantity }} free
+                                    </p>
                                 </div>
-                                <p class="mt-0.5 text-sm text-muted">₱{{ group.item.actual_price ?? group.item.estimated_price }} × {{ group.item.quantity }}</p>
-                                <p
-                                    v-if="group.bonus"
-                                    class="mt-1.5 inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"
-                                >
-                                    <UIcon name="i-lucide-sparkles" class="size-3" />
-                                    +{{ group.bonus.quantity }} free
-                                </p>
-                            </div>
-                            <div class="shrink-0 pt-0.5 text-right">
-                                <UBadge v-if="group.item.is_out_of_stock" color="error" variant="subtle" size="sm">
-                                    Out of stock
-                                </UBadge>
-                                <p v-else class="font-medium text-highlighted">₱{{ group.item.subtotal }}</p>
-                            </div>
+                                <div class="flex shrink-0 items-center gap-2 pt-0.5">
+                                    <UBadge v-if="group.item.is_out_of_stock" color="error" variant="subtle" size="sm">
+                                        Out of stock
+                                    </UBadge>
+                                    <p v-else class="font-medium text-highlighted">₱{{ group.item.subtotal }}</p>
+                                    <UButton
+                                        v-if="canEditOrderItems && findEditableItem(group.item.product_uuid)"
+                                        icon="i-lucide-pencil"
+                                        size="xs"
+                                        color="neutral"
+                                        variant="ghost"
+                                        aria-label="Edit item"
+                                        @click="editingProductUuid = group.item.product_uuid ?? null"
+                                    />
+                                </div>
+                            </template>
                         </div>
+                        <div
+                            v-for="newItem in pendingNewItems"
+                            :key="newItem.product_uuid"
+                            class="flex items-center gap-3 p-3"
+                        >
+                            <span class="flex-1 truncate font-medium text-highlighted">{{ newItem.product_name }}</span>
+                            <UBadge color="neutral" variant="subtle" size="sm">New</UBadge>
+                            <UInput v-model.number="newItem.quantity" type="number" min="1" size="sm" class="w-20" />
+                            <UButton
+                                icon="i-lucide-x"
+                                size="xs"
+                                color="error"
+                                variant="ghost"
+                                aria-label="Remove item"
+                                @click="removeEditableItem(newItem.product_uuid)"
+                            />
+                        </div>
+                    </div>
+
+                    <div v-if="canEditOrderItems" class="flex items-center gap-2">
+                        <USelect
+                            v-model="itemToAdd"
+                            :items="addableProductOptions"
+                            value-key="value"
+                            placeholder="Add a product…"
+                            class="flex-1"
+                        />
+                        <UButton
+                            icon="i-lucide-plus"
+                            size="sm"
+                            color="neutral"
+                            variant="soft"
+                            :disabled="!itemToAdd"
+                            @click="addEditableItem"
+                        >
+                            Add
+                        </UButton>
                     </div>
 
                     <div class="flex items-center justify-between border-t border-default pt-3 font-medium text-highlighted">
                         <span>Total</span>
                         <span>₱{{ viewingOrder.total_amount }}</span>
+                    </div>
+
+                    <div v-if="canEditOrderItems" class="flex justify-end">
+                        <UButton :loading="savingOrderItems" @click="saveOrderItems">Save changes</UButton>
                     </div>
 
                     <p class="text-xs text-dimmed">Placed {{ formatDate(viewingOrder.created_at) }}</p>
@@ -554,6 +563,28 @@ const summaryTabs: TabsItem[] = [
     { label: 'Price & Totals', icon: 'i-lucide-receipt-text', value: 'pricing', slot: 'pricing' },
     { label: 'Shopping Checklist', icon: 'i-lucide-list-checks', value: 'checklist', slot: 'checklist' }
 ]
+
+const statusTabs = computed<TabsItem[]>(() => [
+    { label: 'Open', icon: 'i-lucide-unlock', value: 'open', disabled: !canSetStatus('open') },
+    { label: 'Closed', icon: 'i-lucide-lock', value: 'closed', disabled: !canSetStatus('closed') },
+    { label: 'Finished', icon: 'i-lucide-check-circle', value: 'finished', disabled: !canSetStatus('finished') }
+])
+
+function canSetStatus(target: string) {
+    const current = schedule.value?.status
+    if (current === target) return true
+    if (changingStatus.value) return false
+    if (current === 'open') return target === 'closed'
+    if (current === 'closed') return target === 'open' || target === 'finished'
+    return false
+}
+
+function handleStatusTabChange(value: string | number) {
+    if (value === schedule.value?.status) return
+    if (value === 'closed') closeSchedule()
+    else if (value === 'open') reopenSchedule()
+    else if (value === 'finished') finishSchedule()
+}
 
 const detailsForm = reactive({
     title: '',
@@ -844,6 +875,16 @@ async function setOrderStatus(order: Order, status: 'confirmed' | 'cancelled') {
     }
 }
 
+function confirmOrder(order: Order) {
+    askConfirm({
+        title: 'Confirm order?',
+        description: `Confirm ${order.customer_name}'s order? This marks it as settled.`,
+        confirmLabel: 'Confirm order',
+        color: 'success',
+        action: () => setOrderStatus(order, 'confirmed')
+    })
+}
+
 function cancelOrder(order: Order) {
     askConfirm({
         title: 'Cancel order?',
@@ -858,6 +899,7 @@ const isOrderModalOpen = ref(false)
 const viewingOrder = ref<Order | null>(null)
 const canEditOrderItems = computed(() => isClosed.value)
 const viewingOrderGroupedItems = computed(() => groupOrderItems(viewingOrder.value?.items ?? []))
+const editingProductUuid = ref<string | null>(null)
 
 interface EditableItem {
     product_uuid: string
@@ -868,6 +910,24 @@ interface EditableItem {
 const editableItems = ref<EditableItem[]>([])
 const itemToAdd = ref<string | undefined>(undefined)
 const savingOrderItems = ref(false)
+
+// Existing order items still shown via viewingOrderGroupedItems; ones removed from editableItems drop out here.
+const displayGroups = computed(() => {
+    if (!canEditOrderItems.value) return viewingOrderGroupedItems.value
+    const editableUuids = new Set(editableItems.value.map((item) => item.product_uuid))
+    return viewingOrderGroupedItems.value.filter((group) => !group.item.product_uuid || editableUuids.has(group.item.product_uuid))
+})
+
+// Items added via "Add a product" that aren't part of the saved order yet — shown as pending rows until saved.
+const pendingNewItems = computed(() => {
+    if (!canEditOrderItems.value) return []
+    const existingUuids = new Set((viewingOrder.value?.items ?? []).map((item) => item.product_uuid))
+    return editableItems.value.filter((item) => !existingUuids.has(item.product_uuid))
+})
+
+function findEditableItem(productUuid?: string) {
+    return editableItems.value.find((item) => item.product_uuid === productUuid)
+}
 
 function getScheduleProductStatus(productUuid: string) {
     return schedule.value?.products.find((sp) => sp.product.uuid === productUuid)?.product_status
@@ -886,6 +946,7 @@ function viewOrder(order: Order) {
         .filter((item) => !item.is_bonus && item.product_uuid)
         .map((item) => ({ product_uuid: item.product_uuid!, product_name: item.product_name, quantity: item.quantity }))
     itemToAdd.value = undefined
+    editingProductUuid.value = null
     isOrderModalOpen.value = true
 }
 
@@ -915,6 +976,7 @@ async function saveOrderItems() {
         viewingOrder.value = response.data
         const row = orders.value.find((o) => o.uuid === response.data.uuid)
         if (row) Object.assign(row, response.data)
+        editingProductUuid.value = null
         await refreshSummary()
         toast.add({ title: 'Order items updated', color: 'success' })
     } catch (error) {

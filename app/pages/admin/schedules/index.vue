@@ -282,14 +282,7 @@ function closeSchedule(scheduleRow: Schedule) {
         action: async () => {
             closingUuid.value = scheduleRow.uuid
             try {
-                const detail = await pasabuyScheduleService.fetchSchedule(scheduleRow.uuid)
-                await pasabuyScheduleService.updateSchedule(scheduleRow.uuid, {
-                    title: detail.data.title,
-                    description: detail.data.description,
-                    cutoff_at: detail.data.cutoff_at,
-                    pasabuy_schedule_date: detail.data.pasabuy_schedule_date ?? detail.data.created_at.slice(0, 10),
-                    status: 'closed'
-                })
+                await pasabuyScheduleService.closeSchedule(scheduleRow.uuid)
                 scheduleRow.status = 'closed'
                 toast.add({ title: 'Schedule closed', color: 'success' })
             } catch (error) {
