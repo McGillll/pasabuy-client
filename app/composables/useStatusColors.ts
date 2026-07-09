@@ -5,7 +5,7 @@ export const scheduleStatusColor: Record<string, 'neutral' | 'success' | 'warnin
 }
 
 export const orderStatusColor: Record<string, 'neutral' | 'success' | 'error' | 'warning'> = {
-    pending: 'neutral',
+    pending: 'warning',
     confirmed: 'success',
     cancelled: 'error'
 }

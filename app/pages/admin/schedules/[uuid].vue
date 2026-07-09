@@ -89,34 +89,71 @@
                 <UTabs v-model="activeSummaryTab" :items="summaryTabs" class="w-full mt-4">
                     <template #pricing>
                         <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
-                            <UTable
-                                :data="summary"
-                                :columns="summaryColumns"
-                                :ui="{ tr: 'hover:bg-elevated/50 transition-colors cursor-pointer' }"
-                                @select="(_event, row) => openBuyersModal(row.original)"
-                            >
-                                <template #product_name-cell="{ row }">
-                                    <div class="flex items-center gap-2">
-                                        <p class="font-medium text-highlighted">{{ row.original.product_name }}</p>
-                                        <UBadge v-if="getScheduleProductStatus(row.original.product_uuid) === 'b1t1'" color="warning" variant="subtle" size="sm">
+                            <div class="hidden sm:block">
+                                <UTable
+                                    :data="summary"
+                                    :columns="summaryColumns"
+                                    :ui="{ tr: 'hover:bg-elevated/50 transition-colors cursor-pointer' }"
+                                    @select="(_event, row) => openBuyersModal(row.original)"
+                                >
+                                    <template #product_name-cell="{ row }">
+                                        <div class="flex items-center gap-2">
+                                            <p class="font-medium text-highlighted">{{ row.original.product_name }}</p>
+                                            <UBadge v-if="getScheduleProductStatus(row.original.product_uuid) === 'b1t1'" color="warning" variant="subtle" size="sm">
+                                                B1T1
+                                            </UBadge>
+                                            <UBadge v-else-if="getScheduleProductStatus(row.original.product_uuid) === 'out_of_stock'" color="error" variant="subtle" size="sm">
+                                                Out of stock
+                                            </UBadge>
+                                        </div>
+                                        <p class="text-sm text-muted">{{ row.original.category_name ?? '—' }}</p>
+                                    </template>
+                                    <template #default_price-cell="{ row }">
+                                        ₱{{ row.original.default_price }}
+                                    </template>
+                                    <template #total_quantity-cell="{ row }">
+                                        {{ getDisplayQuantity(row.original) }}
+                                    </template>
+                                    <template #subtotal-cell="{ row }">
+                                        <span v-if="getScheduleProductStatus(row.original.product_uuid) === 'out_of_stock'" class="text-sm font-medium text-error">
+                                            Out of stock
+                                        </span>
+                                        <span v-else>₱{{ row.original.subtotal }}</span>
+                                    </template>
+                                    <template #empty>
+                                        <TableEmptyState icon="i-lucide-clipboard-list" message="No orders yet — the checklist fills in once customers order." />
+                                    </template>
+                                </UTable>
+                            </div>
+                            <div class="sm:hidden divide-y divide-default">
+                                <ListCard
+                                    v-for="item in summary"
+                                    :key="item.product_uuid"
+                                    clickable
+                                    :tone="getScheduleProductStatus(item.product_uuid) === 'out_of_stock' ? 'error' : getScheduleProductStatus(item.product_uuid) === 'b1t1' ? 'warning' : undefined"
+                                    @click="openBuyersModal(item)"
+                                >
+                                    <template #title>
+                                        <p class="font-medium text-highlighted">{{ item.product_name }}</p>
+                                    </template>
+                                    <template #subtitle>
+                                        {{ item.category_name ?? '—' }}
+                                    </template>
+                                    <template #meta>
+                                        <span class="text-muted">₱{{ item.default_price }} × {{ getDisplayQuantity(item) }}</span>
+                                        <UBadge v-if="getScheduleProductStatus(item.product_uuid) === 'b1t1'" color="warning" variant="subtle" size="sm">
                                             B1T1
                                         </UBadge>
-                                        <UBadge v-else-if="getScheduleProductStatus(row.original.product_uuid) === 'out_of_stock'" color="error" variant="subtle" size="sm">
+                                    </template>
+                                    <template #actions>
+                                        <span v-if="getScheduleProductStatus(item.product_uuid) === 'out_of_stock'" class="text-sm font-medium text-error">
                                             Out of stock
-                                        </UBadge>
-                                    </div>
-                                    <p class="text-sm text-muted">{{ row.original.category_name ?? '—' }}</p>
-                                </template>
-                                <template #default_price-cell="{ row }">
-                                    ₱{{ row.original.default_price }}
-                                </template>
-                                <template #subtotal-cell="{ row }">
-                                    ₱{{ row.original.subtotal }}
-                                </template>
-                                <template #empty>
-                                    <TableEmptyState icon="i-lucide-clipboard-list" message="No orders yet — the checklist fills in once customers order." />
-                                </template>
-                            </UTable>
+                                        </span>
+                                        <span v-else class="font-medium text-highlighted">₱{{ item.subtotal }}</span>
+                                    </template>
+                                </ListCard>
+                                <TableEmptyState v-if="summary.length === 0" icon="i-lucide-clipboard-list" message="No orders yet — the checklist fills in once customers order." />
+                            </div>
                             <template v-if="summary.length > 0" #footer>
                                 <div class="flex items-center justify-between font-medium text-highlighted">
                                     <span>Grand total</span>
@@ -128,30 +165,63 @@
 
                     <template #checklist>
                         <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
-                            <UTable :data="checklistItems" :columns="checklistColumns" :loading="checklistLoading" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
-                                <template #is_checked-cell="{ row }">
-                                    <UCheckbox
-                                        :model-value="row.original.is_checked"
-                                        :disabled="togglingUuid === row.original.product_uuid"
-                                        @update:model-value="(value) => toggleChecklist(row.original, !!value)"
-                                    />
-                                </template>
-                                <template #product-cell="{ row }">
-                                    <p class="font-medium text-highlighted" :class="{ 'line-through text-muted': row.original.is_checked }">{{ row.original.product_name }}</p>
-                                    <p class="text-sm text-muted">{{ row.original.category_name ?? '—' }}</p>
-                                </template>
-                                <template #adjustment-cell="{ row }">
-                                    <UBadge v-if="row.original.additional_quantity > 0" color="warning" variant="subtle" size="sm">
-                                        +{{ row.original.additional_quantity }} more
-                                    </UBadge>
-                                    <UBadge v-if="row.original.return_quantity > 0" color="error" variant="subtle" size="sm">
-                                        return {{ row.original.return_quantity }}
-                                    </UBadge>
-                                </template>
-                                <template #empty>
-                                    <TableEmptyState icon="i-lucide-list-checks" message="Close the schedule to generate the shopping checklist." />
-                                </template>
-                            </UTable>
+                            <div class="hidden sm:block">
+                                <UTable :data="checklistItems" :columns="checklistColumns" :loading="checklistLoading" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
+                                    <template #is_checked-cell="{ row }">
+                                        <UCheckbox
+                                            :model-value="row.original.is_checked"
+                                            :disabled="togglingUuid === row.original.product_uuid"
+                                            @update:model-value="(value) => toggleChecklist(row.original, !!value)"
+                                        />
+                                    </template>
+                                    <template #product-cell="{ row }">
+                                        <p class="font-medium text-highlighted" :class="{ 'line-through text-muted': row.original.is_checked }">{{ row.original.product_name }}</p>
+                                        <p class="text-sm text-muted">{{ row.original.category_name ?? '—' }}</p>
+                                    </template>
+                                    <template #adjustment-cell="{ row }">
+                                        <UBadge v-if="row.original.additional_quantity > 0" color="warning" variant="subtle" size="sm">
+                                            +{{ row.original.additional_quantity }} more
+                                        </UBadge>
+                                        <UBadge v-if="row.original.return_quantity > 0" color="error" variant="subtle" size="sm">
+                                            return {{ row.original.return_quantity }}
+                                        </UBadge>
+                                    </template>
+                                    <template #empty>
+                                        <TableEmptyState icon="i-lucide-list-checks" message="Close the schedule to generate the shopping checklist." />
+                                    </template>
+                                </UTable>
+                            </div>
+                            <div class="sm:hidden divide-y divide-default">
+                                <ListCard
+                                    v-for="item in checklistItems"
+                                    :key="item.product_uuid"
+                                    :tone="item.return_quantity > 0 ? 'error' : item.additional_quantity > 0 ? 'warning' : undefined"
+                                >
+                                    <template #leading>
+                                        <UCheckbox
+                                            :model-value="item.is_checked"
+                                            :disabled="togglingUuid === item.product_uuid"
+                                            @update:model-value="(value) => toggleChecklist(item, !!value)"
+                                        />
+                                    </template>
+                                    <template #title>
+                                        <p class="font-medium text-highlighted" :class="{ 'line-through text-muted': item.is_checked }">{{ item.product_name }}</p>
+                                    </template>
+                                    <template #subtitle>
+                                        {{ item.category_name ?? '—' }}
+                                    </template>
+                                    <template #meta>
+                                        <span class="text-muted">Qty {{ item.quantity }}</span>
+                                        <UBadge v-if="item.additional_quantity > 0" color="warning" variant="subtle" size="sm">
+                                            +{{ item.additional_quantity }} more
+                                        </UBadge>
+                                        <UBadge v-if="item.return_quantity > 0" color="error" variant="subtle" size="sm">
+                                            return {{ item.return_quantity }}
+                                        </UBadge>
+                                    </template>
+                                </ListCard>
+                                <TableEmptyState v-if="checklistItems.length === 0" icon="i-lucide-list-checks" message="Close the schedule to generate the shopping checklist." />
+                            </div>
                         </UCard>
                     </template>
                 </UTabs>
@@ -159,48 +229,96 @@
 
             <template #orders>
                 <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
-                    <UTable :data="orders" :columns="orderColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
-                        <template #status-cell="{ row }">
-                            <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
-                                {{ row.original.status }}
-                            </UBadge>
-                        </template>
-                        <template #actions-cell="{ row }">
-                            <div class="flex items-center justify-end gap-2">
-                                <template v-if="row.original.status === 'pending'">
+                    <div class="hidden sm:block">
+                        <UTable :data="orders" :columns="orderColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
+                            <template #status-cell="{ row }">
+                                <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
+                                    {{ row.original.status }}
+                                </UBadge>
+                            </template>
+                            <template #actions-cell="{ row }">
+                                <div class="flex items-center justify-end gap-2">
+                                    <template v-if="row.original.status === 'pending'">
+                                        <UButton
+                                            v-if="isClosed"
+                                            size="xs"
+                                            color="success"
+                                            variant="soft"
+                                            @click="setOrderStatus(row.original, 'confirmed')"
+                                        >
+                                            Confirm
+                                        </UButton>
+                                        <span v-else class="text-xs text-dimmed">Close schedule to confirm</span>
+                                        <UButton
+                                            size="xs"
+                                            color="error"
+                                            variant="soft"
+                                            @click="cancelOrder(row.original)"
+                                        >
+                                            Cancel
+                                        </UButton>
+                                    </template>
+                                    <UButton
+                                        icon="i-lucide-eye"
+                                        size="xs"
+                                        color="neutral"
+                                        variant="ghost"
+                                        aria-label="View order"
+                                        @click="viewOrder(row.original)"
+                                    />
+                                </div>
+                            </template>
+                            <template #empty>
+                                <TableEmptyState icon="i-lucide-receipt" message="No orders yet." />
+                            </template>
+                        </UTable>
+                    </div>
+                    <div class="sm:hidden divide-y divide-default">
+                        <ListCard v-for="order in orders" :key="order.uuid" :tone="orderStatusColor[order.status]">
+                            <template #title>
+                                <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
+                            </template>
+                            <template #subtitle>
+                                {{ order.customer_contact }}
+                            </template>
+                            <template #meta>
+                                <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
+                                <UBadge :color="orderStatusColor[order.status]" variant="subtle">
+                                    {{ order.status }}
+                                </UBadge>
+                            </template>
+                            <template #actions>
+                                <template v-if="order.status === 'pending'">
                                     <UButton
                                         v-if="isClosed"
-                                        size="xs"
+                                        icon="i-lucide-check"
+                                        size="sm"
                                         color="success"
-                                        variant="soft"
-                                        @click="setOrderStatus(row.original, 'confirmed')"
-                                    >
-                                        Confirm
-                                    </UButton>
-                                    <span v-else class="text-xs text-dimmed">Close schedule to confirm</span>
+                                        variant="ghost"
+                                        aria-label="Confirm order"
+                                        @click.stop="setOrderStatus(order, 'confirmed')"
+                                    />
                                     <UButton
-                                        size="xs"
+                                        icon="i-lucide-x"
+                                        size="sm"
                                         color="error"
-                                        variant="soft"
-                                        @click="setOrderStatus(row.original, 'cancelled')"
-                                    >
-                                        Cancel
-                                    </UButton>
+                                        variant="ghost"
+                                        aria-label="Cancel order"
+                                        @click.stop="cancelOrder(order)"
+                                    />
                                 </template>
                                 <UButton
-                                    icon="i-lucide-eye"
-                                    size="xs"
+                                    icon="i-lucide-chevron-right"
+                                    size="sm"
                                     color="neutral"
                                     variant="ghost"
                                     aria-label="View order"
-                                    @click="viewOrder(row.original)"
+                                    @click.stop="viewOrder(order)"
                                 />
-                            </div>
-                        </template>
-                        <template #empty>
-                            <TableEmptyState icon="i-lucide-receipt" message="No orders yet." />
-                        </template>
-                    </UTable>
+                            </template>
+                        </ListCard>
+                        <TableEmptyState v-if="orders.length === 0" icon="i-lucide-receipt" message="No orders yet." />
+                    </div>
                 </UCard>
             </template>
         </UTabs>
@@ -211,16 +329,33 @@
         >
             <template #body>
                 <div class="space-y-4">
-                    <UTable :data="buyers" :columns="buyerColumns" :loading="buyersLoading">
-                        <template #status-cell="{ row }">
-                            <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
-                                {{ row.original.status }}
-                            </UBadge>
-                        </template>
-                        <template #empty>
-                            <TableEmptyState icon="i-lucide-users" message="No buyers yet." padding="py-6" />
-                        </template>
-                    </UTable>
+                    <div class="hidden sm:block">
+                        <UTable :data="buyers" :columns="buyerColumns" :loading="buyersLoading">
+                            <template #status-cell="{ row }">
+                                <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
+                                    {{ row.original.status }}
+                                </UBadge>
+                            </template>
+                            <template #empty>
+                                <TableEmptyState icon="i-lucide-users" message="No buyers yet." padding="py-6" />
+                            </template>
+                        </UTable>
+                    </div>
+                    <div class="sm:hidden divide-y divide-default">
+                        <ListCard v-for="buyer in buyers" :key="buyer.customer_name + buyer.quantity" :tone="orderStatusColor[buyer.status]">
+                            <template #title>
+                                <p class="font-medium text-highlighted">{{ buyer.customer_name }}</p>
+                            </template>
+                            <template #meta>
+                                <span class="text-muted">Qty {{ buyer.quantity }}</span>
+                                <span class="font-medium text-highlighted">₱{{ buyer.subtotal }}</span>
+                                <UBadge :color="orderStatusColor[buyer.status]" variant="subtle">
+                                    {{ buyer.status }}
+                                </UBadge>
+                            </template>
+                        </ListCard>
+                        <TableEmptyState v-if="buyers.length === 0" icon="i-lucide-users" message="No buyers yet." padding="py-6" />
+                    </div>
 
                     <div v-if="canConfirmPrice" class="border-t border-default pt-4">
                         <div class="mb-2 flex items-center justify-between gap-2">
@@ -333,9 +468,6 @@
                                 <div class="flex flex-wrap items-center gap-2">
                                     <p class="font-medium text-highlighted">{{ group.item.product_name }}</p>
                                     <UBadge v-if="group.bonus" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
-                                    <UBadge v-else-if="group.item.is_out_of_stock" color="error" variant="subtle" size="sm">
-                                        Out of stock
-                                    </UBadge>
                                 </div>
                                 <p class="mt-0.5 text-sm text-muted">₱{{ group.item.actual_price ?? group.item.estimated_price }} × {{ group.item.quantity }}</p>
                                 <p
@@ -346,7 +478,12 @@
                                     +{{ group.bonus.quantity }} free
                                 </p>
                             </div>
-                            <p class="shrink-0 pt-0.5 font-medium text-highlighted">₱{{ group.item.subtotal }}</p>
+                            <div class="shrink-0 pt-0.5 text-right">
+                                <UBadge v-if="group.item.is_out_of_stock" color="error" variant="subtle" size="sm">
+                                    Out of stock
+                                </UBadge>
+                                <p v-else class="font-medium text-highlighted">₱{{ group.item.subtotal }}</p>
+                            </div>
                         </div>
                     </div>
 
@@ -455,6 +592,10 @@ const summaryColumns: TableColumn<ScheduleSummaryItem>[] = [
 
 const summaryGrandTotal = computed(() => summary.value.reduce((sum, item) => sum + Number(item.subtotal), 0))
 
+function getDisplayQuantity(item: ScheduleSummaryItem) {
+    return getScheduleProductStatus(item.product_uuid) === 'b1t1' ? item.total_quantity * 2 : item.total_quantity
+}
+
 // ---- Buyers modal / price confirmation ----
 
 const isBuyersModalOpen = ref(false)
@@ -485,7 +626,7 @@ async function openBuyersModal(item: ScheduleSummaryItem) {
     const scheduleProduct = schedule.value?.products.find((sp) => sp.product.uuid === item.product_uuid)
     confirmForm.actual_price = scheduleProduct?.actual_price !== null && scheduleProduct?.actual_price !== undefined
         ? Number(scheduleProduct.actual_price)
-        : null
+        : Number(scheduleProduct?.product.default_price ?? 0)
     confirmForm.product_status = scheduleProduct?.product_status ?? 'none'
 
     buyersLoading.value = true
@@ -701,6 +842,16 @@ async function setOrderStatus(order: Order, status: 'confirmed' | 'cancelled') {
     } catch (error) {
         toast.add({ title: 'Update failed', description: (error as APIError).message, color: 'error' })
     }
+}
+
+function cancelOrder(order: Order) {
+    askConfirm({
+        title: 'Cancel order?',
+        description: `Cancel ${order.customer_name}'s order? This cannot be undone.`,
+        confirmLabel: 'Cancel order',
+        color: 'error',
+        action: () => setOrderStatus(order, 'cancelled')
+    })
 }
 
 const isOrderModalOpen = ref(false)

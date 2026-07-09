@@ -33,37 +33,77 @@
                 No pending orders right now.
             </p>
 
-            <UTable v-else :data="pendingOrders" :columns="orderColumns" :loading="loading">
-                <template #schedule-cell="{ row }">
-                    <NuxtLink :to="`/admin/schedules/${row.original.scheduleUuid}`" class="text-primary hover:underline">
-                        {{ row.original.scheduleTitle }}
-                    </NuxtLink>
-                </template>
-                <template #actions-cell="{ row }">
-                    <div class="flex items-center gap-2">
-                        <UButton
-                            v-if="row.original.scheduleStatus === 'closed'"
-                            size="xs"
-                            color="success"
-                            variant="soft"
-                            :loading="actingOn === row.original.uuid"
-                            @click="setOrderStatus(row.original, 'confirmed')"
-                        >
-                            Confirm
-                        </UButton>
-                        <span v-else class="text-xs text-dimmed">Close schedule to confirm</span>
-                        <UButton
-                            size="xs"
-                            color="error"
-                            variant="soft"
-                            :loading="actingOn === row.original.uuid"
-                            @click="setOrderStatus(row.original, 'cancelled')"
-                        >
-                            Cancel
-                        </UButton>
-                    </div>
-                </template>
-            </UTable>
+            <template v-else>
+                <div class="hidden sm:block">
+                    <UTable :data="pendingOrders" :columns="orderColumns" :loading="loading">
+                        <template #schedule-cell="{ row }">
+                            <NuxtLink :to="`/admin/schedules/${row.original.scheduleUuid}`" class="text-primary hover:underline">
+                                {{ row.original.scheduleTitle }}
+                            </NuxtLink>
+                        </template>
+                        <template #actions-cell="{ row }">
+                            <div class="flex items-center gap-2">
+                                <UButton
+                                    v-if="row.original.scheduleStatus === 'closed'"
+                                    size="xs"
+                                    color="success"
+                                    variant="soft"
+                                    :loading="actingOn === row.original.uuid"
+                                    @click="setOrderStatus(row.original, 'confirmed')"
+                                >
+                                    Confirm
+                                </UButton>
+                                <span v-else class="text-xs text-dimmed">Close schedule to confirm</span>
+                                <UButton
+                                    size="xs"
+                                    color="error"
+                                    variant="soft"
+                                    :loading="actingOn === row.original.uuid"
+                                    @click="cancelOrder(row.original)"
+                                >
+                                    Cancel
+                                </UButton>
+                            </div>
+                        </template>
+                    </UTable>
+                </div>
+                <div class="sm:hidden divide-y divide-default">
+                    <ListCard v-for="order in pendingOrders" :key="order.uuid" tone="warning">
+                        <template #title>
+                            <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
+                        </template>
+                        <template #subtitle>
+                            <NuxtLink :to="`/admin/schedules/${order.scheduleUuid}`" class="text-primary hover:underline">
+                                {{ order.scheduleTitle }}
+                            </NuxtLink>
+                        </template>
+                        <template #meta>
+                            <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
+                        </template>
+                        <template #actions>
+                            <UButton
+                                v-if="order.scheduleStatus === 'closed'"
+                                icon="i-lucide-check"
+                                size="sm"
+                                color="success"
+                                variant="ghost"
+                                aria-label="Confirm order"
+                                :loading="actingOn === order.uuid"
+                                @click="setOrderStatus(order, 'confirmed')"
+                            />
+                            <UButton
+                                icon="i-lucide-x"
+                                size="sm"
+                                color="error"
+                                variant="ghost"
+                                aria-label="Cancel order"
+                                :loading="actingOn === order.uuid"
+                                @click="cancelOrder(order)"
+                            />
+                        </template>
+                    </ListCard>
+                </div>
+            </template>
         </UCard>
 
         <UCard>
@@ -89,6 +129,16 @@
                 </p>
             </div>
         </UCard>
+
+        <ConfirmDialogModal
+            v-model:open="confirmDialog.open"
+            :title="confirmDialog.title"
+            :description="confirmDialog.description"
+            :color="confirmDialog.color"
+            :confirm-label="confirmDialog.confirmLabel"
+            :loading="confirming"
+            @confirm="confirmDialogAccept"
+        />
     </div>
 </template>
 
@@ -201,6 +251,18 @@ async function setOrderStatus(order: PendingOrder, status: 'confirmed' | 'cancel
     } finally {
         actingOn.value = null
     }
+}
+
+const { confirmDialog, confirming, askConfirm, confirmDialogAccept } = useConfirmDialog()
+
+function cancelOrder(order: PendingOrder) {
+    askConfirm({
+        title: 'Cancel order?',
+        description: `Cancel ${order.customer_name}'s order? This cannot be undone.`,
+        confirmLabel: 'Cancel order',
+        color: 'error',
+        action: () => setOrderStatus(order, 'cancelled')
+    })
 }
 
 onMounted(loadDashboard)

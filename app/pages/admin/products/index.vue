@@ -21,50 +21,107 @@
                     </div>
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-                        <UTable
-                            :data="products"
-                            :columns="productColumns"
-                            :loading="productsLoading"
-                            :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
-                        >
-                            <template #image-cell="{ row }">
-                                <img
-                                    v-if="row.original.image_url"
-                                    :src="row.original.image_url"
-                                    class="size-12 rounded-lg object-cover ring-1 ring-default"
-                                    alt=""
-                                >
-                                <div v-else class="flex items-center justify-center size-12 rounded-lg bg-elevated text-dimmed">
-                                    <UIcon name="i-lucide-image" class="size-5" />
-                                </div>
-                            </template>
-                            <template #product-cell="{ row }">
-                                <p class="font-medium text-highlighted">{{ row.original.name }}</p>
-                                <p v-if="row.original.description" class="text-sm text-muted truncate max-w-xs">
-                                    {{ row.original.description }}
-                                </p>
-                            </template>
-                            <template #category-cell="{ row }">
-                                <span class="text-sm text-muted">{{ row.original.category?.name ?? '—' }}</span>
-                            </template>
-                            <template #default_price-cell="{ row }">
-                                <span class="font-medium text-highlighted">₱{{ row.original.default_price }}</span>
-                            </template>
-                            <template #is_active-cell="{ row }">
-                                <StatusBadge
-                                    :color="row.original.is_active ? 'success' : 'neutral'"
-                                    :label="row.original.is_active ? 'Active' : 'Inactive'"
-                                />
-                            </template>
-                            <template #actions-cell="{ row }">
-                                <div class="flex justify-end gap-1">
+                        <div class="hidden sm:block">
+                            <UTable
+                                :data="products"
+                                :columns="productColumns"
+                                :loading="productsLoading"
+                                :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
+                            >
+                                <template #image-cell="{ row }">
+                                    <img
+                                        v-if="row.original.image_url"
+                                        :src="row.original.image_url"
+                                        class="size-12 rounded-lg object-cover ring-1 ring-default"
+                                        alt=""
+                                    >
+                                    <div v-else class="flex items-center justify-center size-12 rounded-lg bg-elevated text-dimmed">
+                                        <UIcon name="i-lucide-image" class="size-5" />
+                                    </div>
+                                </template>
+                                <template #product-cell="{ row }">
+                                    <p class="font-medium text-highlighted">{{ row.original.name }}</p>
+                                    <p v-if="row.original.description" class="text-sm text-muted truncate max-w-xs">
+                                        {{ row.original.description }}
+                                    </p>
+                                </template>
+                                <template #category-cell="{ row }">
+                                    <span class="text-sm text-muted">{{ row.original.category?.name ?? '—' }}</span>
+                                </template>
+                                <template #default_price-cell="{ row }">
+                                    <span class="font-medium text-highlighted">₱{{ row.original.default_price }}</span>
+                                </template>
+                                <template #is_active-cell="{ row }">
+                                    <StatusBadge
+                                        :color="row.original.is_active ? 'success' : 'neutral'"
+                                        :label="row.original.is_active ? 'Active' : 'Inactive'"
+                                    />
+                                </template>
+                                <template #actions-cell="{ row }">
+                                    <div class="flex justify-end gap-1">
+                                        <UButton
+                                            icon="i-lucide-pencil"
+                                            size="sm"
+                                            color="neutral"
+                                            variant="ghost"
+                                            aria-label="Edit product"
+                                            @click="openProductEditModal(row.original)"
+                                        />
+                                        <UButton
+                                            icon="i-lucide-trash-2"
+                                            size="sm"
+                                            color="error"
+                                            variant="ghost"
+                                            aria-label="Delete product"
+                                            @click="onDeleteProduct(row.original)"
+                                        />
+                                    </div>
+                                </template>
+                                <template #empty>
+                                    <TableEmptyState
+                                        icon="i-lucide-package-search"
+                                        message="No products found."
+                                        action-label="Add your first product"
+                                        @action="openProductCreateModal"
+                                    />
+                                </template>
+                            </UTable>
+                        </div>
+                        <div class="sm:hidden divide-y divide-default">
+                            <ListCard v-for="product in products" :key="product.uuid" :dimmed="!product.is_active">
+                                <template #leading>
+                                    <img
+                                        v-if="product.image_url"
+                                        :src="product.image_url"
+                                        class="size-12 rounded-lg object-cover ring-1 ring-default"
+                                        alt=""
+                                    >
+                                    <div v-else class="flex items-center justify-center size-12 rounded-lg bg-elevated text-dimmed">
+                                        <UIcon name="i-lucide-image" class="size-5" />
+                                    </div>
+                                </template>
+                                <template #title>
+                                    <p class="font-medium text-highlighted">{{ product.name }}</p>
+                                </template>
+                                <template #subtitle>
+                                    <span v-if="product.description" class="truncate">{{ product.description }}</span>
+                                </template>
+                                <template #meta>
+                                    <span class="text-muted">{{ product.category?.name ?? '—' }}</span>
+                                    <span class="font-medium text-highlighted">₱{{ product.default_price }}</span>
+                                    <StatusBadge
+                                        :color="product.is_active ? 'success' : 'neutral'"
+                                        :label="product.is_active ? 'Active' : 'Inactive'"
+                                    />
+                                </template>
+                                <template #actions>
                                     <UButton
                                         icon="i-lucide-pencil"
                                         size="sm"
                                         color="neutral"
                                         variant="ghost"
                                         aria-label="Edit product"
-                                        @click="openProductEditModal(row.original)"
+                                        @click="openProductEditModal(product)"
                                     />
                                     <UButton
                                         icon="i-lucide-trash-2"
@@ -72,19 +129,18 @@
                                         color="error"
                                         variant="ghost"
                                         aria-label="Delete product"
-                                        @click="onDeleteProduct(row.original)"
+                                        @click="onDeleteProduct(product)"
                                     />
-                                </div>
-                            </template>
-                            <template #empty>
-                                <TableEmptyState
-                                    icon="i-lucide-package-search"
-                                    message="No products found."
-                                    action-label="Add your first product"
-                                    @action="openProductCreateModal"
-                                />
-                            </template>
-                        </UTable>
+                                </template>
+                            </ListCard>
+                            <TableEmptyState
+                                v-if="products.length === 0"
+                                icon="i-lucide-package-search"
+                                message="No products found."
+                                action-label="Add your first product"
+                                @action="openProductCreateModal"
+                            />
+                        </div>
                     </UCard>
 
                     <div v-if="productsTotal > perPage" class="flex justify-center">
@@ -98,33 +154,77 @@
                     <SearchInput v-model="categorySearch" placeholder="Search categories…" />
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-                        <UTable
-                            :data="categories"
-                            :columns="categoryColumns"
-                            :loading="categoriesLoading"
-                            :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
-                        >
-                            <template #category-cell="{ row }">
-                                <p class="font-medium text-highlighted">{{ row.original.name }}</p>
-                                <p v-if="row.original.description" class="text-sm text-muted truncate max-w-xs">
-                                    {{ row.original.description }}
-                                </p>
-                            </template>
-                            <template #is_active-cell="{ row }">
-                                <StatusBadge
-                                    :color="row.original.is_active ? 'success' : 'neutral'"
-                                    :label="row.original.is_active ? 'Active' : 'Inactive'"
-                                />
-                            </template>
-                            <template #actions-cell="{ row }">
-                                <div class="flex justify-end gap-1">
+                        <div class="hidden sm:block">
+                            <UTable
+                                :data="categories"
+                                :columns="categoryColumns"
+                                :loading="categoriesLoading"
+                                :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
+                            >
+                                <template #category-cell="{ row }">
+                                    <p class="font-medium text-highlighted">{{ row.original.name }}</p>
+                                    <p v-if="row.original.description" class="text-sm text-muted truncate max-w-xs">
+                                        {{ row.original.description }}
+                                    </p>
+                                </template>
+                                <template #is_active-cell="{ row }">
+                                    <StatusBadge
+                                        :color="row.original.is_active ? 'success' : 'neutral'"
+                                        :label="row.original.is_active ? 'Active' : 'Inactive'"
+                                    />
+                                </template>
+                                <template #actions-cell="{ row }">
+                                    <div class="flex justify-end gap-1">
+                                        <UButton
+                                            icon="i-lucide-pencil"
+                                            size="sm"
+                                            color="neutral"
+                                            variant="ghost"
+                                            aria-label="Edit category"
+                                            @click="openCategoryEditModal(row.original)"
+                                        />
+                                        <UButton
+                                            icon="i-lucide-trash-2"
+                                            size="sm"
+                                            color="error"
+                                            variant="ghost"
+                                            aria-label="Delete category"
+                                            @click="onDeleteCategory(row.original)"
+                                        />
+                                    </div>
+                                </template>
+                                <template #empty>
+                                    <TableEmptyState
+                                        icon="i-lucide-tags"
+                                        message="No categories found."
+                                        action-label="Add your first category"
+                                        @action="openCategoryCreateModal"
+                                    />
+                                </template>
+                            </UTable>
+                        </div>
+                        <div class="sm:hidden divide-y divide-default">
+                            <ListCard v-for="category in categories" :key="category.uuid" :dimmed="!category.is_active">
+                                <template #title>
+                                    <p class="font-medium text-highlighted">{{ category.name }}</p>
+                                </template>
+                                <template #subtitle>
+                                    <span v-if="category.description" class="truncate">{{ category.description }}</span>
+                                </template>
+                                <template #meta>
+                                    <StatusBadge
+                                        :color="category.is_active ? 'success' : 'neutral'"
+                                        :label="category.is_active ? 'Active' : 'Inactive'"
+                                    />
+                                </template>
+                                <template #actions>
                                     <UButton
                                         icon="i-lucide-pencil"
                                         size="sm"
                                         color="neutral"
                                         variant="ghost"
                                         aria-label="Edit category"
-                                        @click="openCategoryEditModal(row.original)"
+                                        @click="openCategoryEditModal(category)"
                                     />
                                     <UButton
                                         icon="i-lucide-trash-2"
@@ -132,19 +232,18 @@
                                         color="error"
                                         variant="ghost"
                                         aria-label="Delete category"
-                                        @click="onDeleteCategory(row.original)"
+                                        @click="onDeleteCategory(category)"
                                     />
-                                </div>
-                            </template>
-                            <template #empty>
-                                <TableEmptyState
-                                    icon="i-lucide-tags"
-                                    message="No categories found."
-                                    action-label="Add your first category"
-                                    @action="openCategoryCreateModal"
-                                />
-                            </template>
-                        </UTable>
+                                </template>
+                            </ListCard>
+                            <TableEmptyState
+                                v-if="categories.length === 0"
+                                icon="i-lucide-tags"
+                                message="No categories found."
+                                action-label="Add your first category"
+                                @action="openCategoryCreateModal"
+                            />
+                        </div>
                     </UCard>
 
                     <div v-if="categoriesTotal > perPage" class="flex justify-center">

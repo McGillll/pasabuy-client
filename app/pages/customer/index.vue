@@ -13,39 +13,59 @@
         </div>
 
         <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <UTable
-                :data="orders"
-                :columns="columns"
-                :loading="loading"
-                :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
-            >
-                <template #schedule-cell="{ row }">
-                    <NuxtLink
-                        v-if="row.original.pasabuy_schedule"
-                        :to="`/pasabuy/${row.original.pasabuy_schedule.uuid}`"
-                        class="font-medium text-highlighted hover:text-primary"
-                    >
-                        {{ row.original.pasabuy_schedule.title }}
-                    </NuxtLink>
-                </template>
-                <template #status-cell="{ row }">
-                    <OrderStatusBadge :status="row.original.status" />
-                </template>
-                <template #created_at-cell="{ row }">
-                    <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
-                </template>
-                <template #actions-cell="{ row }">
-                    <UButton size="sm" color="neutral" variant="ghost" @click="viewOrder(row.original)">
-                        View
-                    </UButton>
-                </template>
-                <template #empty>
-                    <div class="flex flex-col items-center gap-3 py-10">
-                        <UIcon name="i-lucide-receipt" class="size-8 text-dimmed" />
-                        <p class="text-sm text-muted">You haven't placed any orders yet.</p>
-                    </div>
-                </template>
-            </UTable>
+            <div class="hidden sm:block">
+                <UTable
+                    :data="orders"
+                    :columns="columns"
+                    :loading="loading"
+                    :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
+                >
+                    <template #schedule-cell="{ row }">
+                        <NuxtLink
+                            v-if="row.original.pasabuy_schedule"
+                            :to="`/pasabuy/${row.original.pasabuy_schedule.uuid}`"
+                            class="font-medium text-highlighted hover:text-primary"
+                        >
+                            {{ row.original.pasabuy_schedule.title }}
+                        </NuxtLink>
+                    </template>
+                    <template #status-cell="{ row }">
+                        <OrderStatusBadge :status="row.original.status" />
+                    </template>
+                    <template #created_at-cell="{ row }">
+                        <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
+                    </template>
+                    <template #actions-cell="{ row }">
+                        <UButton size="sm" color="neutral" variant="ghost" @click="viewOrder(row.original)">
+                            View
+                        </UButton>
+                    </template>
+                    <template #empty>
+                        <div class="flex flex-col items-center gap-3 py-10">
+                            <UIcon name="i-lucide-receipt" class="size-8 text-dimmed" />
+                            <p class="text-sm text-muted">You haven't placed any orders yet.</p>
+                        </div>
+                    </template>
+                </UTable>
+            </div>
+            <div class="sm:hidden divide-y divide-default">
+                <ListCard v-for="order in orders" :key="order.uuid" clickable :tone="customerOrderStatusColor[order.status]" @click="viewOrder(order)">
+                    <template #title>
+                        <span v-if="order.pasabuy_schedule" class="font-medium text-highlighted">
+                            {{ order.pasabuy_schedule.title }}
+                        </span>
+                    </template>
+                    <template #meta>
+                        <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
+                        <OrderStatusBadge :status="order.status" />
+                        <span class="text-muted">{{ formatDate(order.created_at) }}</span>
+                    </template>
+                </ListCard>
+                <div v-if="orders.length === 0" class="flex flex-col items-center gap-3 py-10">
+                    <UIcon name="i-lucide-receipt" class="size-8 text-dimmed" />
+                    <p class="text-sm text-muted">You haven't placed any orders yet.</p>
+                </div>
+            </div>
         </UCard>
 
         <div v-if="total > perPage" class="flex justify-center">

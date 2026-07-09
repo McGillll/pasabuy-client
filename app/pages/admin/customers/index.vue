@@ -10,24 +10,62 @@
                     <SearchInput v-model="search" placeholder="Search customers…" />
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-                        <UTable
-                            :data="approvedCustomers"
-                            :columns="approvedColumns"
-                            :loading="approvedLoading"
-                            :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
-                        >
-                            <template #customer-cell="{ row }">
-                                <p class="font-medium text-highlighted">{{ row.original.first_name }} {{ row.original.last_name }}</p>
-                                <p class="text-sm text-muted truncate">{{ row.original.email }}</p>
-                            </template>
-                            <template #actions-cell="{ row }">
-                                <div class="flex justify-end gap-2">
+                        <div class="hidden sm:block">
+                            <UTable
+                                :data="approvedCustomers"
+                                :columns="approvedColumns"
+                                :loading="approvedLoading"
+                                :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
+                            >
+                                <template #customer-cell="{ row }">
+                                    <p class="font-medium text-highlighted">{{ row.original.first_name }} {{ row.original.last_name }}</p>
+                                    <p class="text-sm text-muted truncate">{{ row.original.email }}</p>
+                                </template>
+                                <template #actions-cell="{ row }">
+                                    <div class="flex justify-end gap-2">
+                                        <UButton
+                                            size="sm"
+                                            color="neutral"
+                                            variant="ghost"
+                                            trailing-icon="i-lucide-arrow-right"
+                                            @click="viewOrders(row.original)"
+                                        >
+                                            View orders
+                                        </UButton>
+                                        <UButton
+                                            size="sm"
+                                            color="error"
+                                            variant="ghost"
+                                            :loading="actingOn === row.original.uuid"
+                                            @click="revokeCustomer(row.original)"
+                                        >
+                                            Revoke
+                                        </UButton>
+                                    </div>
+                                </template>
+                                <template #empty>
+                                    <TableEmptyState icon="i-lucide-users" message="No approved customers found." />
+                                </template>
+                            </UTable>
+                        </div>
+                        <div class="sm:hidden divide-y divide-default">
+                            <ListCard v-for="customer in approvedCustomers" :key="customer.uuid">
+                                <template #title>
+                                    <p class="font-medium text-highlighted">{{ customer.first_name }} {{ customer.last_name }}</p>
+                                </template>
+                                <template #subtitle>
+                                    {{ customer.email }}
+                                </template>
+                                <template #meta>
+                                    <span class="text-muted">{{ customer.contact_number ?? '—' }}</span>
+                                </template>
+                                <template #actions>
                                     <UButton
                                         size="sm"
                                         color="neutral"
                                         variant="ghost"
                                         trailing-icon="i-lucide-arrow-right"
-                                        @click="viewOrders(row.original)"
+                                        @click="viewOrders(customer)"
                                     >
                                         View orders
                                     </UButton>
@@ -35,17 +73,15 @@
                                         size="sm"
                                         color="error"
                                         variant="ghost"
-                                        :loading="actingOn === row.original.uuid"
-                                        @click="revokeCustomer(row.original)"
+                                        :loading="actingOn === customer.uuid"
+                                        @click="revokeCustomer(customer)"
                                     >
                                         Revoke
                                     </UButton>
-                                </div>
-                            </template>
-                            <template #empty>
-                                <TableEmptyState icon="i-lucide-users" message="No approved customers found." />
-                            </template>
-                        </UTable>
+                                </template>
+                            </ListCard>
+                            <TableEmptyState v-if="approvedCustomers.length === 0" icon="i-lucide-users" message="No approved customers found." />
+                        </div>
                     </UCard>
 
                     <div v-if="approvedTotal > perPage" class="flex justify-center">
@@ -57,36 +93,64 @@
             <template #pending>
                 <div class="mt-4 space-y-4">
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-                        <UTable
-                            :data="pendingCustomers"
-                            :columns="pendingColumns"
-                            :loading="pendingLoading"
-                            :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
-                        >
-                            <template #customer-cell="{ row }">
-                                <p class="font-medium text-highlighted">{{ row.original.first_name }} {{ row.original.last_name }}</p>
-                                <p class="text-sm text-muted truncate">{{ row.original.email }}</p>
-                            </template>
-                            <template #created_at-cell="{ row }">
-                                <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
-                            </template>
-                            <template #actions-cell="{ row }">
-                                <div class="flex justify-end">
+                        <div class="hidden sm:block">
+                            <UTable
+                                :data="pendingCustomers"
+                                :columns="pendingColumns"
+                                :loading="pendingLoading"
+                                :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
+                            >
+                                <template #customer-cell="{ row }">
+                                    <p class="font-medium text-highlighted">{{ row.original.first_name }} {{ row.original.last_name }}</p>
+                                    <p class="text-sm text-muted truncate">{{ row.original.email }}</p>
+                                </template>
+                                <template #created_at-cell="{ row }">
+                                    <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
+                                </template>
+                                <template #actions-cell="{ row }">
+                                    <div class="flex justify-end">
+                                        <UButton
+                                            size="sm"
+                                            color="success"
+                                            variant="soft"
+                                            :loading="actingOn === row.original.uuid"
+                                            @click="approveCustomer(row.original)"
+                                        >
+                                            Approve
+                                        </UButton>
+                                    </div>
+                                </template>
+                                <template #empty>
+                                    <TableEmptyState icon="i-lucide-user-check" message="No pending registrations." />
+                                </template>
+                            </UTable>
+                        </div>
+                        <div class="sm:hidden divide-y divide-default">
+                            <ListCard v-for="customer in pendingCustomers" :key="customer.uuid">
+                                <template #title>
+                                    <p class="font-medium text-highlighted">{{ customer.first_name }} {{ customer.last_name }}</p>
+                                </template>
+                                <template #subtitle>
+                                    {{ customer.email }}
+                                </template>
+                                <template #meta>
+                                    <span class="text-muted">{{ customer.contact_number ?? '—' }}</span>
+                                    <span class="text-muted">{{ formatDate(customer.created_at) }}</span>
+                                </template>
+                                <template #actions>
                                     <UButton
                                         size="sm"
                                         color="success"
                                         variant="soft"
-                                        :loading="actingOn === row.original.uuid"
-                                        @click="approveCustomer(row.original)"
+                                        :loading="actingOn === customer.uuid"
+                                        @click="approveCustomer(customer)"
                                     >
                                         Approve
                                     </UButton>
-                                </div>
-                            </template>
-                            <template #empty>
-                                <TableEmptyState icon="i-lucide-user-check" message="No pending registrations." />
-                            </template>
-                        </UTable>
+                                </template>
+                            </ListCard>
+                            <TableEmptyState v-if="pendingCustomers.length === 0" icon="i-lucide-user-check" message="No pending registrations." />
+                        </div>
                     </UCard>
 
                     <div v-if="pendingTotal > perPage" class="flex justify-center">
@@ -101,28 +165,48 @@
             :title="selectedCustomer ? `${selectedCustomer.first_name} ${selectedCustomer.last_name}'s orders` : 'Orders'"
         >
             <template #body>
-                <UTable :data="customerOrders" :columns="orderColumns" :loading="loadingOrders">
-                    <template #pasabuy_schedule-cell="{ row }">
-                        <NuxtLink
-                            v-if="row.original.pasabuy_schedule"
-                            :to="`/admin/schedules/${row.original.pasabuy_schedule.uuid}`"
-                            class="text-primary hover:underline"
-                        >
-                            {{ row.original.pasabuy_schedule.title }}
-                        </NuxtLink>
-                    </template>
-                    <template #status-cell="{ row }">
-                        <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
-                            {{ row.original.status }}
-                        </UBadge>
-                    </template>
-                    <template #created_at-cell="{ row }">
-                        <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
-                    </template>
-                    <template #empty>
-                        <TableEmptyState icon="i-lucide-receipt" message="No orders yet." />
-                    </template>
-                </UTable>
+                <div class="hidden sm:block">
+                    <UTable :data="customerOrders" :columns="orderColumns" :loading="loadingOrders">
+                        <template #pasabuy_schedule-cell="{ row }">
+                            <NuxtLink
+                                v-if="row.original.pasabuy_schedule"
+                                :to="`/admin/schedules/${row.original.pasabuy_schedule.uuid}`"
+                                class="text-primary hover:underline"
+                            >
+                                {{ row.original.pasabuy_schedule.title }}
+                            </NuxtLink>
+                        </template>
+                        <template #status-cell="{ row }">
+                            <UBadge :color="orderStatusColor[row.original.status]" variant="subtle">
+                                {{ row.original.status }}
+                            </UBadge>
+                        </template>
+                        <template #created_at-cell="{ row }">
+                            <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
+                        </template>
+                        <template #empty>
+                            <TableEmptyState icon="i-lucide-receipt" message="No orders yet." />
+                        </template>
+                    </UTable>
+                </div>
+                <div class="sm:hidden divide-y divide-default">
+                    <ListCard v-for="order in customerOrders" :key="order.uuid" :tone="orderStatusColor[order.status]">
+                        <template #title>
+                            <NuxtLink
+                                v-if="order.pasabuy_schedule"
+                                :to="`/admin/schedules/${order.pasabuy_schedule.uuid}`"
+                                class="font-medium text-primary hover:underline"
+                            >
+                                {{ order.pasabuy_schedule.title }}
+                            </NuxtLink>
+                        </template>
+                        <template #meta>
+                            <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
+                            <span class="text-muted">{{ formatDate(order.created_at) }}</span>
+                        </template>
+                    </ListCard>
+                    <TableEmptyState v-if="customerOrders.length === 0" icon="i-lucide-receipt" message="No orders yet." />
+                </div>
             </template>
         </UModal>
 

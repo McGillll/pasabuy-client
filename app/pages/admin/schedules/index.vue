@@ -26,56 +26,95 @@
         </div>
 
         <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <UTable
-                :data="schedules"
-                :columns="columns"
-                :loading="loading"
-                :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
-            >
-                <template #title-cell="{ row }">
-                    <NuxtLink :to="`/admin/schedules/${row.original.uuid}`" class="font-medium text-highlighted hover:text-primary">
-                        {{ row.original.title }}
-                    </NuxtLink>
-                </template>
-                <template #status-cell="{ row }">
-                    <StatusBadge :color="scheduleStatusColor[row.original.status]" :label="row.original.status" />
-                </template>
-                <template #pasabuy_schedule_date-cell="{ row }">
-                    <span class="text-muted">{{ row.original.pasabuy_schedule_date ? formatDate(row.original.pasabuy_schedule_date) : '—' }}</span>
-                </template>
-                <template #actions-cell="{ row }">
-                    <div class="flex justify-end gap-2">
+            <div class="hidden sm:block">
+                <UTable
+                    :data="schedules"
+                    :columns="columns"
+                    :loading="loading"
+                    :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
+                >
+                    <template #title-cell="{ row }">
+                        <NuxtLink :to="`/admin/schedules/${row.original.uuid}`" class="font-medium text-highlighted hover:text-primary">
+                            {{ row.original.title }}
+                        </NuxtLink>
+                    </template>
+                    <template #status-cell="{ row }">
+                        <StatusBadge :color="scheduleStatusColor[row.original.status]" :label="row.original.status" />
+                    </template>
+                    <template #pasabuy_schedule_date-cell="{ row }">
+                        <span class="text-muted">{{ row.original.pasabuy_schedule_date ? formatDate(row.original.pasabuy_schedule_date) : '—' }}</span>
+                    </template>
+                    <template #actions-cell="{ row }">
+                        <div class="flex justify-end gap-2">
+                            <UButton
+                                v-if="row.original.status === 'open'"
+                                size="sm"
+                                color="neutral"
+                                variant="ghost"
+                                icon="i-lucide-lock"
+                                :loading="closingUuid === row.original.uuid"
+                                @click="closeSchedule(row.original)"
+                            >
+                                Close
+                            </UButton>
+                            <UButton
+                                size="sm"
+                                color="neutral"
+                                variant="ghost"
+                                trailing-icon="i-lucide-arrow-right"
+                                :to="`/admin/schedules/${row.original.uuid}`"
+                            >
+                                Manage
+                            </UButton>
+                        </div>
+                    </template>
+                    <template #empty>
+                        <TableEmptyState
+                            icon="i-lucide-calendar-search"
+                            message="No schedules found."
+                            action-label="Create your first schedule"
+                            @action="openCreateModal"
+                        />
+                    </template>
+                </UTable>
+            </div>
+            <div class="sm:hidden divide-y divide-default">
+                <ListCard
+                    v-for="scheduleRow in schedules"
+                    :key="scheduleRow.uuid"
+                    clickable
+                    :tone="scheduleStatusColor[scheduleRow.status]"
+                    @click="navigateTo(`/admin/schedules/${scheduleRow.uuid}`)"
+                >
+                    <template #title>
+                        <p class="font-medium text-highlighted">{{ scheduleRow.title }}</p>
+                    </template>
+                    <template #meta>
+                        <StatusBadge :color="scheduleStatusColor[scheduleRow.status]" :label="scheduleRow.status" />
+                        <span class="text-muted">{{ scheduleRow.pasabuy_schedule_date ? formatDate(scheduleRow.pasabuy_schedule_date) : '—' }}</span>
+                    </template>
+                    <template #actions>
                         <UButton
-                            v-if="row.original.status === 'open'"
+                            v-if="scheduleRow.status === 'open'"
                             size="sm"
                             color="neutral"
                             variant="ghost"
                             icon="i-lucide-lock"
-                            :loading="closingUuid === row.original.uuid"
-                            @click="closeSchedule(row.original)"
-                        >
-                            Close
-                        </UButton>
-                        <UButton
-                            size="sm"
-                            color="neutral"
-                            variant="ghost"
-                            trailing-icon="i-lucide-arrow-right"
-                            :to="`/admin/schedules/${row.original.uuid}`"
-                        >
-                            Manage
-                        </UButton>
-                    </div>
-                </template>
-                <template #empty>
-                    <TableEmptyState
-                        icon="i-lucide-calendar-search"
-                        message="No schedules found."
-                        action-label="Create your first schedule"
-                        @action="openCreateModal"
-                    />
-                </template>
-            </UTable>
+                            aria-label="Close schedule"
+                            :loading="closingUuid === scheduleRow.uuid"
+                            @click.stop="closeSchedule(scheduleRow)"
+                        />
+                        <UIcon name="i-lucide-chevron-right" class="size-4 text-dimmed" />
+                    </template>
+                </ListCard>
+                <TableEmptyState
+                    v-if="schedules.length === 0"
+                    icon="i-lucide-calendar-search"
+                    message="No schedules found."
+                    action-label="Create your first schedule"
+                    @action="openCreateModal"
+                />
+            </div>
         </UCard>
 
         <div v-if="total > perPage" class="flex justify-center">
