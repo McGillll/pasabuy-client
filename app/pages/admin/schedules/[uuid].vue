@@ -75,6 +75,9 @@
                         <UFormField label="Cutoff (optional)">
                             <UInput v-model="detailsForm.cutoffAt" type="datetime-local" :disabled="isLocked" class="w-full" />
                         </UFormField>
+                        <UFormField label="Pasabuy date" hint="The date you'll go to the store">
+                            <UInput v-model="detailsForm.pasabuyScheduleDate" type="date" :disabled="isLocked" class="w-full" />
+                        </UFormField>
                         <UButton type="submit" :loading="savingDetails" :disabled="isLocked">
                             Save details
                         </UButton>
@@ -444,7 +447,8 @@ const summaryTabs: TabsItem[] = [
 const detailsForm = reactive({
     title: '',
     description: '',
-    cutoffAt: ''
+    cutoffAt: '',
+    pasabuyScheduleDate: ''
 })
 const savingDetails = ref(false)
 const changingStatus = ref(false)
@@ -602,6 +606,7 @@ async function loadAll() {
         detailsForm.title = schedule.value!.title
         detailsForm.description = schedule.value!.description ?? ''
         detailsForm.cutoffAt = isoToDatetimeLocal(schedule.value!.cutoff_at)
+        detailsForm.pasabuyScheduleDate = schedule.value!.pasabuy_schedule_date ?? ''
 
         await loadChecklist()
     } catch (error) {
@@ -622,7 +627,8 @@ async function saveDetails() {
         const response = await pasabuyScheduleService.updateSchedule(uuid, {
             title: detailsForm.title,
             description: detailsForm.description,
-            cutoff_at: detailsForm.cutoffAt || null
+            cutoff_at: detailsForm.cutoffAt || null,
+            pasabuy_schedule_date: detailsForm.pasabuyScheduleDate || null
         })
         schedule.value = { ...schedule.value!, ...response.data }
         toast.add({ title: 'Schedule updated', color: 'success' })

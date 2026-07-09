@@ -5,7 +5,25 @@
             <UButton icon="i-lucide-plus" @click="openCreateModal">New Schedule</UButton>
         </div>
 
-        <UInput v-model="search" icon="i-lucide-search" placeholder="Search schedules…" class="w-full sm:w-72" />
+        <div class="flex flex-col sm:flex-row gap-2">
+            <UInput v-model="search" icon="i-lucide-search" placeholder="Search schedules…" class="w-full sm:w-72" />
+            <div class="flex gap-2">
+                <USelect
+                    v-model="monthFilter"
+                    :items="monthFilterOptions"
+                    value-key="value"
+                    placeholder="All months"
+                    class="w-full sm:w-40"
+                />
+                <USelect
+                    v-model="yearFilter"
+                    :items="yearFilterOptions"
+                    value-key="value"
+                    placeholder="All years"
+                    class="w-full sm:w-32"
+                />
+            </div>
+        </div>
 
         <UCard :ui="{ body: 'p-0 sm:p-0' }">
             <UTable
@@ -27,8 +45,8 @@
                         </span>
                     </UBadge>
                 </template>
-                <template #created_at-cell="{ row }">
-                    <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
+                <template #pasabuy_schedule_date-cell="{ row }">
+                    <span class="text-muted">{{ row.original.pasabuy_schedule_date ? formatDate(row.original.pasabuy_schedule_date) : '—' }}</span>
                 </template>
                 <template #actions-cell="{ row }">
                     <div class="flex justify-end gap-2">
@@ -77,6 +95,9 @@
                     <UFormField label="Description">
                         <UTextarea v-model="form.description" class="w-full" />
                     </UFormField>
+                    <UFormField label="Pasabuy date" hint="The date you'll go to the store">
+                        <UInput v-model="form.pasabuy_schedule_date" type="date" class="w-full" />
+                    </UFormField>
                     <UButton type="submit" block :loading="saving">Create</UButton>
                 </form>
             </template>
@@ -110,6 +131,7 @@ interface Schedule {
     title: string
     status: string
     is_open: boolean
+    pasabuy_schedule_date: string | null
     created_at: string
 }
 
@@ -120,18 +142,48 @@ const page = ref(1)
 const perPage = 15
 const total = ref(0)
 const search = ref('')
+const monthFilter = ref<number | null>(null)
+const yearFilter = ref<number | null>(null)
+
+const monthFilterOptions = [
+    { label: 'All months', value: null },
+    { label: 'January', value: 1 },
+    { label: 'February', value: 2 },
+    { label: 'March', value: 3 },
+    { label: 'April', value: 4 },
+    { label: 'May', value: 5 },
+    { label: 'June', value: 6 },
+    { label: 'July', value: 7 },
+    { label: 'August', value: 8 },
+    { label: 'September', value: 9 },
+    { label: 'October', value: 10 },
+    { label: 'November', value: 11 },
+    { label: 'December', value: 12 }
+]
+
+const currentYear = new Date().getFullYear()
+const yearFilterOptions = [
+    { label: 'All years', value: null },
+    ...Array.from({ length: 5 }, (_, index) => currentYear - index).map((year) => ({ label: String(year), value: year }))
+]
 
 const columns: TableColumn<Schedule>[] = [
     { accessorKey: 'title', header: 'Title' },
     { accessorKey: 'status', header: 'Status' },
-    { accessorKey: 'created_at', header: 'Created' },
+    { accessorKey: 'pasabuy_schedule_date', header: 'Pasabuy date' },
     { id: 'actions', header: '' }
 ]
 
 async function loadSchedules() {
     loading.value = true
     try {
-        const response = await pasabuyScheduleService.fetchSchedules({ page: page.value, per_page: perPage, search: search.value || undefined })
+        const response = await pasabuyScheduleService.fetchSchedules({
+            page: page.value,
+            per_page: perPage,
+            search: search.value || undefined,
+            month: monthFilter.value || undefined,
+            year: yearFilter.value || undefined
+        })
         schedules.value = response.data.data
         total.value = response.data.total
     } catch (error) {
@@ -143,25 +195,35 @@ async function loadSchedules() {
 
 watch(page, loadSchedules)
 
+watch([monthFilter, yearFilter], () => {
+    page.value = 1
+    loadSchedules()
+})
+
 useSearchDebounce(search, () => {
     page.value = 1
     loadSchedules()
 })
 
 const isModalOpen = ref(false)
-const form = reactive({ title: '', description: '' })
+const form = reactive({ title: '', description: '', pasabuy_schedule_date: '' })
 const saving = ref(false)
 
 function openCreateModal() {
     form.title = ''
     form.description = ''
+    form.pasabuy_schedule_date = ''
     isModalOpen.value = true
 }
 
 async function onCreate() {
     saving.value = true
     try {
-        const response = await pasabuyScheduleService.createSchedule({ title: form.title, description: form.description })
+        const response = await pasabuyScheduleService.createSchedule({
+            title: form.title,
+            description: form.description,
+            pasabuy_schedule_date: form.pasabuy_schedule_date || null
+        })
         isModalOpen.value = false
         await navigateTo(`/admin/schedules/${response.data.uuid}`)
     } catch (error) {
@@ -222,6 +284,7 @@ function closeSchedule(scheduleRow: Schedule) {
                     title: detail.data.title,
                     description: detail.data.description,
                     cutoff_at: detail.data.cutoff_at,
+                    pasabuy_schedule_date: detail.data.pasabuy_schedule_date,
                     status: 'closed'
                 })
                 scheduleRow.status = 'closed'
