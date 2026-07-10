@@ -38,15 +38,12 @@ class ProductCategoryService extends BaseAPIService {
     }
 
     /**
-     * PUT /api/admin/product-categories/{uuid} (sent as POST with `_method: 'PUT'` spoofing)
+     * POST /api/admin/product-categories/{uuid}
      * FormData fields: same as createCategory.
      * Response: updated `Category`.
      */
     async updateCategory(uuid: string, payload: CategoryPayload): Promise<any> {
-        const formData = this.buildFormData(payload)
-        formData.append('_method', 'PUT')
-
-        return await this.request(`/admin/product-categories/${uuid}`, 'POST', formData)
+        return await this.request(`/admin/product-categories/${uuid}`, 'POST', this.buildFormData(payload))
     }
 
     /**

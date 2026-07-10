@@ -41,29 +41,25 @@ class CustomerOrderService extends BaseAPIService {
     }
 
     /**
-     * PUT /api/customer/orders/{uuid}
+     * POST /api/customer/orders/{uuid}
      * FormData fields: same indexed items array as placeOrder. Replaces the order's items entirely.
      * Only allowed while the order is pending and its schedule is still open (see `is_editable`).
      * Response: updated `Order`.
      */
     async updateMyOrder(uuid: string, items: CustomerOrderItemInput[]): Promise<any> {
         const formData = new FormData()
-        formData.append('_method', 'PUT')
         this.appendItems(formData, items)
 
         return await this.request(`/customer/orders/${uuid}`, 'POST', formData)
     }
 
     /**
-     * PATCH /api/customer/orders/{uuid}/cancel (sent as POST with `_method: 'PATCH'` spoofing)
+     * POST /api/customer/orders/{uuid}/cancel
      * Cancels the order outright. Only allowed while status is 'pending'.
      * Response: updated `Order`.
      */
     async cancelOrder(uuid: string): Promise<any> {
-        const formData = new FormData()
-        formData.append('_method', 'PATCH')
-
-        return await this.request(`/customer/orders/${uuid}/cancel`, 'POST', formData)
+        return await this.request(`/customer/orders/${uuid}/cancel`, 'POST', new FormData())
     }
 
     private appendItems(formData: FormData, items: CustomerOrderItemInput[]) {

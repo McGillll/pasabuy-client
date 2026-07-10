@@ -16,13 +16,12 @@ class PublicChecklistService extends BaseAPIService {
     }
 
     /**
-     * PATCH /api/public/checklist/{token}/{productUuid} (sent as POST with `_method: 'PATCH'` spoofing)
+     * POST /api/public/checklist/{token}/{productUuid}
      * FormData fields: is_checked ('1'|'0', required).
      * Response: updated `ChecklistItem`.
      */
     async toggleChecklistItem(token: string, productUuid: string, isChecked: boolean): Promise<any> {
         const formData = new FormData()
-        formData.append('_method', 'PATCH')
         formData.append('is_checked', isChecked ? '1' : '0')
 
         return await this.request(`/public/checklist/${token}/${productUuid}`, 'POST', formData)

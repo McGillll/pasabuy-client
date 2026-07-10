@@ -12,7 +12,7 @@ export interface ProductPayload {
 
 /**
  * Admin product catalog CRUD.
- * GET /api/admin/products, POST /api/admin/products, GET/PUT/DELETE /api/admin/products/{uuid}
+ * GET /api/admin/products, POST /api/admin/products, GET/POST/DELETE /api/admin/products/{uuid}
  * See api/rsc-doc/product-api.md for response shapes.
  */
 class ProductService extends BaseAPIService {
@@ -45,15 +45,12 @@ class ProductService extends BaseAPIService {
     }
 
     /**
-     * PUT /api/admin/products/{uuid} (sent as POST with `_method: 'PUT'` spoofing)
+     * POST /api/admin/products/{uuid}
      * FormData fields: same as createProduct.
      * Response: updated `Product`.
      */
     async updateProduct(uuid: string, payload: ProductPayload): Promise<any> {
-        const formData = this.buildFormData(payload)
-        formData.append('_method', 'PUT')
-
-        return await this.request(`/admin/products/${uuid}`, 'POST', formData)
+        return await this.request(`/admin/products/${uuid}`, 'POST', this.buildFormData(payload))
     }
 
     /**
