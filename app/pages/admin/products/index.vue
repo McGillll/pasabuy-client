@@ -253,46 +253,97 @@
             </template>
         </UTabs>
 
-        <UModal v-model:open="isProductModalOpen" :title="editingProduct ? 'Edit Product' : 'Add Product'">
+        <UModal
+            v-model:open="isProductModalOpen"
+            :title="editingProduct ? 'Edit Product' : 'Add Product'"
+            :ui="{ content: 'sm:max-w-2xl' }"
+        >
             <template #body>
-                <form class="space-y-4" @submit.prevent="onSaveProduct">
-                    <UFormField label="Name" required>
-                        <UInput v-model="productForm.name" class="w-full" />
-                    </UFormField>
-                    <UFormField label="Description">
-                        <UTextarea v-model="productForm.description" class="w-full" />
-                    </UFormField>
-                    <UFormField label="Default price" required>
-                        <UInput v-model.number="productForm.default_price" type="number" min="0" step="0.01" class="w-full">
-                            <template #leading>
-                                <span class="text-sm text-dimmed">₱</span>
-                            </template>
-                        </UInput>
-                    </UFormField>
-                    <UFormField label="Category">
-                        <USelect
-                            v-model="productForm.category_id"
-                            :items="categoryOptions"
-                            value-key="value"
-                            class="w-full"
-                        />
-                    </UFormField>
-                    <UFormField label="Default product status">
-                        <USelect
-                            v-model="productForm.default_product_status"
-                            :items="productStatusOptions"
-                            value-key="value"
-                            class="w-full"
-                        />
-                    </UFormField>
-                    <UFormField label="Image">
-                        <UFileUpload v-model="productForm.image" accept="image/*" />
-                    </UFormField>
-                    <UFormField label="Active">
-                        <UCheckbox v-model="productForm.is_active" label="Product is active" />
-                    </UFormField>
-                    <UButton type="submit" block :loading="savingProduct">Save</UButton>
+                <form id="product-form" class="space-y-6" @submit.prevent="onSaveProduct">
+                    <div class="flex flex-col sm:flex-row gap-6">
+                        <div class="sm:w-48 shrink-0 space-y-4">
+                            <UFormField label="Image">
+                                <UFileUpload v-model="productForm.image" accept="image/*">
+                                    <template #default="{ open }">
+                                        <div class="flex items-center gap-3 sm:flex-col sm:items-stretch">
+                                            <div
+                                                class="relative shrink-0 size-24 sm:size-auto sm:w-full sm:aspect-square rounded-lg overflow-hidden ring-1 ring-default bg-elevated cursor-pointer"
+                                                @click="open()"
+                                            >
+                                                <img
+                                                    v-if="productImagePreviewUrl"
+                                                    :src="productImagePreviewUrl"
+                                                    class="size-full object-cover"
+                                                    alt=""
+                                                >
+                                                <div v-else class="flex items-center justify-center size-full text-dimmed">
+                                                    <UIcon name="i-lucide-image-plus" class="size-6" />
+                                                </div>
+                                                <UButton
+                                                    v-if="productForm.image"
+                                                    icon="i-lucide-x"
+                                                    size="2xs"
+                                                    color="neutral"
+                                                    variant="solid"
+                                                    class="absolute top-1 right-1 rounded-full"
+                                                    aria-label="Remove selected image"
+                                                    @click.stop="productForm.image = null"
+                                                />
+                                            </div>
+                                            <UButton
+                                                :label="productImagePreviewUrl ? 'Change photo' : 'Add photo'"
+                                                color="neutral"
+                                                variant="outline"
+                                                size="sm"
+                                                @click="open()"
+                                            />
+                                        </div>
+                                    </template>
+                                </UFileUpload>
+                            </UFormField>
+                            <UFormField label="Active">
+                                <USwitch v-model="productForm.is_active" label="Product is active" />
+                            </UFormField>
+                        </div>
+                        <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <UFormField label="Name" required>
+                                <UInput v-model="productForm.name" class="w-full" />
+                            </UFormField>
+                            <UFormField label="Default price" required>
+                                <UInput v-model.number="productForm.default_price" type="number" min="0" step="0.01" class="w-full">
+                                    <template #leading>
+                                        <span class="text-sm text-dimmed">₱</span>
+                                    </template>
+                                </UInput>
+                            </UFormField>
+                            <UFormField label="Category">
+                                <USelect
+                                    v-model="productForm.category_id"
+                                    :items="categoryOptions"
+                                    value-key="value"
+                                    class="w-full"
+                                />
+                            </UFormField>
+                            <UFormField label="Default product status">
+                                <USelect
+                                    v-model="productForm.default_product_status"
+                                    :items="productStatusOptions"
+                                    value-key="value"
+                                    class="w-full"
+                                />
+                            </UFormField>
+                            <UFormField label="Description" class="sm:col-span-2">
+                                <UTextarea v-model="productForm.description" class="w-full" :rows="3" />
+                            </UFormField>
+                        </div>
+                    </div>
                 </form>
+            </template>
+            <template #footer>
+                <div class="flex justify-end gap-2 w-full">
+                    <UButton color="neutral" variant="soft" @click="isProductModalOpen = false">Cancel</UButton>
+                    <UButton type="submit" form="product-form" :loading="savingProduct">Save</UButton>
+                </div>
             </template>
         </UModal>
 
@@ -431,6 +482,11 @@ const productForm = reactive({
     image: null as File | null
 })
 const savingProduct = ref(false)
+
+const productImagePreviewUrl = computed(() => {
+    if (productForm.image) return URL.createObjectURL(productForm.image)
+    return editingProduct.value?.image_url ?? null
+})
 
 function openProductCreateModal() {
     editingProduct.value = null
