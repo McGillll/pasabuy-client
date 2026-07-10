@@ -6,18 +6,9 @@ export interface LoginPayload {
     remember?: boolean
 }
 
-/**
- * POST /api/auth/login — FormData: email, password, remember?
- * Response data: { user: { uuid, name, email, role }, token }
- */
 class AuthService extends BaseAPIService {
     async login(payload: LoginPayload): Promise<any> {
-        const formData = new FormData()
-        formData.append('email', payload.email)
-        formData.append('password', payload.password)
-        formData.append('remember', payload.remember ? '1' : '0')
-
-        return await this.request('/auth/login', 'POST', formData)
+        return await this.request('/auth/login', 'POST', payload)
     }
 
     async logout(): Promise<any> {
