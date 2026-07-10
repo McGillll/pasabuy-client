@@ -107,18 +107,23 @@ async function toggleItem(item: ChecklistItem, isChecked: boolean) {
     }
 }
 
-const POLL_INTERVAL_MS = 15000
-let pollTimer: ReturnType<typeof setInterval> | null = null
+function applyBroadcastUpdate(updatedItem: ChecklistItem) {
+    const item = checklistItems.value.find((candidate) => candidate.product_uuid === updatedItem.product_uuid)
+    if (item) {
+        Object.assign(item, updatedItem)
+    }
+}
+
+const { $echo } = useNuxtApp()
+let channel: ReturnType<typeof $echo.channel> | null = null
 
 onMounted(async () => {
     await load()
-    pollTimer = setInterval(() => {
-        if (togglingUuid.value) return
-        load()
-    }, POLL_INTERVAL_MS)
+    channel = $echo.channel(`checklist.${token}`)
+    channel.listen('.checklist.item.toggled', applyBroadcastUpdate)
 })
 
 onUnmounted(() => {
-    if (pollTimer) clearInterval(pollTimer)
+    if (channel) $echo.leaveChannel(`checklist.${token}`)
 })
 </script>

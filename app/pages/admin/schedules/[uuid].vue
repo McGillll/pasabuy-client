@@ -817,6 +817,7 @@ async function regenerateChecklistShareLinkAction() {
         const url = `${window.location.origin}/pasabuy/checklist/${response.data.token}`
         await navigator.clipboard.writeText(url)
         toast.add({ title: 'New helper link copied', description: 'The previous link no longer works.', color: 'success' })
+        if (checklistChannel) subscribeChecklistChannel(response.data.token)
     } catch (error) {
         toast.add({ title: 'Failed to revoke link', description: (error as APIError).message, color: 'error' })
     } finally {
@@ -824,37 +825,51 @@ async function regenerateChecklistShareLinkAction() {
     }
 }
 
-const CHECKLIST_POLL_INTERVAL_MS = 15000
-let checklistPollTimer: ReturnType<typeof setInterval> | null = null
+const { $echo } = useNuxtApp()
+const checklistShareToken = ref<string | null>(null)
+let checklistChannel: ReturnType<typeof $echo.channel> | null = null
 
-function stopChecklistPolling() {
-    if (checklistPollTimer) {
-        clearInterval(checklistPollTimer)
-        checklistPollTimer = null
-    }
+function applyBroadcastChecklistUpdate(updatedItem: ChecklistItem) {
+    const item = checklistItems.value.find((candidate) => candidate.product_uuid === updatedItem.product_uuid)
+    if (item) Object.assign(item, updatedItem)
 }
 
-function startChecklistPolling() {
-    if (checklistPollTimer) return
-    checklistPollTimer = setInterval(() => {
-        if (regeneratingChecklist.value || togglingUuid.value) return
-        regenerateChecklist(true)
-    }, CHECKLIST_POLL_INTERVAL_MS)
+function subscribeChecklistChannel(token: string) {
+    if (checklistShareToken.value) $echo.leaveChannel(`checklist.${checklistShareToken.value}`)
+    checklistShareToken.value = token
+    checklistChannel = $echo.channel(`checklist.${token}`)
+    checklistChannel.listen('.checklist.item.toggled', applyBroadcastChecklistUpdate)
+}
+
+function stopChecklistLiveSync() {
+    if (checklistShareToken.value) $echo.leaveChannel(`checklist.${checklistShareToken.value}`)
+    checklistChannel = null
+    checklistShareToken.value = null
+}
+
+async function startChecklistLiveSync() {
+    if (checklistChannel) return
+    try {
+        const response = await pasabuyScheduleService.fetchChecklistShareLink(uuid)
+        subscribeChecklistChannel(response.data.token)
+    } catch {
+        // Share link isn't ready yet (schedule not closed) — admin can still toggle items manually.
+    }
 }
 
 watch(
     [activeTab, activeSummaryTab, isLocked],
     ([tab, summaryTab, locked]) => {
         if (tab === 'summary' && summaryTab === 'checklist' && locked) {
-            startChecklistPolling()
+            startChecklistLiveSync()
         } else {
-            stopChecklistPolling()
+            stopChecklistLiveSync()
         }
     },
     { immediate: true }
 )
 
-onUnmounted(stopChecklistPolling)
+onUnmounted(stopChecklistLiveSync)
 
 async function toggleChecklist(item: ChecklistItem, isChecked: boolean) {
     const previousIsChecked = item.is_checked
