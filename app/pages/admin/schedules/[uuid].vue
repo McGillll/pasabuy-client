@@ -157,6 +157,22 @@
 
                     <template #checklist>
                         <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
+                            <template #header>
+                                <div class="flex items-center justify-between">
+                                    <h2 class="font-medium">Shopping checklist</h2>
+                                    <UButton
+                                        icon="i-lucide-refresh-cw"
+                                        color="neutral"
+                                        variant="soft"
+                                        size="sm"
+                                        :loading="regeneratingChecklist"
+                                        :disabled="!isLocked"
+                                        @click="() => regenerateChecklist()"
+                                    >
+                                        Regenerate
+                                    </UButton>
+                                </div>
+                            </template>
                             <div class="hidden sm:block">
                                 <UTable :data="checklistItems" :columns="checklistColumns" :loading="checklistLoading" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
                                     <template #is_checked-cell="{ row }">
@@ -169,6 +185,9 @@
                                     <template #product-cell="{ row }">
                                         <p class="font-medium text-highlighted" :class="{ 'line-through text-muted': row.original.is_checked }">{{ row.original.product_name }}</p>
                                         <p class="text-sm text-muted">{{ row.original.category_name ?? '—' }}</p>
+                                    </template>
+                                    <template #quantity-cell="{ row }">
+                                        <span class="text-lg font-bold text-highlighted tabular-nums">{{ row.original.quantity }}x</span>
                                     </template>
                                     <template #adjustment-cell="{ row }">
                                         <UBadge v-if="row.original.additional_quantity > 0" color="warning" variant="subtle" size="sm">
@@ -197,13 +216,15 @@
                                         />
                                     </template>
                                     <template #title>
-                                        <p class="font-medium text-highlighted" :class="{ 'line-through text-muted': item.is_checked }">{{ item.product_name }}</p>
+                                        <div class="flex w-full items-center justify-between gap-2">
+                                            <p class="font-medium text-highlighted" :class="{ 'line-through text-muted': item.is_checked }">{{ item.product_name }}</p>
+                                            <p class="shrink-0 text-xl font-bold text-highlighted tabular-nums">{{ item.quantity }}x</p>
+                                        </div>
                                     </template>
                                     <template #subtitle>
                                         {{ item.category_name ?? '—' }}
                                     </template>
                                     <template #meta>
-                                        <span class="text-muted">Qty {{ item.quantity }}</span>
                                         <UBadge v-if="item.additional_quantity > 0" color="warning" variant="subtle" size="sm">
                                             +{{ item.additional_quantity }} more
                                         </UBadge>
@@ -710,6 +731,7 @@ async function confirmSelectedPrice() {
 
 const checklistItems = ref<ChecklistItem[]>([])
 const checklistLoading = ref(false)
+const regeneratingChecklist = ref(false)
 const togglingUuid = ref<string | null>(null)
 
 const checklistColumns: TableColumn<ChecklistItem>[] = [
@@ -731,12 +753,63 @@ async function loadChecklist() {
     }
 }
 
+async function regenerateChecklist(silent = false) {
+    if (!silent) regeneratingChecklist.value = true
+    try {
+        const response = await pasabuyScheduleService.regenerateChecklist(uuid)
+        checklistItems.value = response.data
+        if (!silent) toast.add({ title: 'Checklist regenerated', color: 'success' })
+    } catch (error) {
+        if (!silent) toast.add({ title: 'Failed to regenerate checklist', description: (error as APIError).message, color: 'error' })
+    } finally {
+        if (!silent) regeneratingChecklist.value = false
+    }
+}
+
+const CHECKLIST_POLL_INTERVAL_MS = 15000
+let checklistPollTimer: ReturnType<typeof setInterval> | null = null
+
+function stopChecklistPolling() {
+    if (checklistPollTimer) {
+        clearInterval(checklistPollTimer)
+        checklistPollTimer = null
+    }
+}
+
+function startChecklistPolling() {
+    if (checklistPollTimer) return
+    checklistPollTimer = setInterval(() => {
+        if (regeneratingChecklist.value || togglingUuid.value) return
+        regenerateChecklist(true)
+    }, CHECKLIST_POLL_INTERVAL_MS)
+}
+
+watch(
+    [activeTab, activeSummaryTab, isLocked],
+    ([tab, summaryTab, locked]) => {
+        if (tab === 'summary' && summaryTab === 'checklist' && locked) {
+            startChecklistPolling()
+        } else {
+            stopChecklistPolling()
+        }
+    },
+    { immediate: true }
+)
+
+onUnmounted(stopChecklistPolling)
+
 async function toggleChecklist(item: ChecklistItem, isChecked: boolean) {
+    const previousIsChecked = item.is_checked
+    const previousCheckedAt = item.checked_at
+
+    item.is_checked = isChecked
     togglingUuid.value = item.product_uuid
     try {
         const response = await pasabuyScheduleService.toggleChecklistItem(uuid, item.product_uuid, isChecked)
         Object.assign(item, response.data)
     } catch (error) {
+        item.is_checked = previousIsChecked
+        item.checked_at = previousCheckedAt
         toast.add({ title: 'Update failed', description: (error as APIError).message, color: 'error' })
     } finally {
         togglingUuid.value = null

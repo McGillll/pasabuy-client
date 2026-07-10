@@ -144,6 +144,14 @@ class PasabuyScheduleService extends BaseAPIService {
     }
 
     /**
+     * POST /api/admin/pasabuy-schedules/{uuid}/checklist/regenerate
+     * Response: refreshed `ChecklistItem[]`, recalculated against current order totals.
+     */
+    async regenerateChecklist(uuid: string): Promise<any> {
+        return await this.request(`/admin/pasabuy-schedules/${uuid}/checklist/regenerate`, 'POST', new FormData())
+    }
+
+    /**
      * GET /api/admin/pasabuy-schedules/{uuid}/orders
      * Response: `Order[]` for the schedule.
      */
