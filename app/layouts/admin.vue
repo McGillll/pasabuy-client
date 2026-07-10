@@ -23,7 +23,7 @@
             <div class="border-t border-default p-4">
                 <p class="text-sm font-medium text-highlighted truncate">{{ user?.first_name }} {{ user?.last_name }}</p>
                 <p class="text-xs text-muted truncate mb-3">{{ user?.email }}</p>
-                <UButton block size="md" color="neutral" variant="soft" icon="i-lucide-log-out" @click="logout">
+                <UButton block size="md" color="neutral" variant="soft" icon="i-lucide-log-out" @click="logout('/login')">
                     Log out
                 </UButton>
             </div>
@@ -38,7 +38,7 @@
                         </div>
                         <span class="font-semibold text-highlighted">Pasabuy</span>
                     </div>
-                    <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-log-out" @click="logout">
+                    <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-log-out" @click="logout('/login')">
                         Log out
                     </UButton>
                 </div>

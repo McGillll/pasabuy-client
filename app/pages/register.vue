@@ -50,27 +50,11 @@
                 </UFormField>
 
                 <UFormField label="Password" name="password" required>
-                    <UInput
-                        v-model="state.password"
-                        type="password"
-                        placeholder="••••••••"
-                        icon="i-lucide-lock"
-                        autocomplete="new-password"
-                        size="xl"
-                        class="w-full"
-                    />
+                    <PasswordInput v-model="state.password" autocomplete="new-password" />
                 </UFormField>
 
                 <UFormField label="Confirm password" name="password_confirmation" required>
-                    <UInput
-                        v-model="state.password_confirmation"
-                        type="password"
-                        placeholder="••••••••"
-                        icon="i-lucide-lock"
-                        autocomplete="new-password"
-                        size="xl"
-                        class="w-full"
-                    />
+                    <PasswordInput v-model="state.password_confirmation" autocomplete="new-password" />
                 </UFormField>
 
                 <UButton type="submit" block size="xl" :loading="isSubmitting">

@@ -28,15 +28,7 @@
             </UFormField>
 
             <UFormField label="Password" name="password" required>
-                <UInput
-                    v-model="state.password"
-                    type="password"
-                    placeholder="••••••••"
-                    icon="i-lucide-lock"
-                    autocomplete="current-password"
-                    size="xl"
-                    class="w-full"
-                />
+                <PasswordInput v-model="state.password" autocomplete="current-password" />
             </UFormField>
 
             <div class="flex items-center justify-between">
