@@ -158,19 +158,45 @@
                     <template #checklist>
                         <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
                             <template #header>
-                                <div class="flex items-center justify-between">
+                                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <h2 class="font-medium">Shopping checklist</h2>
-                                    <UButton
-                                        icon="i-lucide-refresh-cw"
-                                        color="neutral"
-                                        variant="soft"
-                                        size="sm"
-                                        :loading="regeneratingChecklist"
-                                        :disabled="!isLocked"
-                                        @click="() => regenerateChecklist()"
-                                    >
-                                        Regenerate
-                                    </UButton>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <UButton
+                                            icon="i-lucide-user-plus"
+                                            color="neutral"
+                                            variant="soft"
+                                            size="sm"
+                                            :loading="loadingChecklistShareLink"
+                                            :disabled="!isLocked"
+                                            @click="copyChecklistShareLink"
+                                        >
+                                            Share with helper
+                                        </UButton>
+                                        <UButton
+                                            icon="i-lucide-shield-off"
+                                            color="neutral"
+                                            variant="ghost"
+                                            size="sm"
+                                            :loading="regeneratingChecklistShareLink"
+                                            :disabled="!isLocked"
+                                            aria-label="Revoke helper link"
+                                            @click="regenerateChecklistShareLinkAction"
+                                        >
+                                            <span class="hidden sm:inline">Revoke link</span>
+                                        </UButton>
+                                        <UButton
+                                            icon="i-lucide-refresh-cw"
+                                            color="neutral"
+                                            variant="soft"
+                                            size="sm"
+                                            :loading="regeneratingChecklist"
+                                            :disabled="!isLocked"
+                                            aria-label="Regenerate checklist"
+                                            @click="() => regenerateChecklist()"
+                                        >
+                                            <span class="hidden sm:inline">Regenerate</span>
+                                        </UButton>
+                                    </div>
                                 </div>
                             </template>
                             <div class="hidden sm:block">
@@ -187,7 +213,7 @@
                                         <p class="text-sm text-muted">{{ row.original.category_name ?? '—' }}</p>
                                     </template>
                                     <template #quantity-cell="{ row }">
-                                        <span class="text-lg font-bold text-highlighted tabular-nums">{{ row.original.quantity }}x</span>
+                                        <span class="text-lg font-bold tabular-nums" :class="row.original.is_checked ? 'text-muted' : 'text-highlighted'">{{ row.original.quantity }}x</span>
                                     </template>
                                     <template #adjustment-cell="{ row }">
                                         <UBadge v-if="row.original.additional_quantity > 0" color="warning" variant="subtle" size="sm">
@@ -218,7 +244,7 @@
                                     <template #title>
                                         <div class="flex w-full items-center justify-between gap-2">
                                             <p class="font-medium text-highlighted" :class="{ 'line-through text-muted': item.is_checked }">{{ item.product_name }}</p>
-                                            <p class="shrink-0 text-xl font-bold text-highlighted tabular-nums">{{ item.quantity }}x</p>
+                                            <p class="shrink-0 text-xl font-bold tabular-nums" :class="item.is_checked ? 'text-muted' : 'text-highlighted'">{{ item.quantity }}x</p>
                                         </div>
                                     </template>
                                     <template #subtitle>
@@ -733,6 +759,8 @@ const checklistItems = ref<ChecklistItem[]>([])
 const checklistLoading = ref(false)
 const regeneratingChecklist = ref(false)
 const togglingUuid = ref<string | null>(null)
+const loadingChecklistShareLink = ref(false)
+const regeneratingChecklistShareLink = ref(false)
 
 const checklistColumns: TableColumn<ChecklistItem>[] = [
     { id: 'is_checked', header: '' },
@@ -763,6 +791,36 @@ async function regenerateChecklist(silent = false) {
         if (!silent) toast.add({ title: 'Failed to regenerate checklist', description: (error as APIError).message, color: 'error' })
     } finally {
         if (!silent) regeneratingChecklist.value = false
+    }
+}
+
+async function copyChecklistShareLink() {
+    loadingChecklistShareLink.value = true
+    try {
+        const response = await pasabuyScheduleService.fetchChecklistShareLink(uuid)
+        const url = `${window.location.origin}/pasabuy/checklist/${response.data.token}`
+        await navigator.clipboard.writeText(url)
+        toast.add({ title: 'Helper link copied', description: 'Anyone with this link can view and check off items — no account needed.', color: 'success' })
+    } catch (error) {
+        toast.add({ title: 'Failed to get share link', description: (error as APIError).message, color: 'error' })
+    } finally {
+        loadingChecklistShareLink.value = false
+    }
+}
+
+async function regenerateChecklistShareLinkAction() {
+    if (!confirm('This invalidates the current helper link — anyone still using it will lose access. Continue?')) return
+
+    regeneratingChecklistShareLink.value = true
+    try {
+        const response = await pasabuyScheduleService.regenerateChecklistShareLink(uuid)
+        const url = `${window.location.origin}/pasabuy/checklist/${response.data.token}`
+        await navigator.clipboard.writeText(url)
+        toast.add({ title: 'New helper link copied', description: 'The previous link no longer works.', color: 'success' })
+    } catch (error) {
+        toast.add({ title: 'Failed to revoke link', description: (error as APIError).message, color: 'error' })
+    } finally {
+        regeneratingChecklistShareLink.value = false
     }
 }
 

@@ -152,6 +152,23 @@ class PasabuyScheduleService extends BaseAPIService {
     }
 
     /**
+     * GET /api/admin/pasabuy-schedules/{uuid}/checklist/share-link
+     * Response: `{ token: string }` — creates the token on first call if it doesn't exist yet.
+     * Build the shareable helper URL client-side as `${origin}/pasabuy/checklist/${token}`.
+     */
+    async fetchChecklistShareLink(uuid: string): Promise<any> {
+        return await this.request(`/admin/pasabuy-schedules/${uuid}/checklist/share-link`, 'GET')
+    }
+
+    /**
+     * POST /api/admin/pasabuy-schedules/{uuid}/checklist/share-link/regenerate
+     * Response: `{ token: string }` — rotates the token, invalidating any previously shared link.
+     */
+    async regenerateChecklistShareLink(uuid: string): Promise<any> {
+        return await this.request(`/admin/pasabuy-schedules/${uuid}/checklist/share-link/regenerate`, 'POST', new FormData())
+    }
+
+    /**
      * GET /api/admin/pasabuy-schedules/{uuid}/orders
      * Response: `Order[]` for the schedule.
      */
