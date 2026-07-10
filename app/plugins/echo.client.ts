@@ -7,12 +7,12 @@ export default defineNuxtPlugin(() => {
     window.Pusher = Pusher
 
     const echo = new Echo({
-        broadcaster: 'reverb',
-        key: config.public.reverbAppKey,
-        wsHost: config.public.reverbHost,
-        wsPort: Number(config.public.reverbPort),
-        wssPort: Number(config.public.reverbPort),
-        forceTLS: config.public.reverbScheme === 'https',
+        broadcaster: 'pusher',
+        key: config.public.wsAppKey,
+        wsHost: config.public.wsHost,
+        wsPort: Number(config.public.wsPort),
+        wssPort: Number(config.public.wsPort),
+        forceTLS: config.public.wsScheme === 'https',
         enabledTransports: ['ws', 'wss']
     })
 

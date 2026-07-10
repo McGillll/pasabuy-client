@@ -3,7 +3,7 @@ import type Pusher from 'pusher-js'
 
 declare module '#app' {
     interface NuxtApp {
-        $echo: Echo<'reverb'>
+        $echo: Echo<'pusher'>
     }
 }
 
