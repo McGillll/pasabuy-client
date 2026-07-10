@@ -9,6 +9,7 @@ export default defineNuxtPlugin(() => {
     const echo = new Echo({
         broadcaster: 'pusher',
         key: config.public.wsAppKey,
+        cluster: 'mt1',
         wsHost: config.public.wsHost,
         wsPort: Number(config.public.wsPort),
         wssPort: Number(config.public.wsPort),
