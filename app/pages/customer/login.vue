@@ -71,5 +71,5 @@ const registerLink = computed(() => {
     return redirect ? `/register?redirect=${encodeURIComponent(redirect)}` : '/register'
 })
 
-const { state, isSubmitting, authError, validate, onSubmit } = useLoginForm('/customer')
+const { state, isSubmitting, authError, validate, onSubmit } = useLoginForm('/customer', 'customer')
 </script>

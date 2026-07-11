@@ -6,12 +6,22 @@ export default defineNuxtRouteMiddleware(async (to) => {
         return navigateTo(`/customer/login?redirect=${encodeURIComponent(to.fullPath)}`)
     }
 
-    const { user, fetchCurrentUser } = useAuth()
+    const { user, fetchCurrentUser, logout } = useAuth()
     if (!user.value) {
         try {
             await fetchCurrentUser()
         } catch {
             return navigateTo(`/customer/login?redirect=${encodeURIComponent(to.fullPath)}`)
         }
+    }
+
+    if (user.value?.is_approved === false) {
+        await logout(null)
+        useToast().add({
+            title: 'Account pending approval',
+            description: 'Your account is pending admin approval. Please try again once approved.',
+            color: 'warning'
+        })
+        return navigateTo(`/customer/login?redirect=${encodeURIComponent(to.fullPath)}`)
     }
 })

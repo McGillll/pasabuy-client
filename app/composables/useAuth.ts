@@ -12,7 +12,7 @@ export function useAuth() {
         user.value = response.data.user
     }
 
-    async function logout(redirectTo: string = '/login') {
+    async function logout(redirectTo: string | null = '/login') {
         try {
             await authService.logout()
         } catch (error) {
@@ -21,7 +21,7 @@ export function useAuth() {
         localStorage.removeItem('_token')
         localStorage.removeItem('rememberMe')
         user.value = null
-        navigateTo(redirectTo)
+        if (redirectTo) navigateTo(redirectTo)
     }
 
     async function fetchCurrentUser() {

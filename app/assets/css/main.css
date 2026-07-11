@@ -1,2 +1,36 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+
+/**
+ * Pasabuy palette (colorhunt.co/palette/2936814274d995ccddd0e7e6)
+ * This is the ONLY file to edit when changing the site's color palette or font.
+ * app.config.ts just points Nuxt UI's "primary"/"secondary" tokens at these
+ * scales by name and should not need to change again.
+ */
+@theme static {
+    --font-sans: "Inter", sans-serif;
+
+    --color-primary-50: #eef1fb;
+    --color-primary-100: #dbe1f6;
+    --color-primary-200: #b6c3ed;
+    --color-primary-300: #8fa4e3;
+    --color-primary-400: #6288dd;
+    --color-primary-500: #4274d9;
+    --color-primary-600: #3660c0;
+    --color-primary-700: #304ea0;
+    --color-primary-800: #293681;
+    --color-primary-900: #212b64;
+    --color-primary-950: #141a3d;
+
+    --color-secondary-50: #f2faf9;
+    --color-secondary-100: #d0e7e6;
+    --color-secondary-200: #b6dfe2;
+    --color-secondary-300: #95ccdd;
+    --color-secondary-400: #72b7cf;
+    --color-secondary-500: #519fbd;
+    --color-secondary-600: #3d80a0;
+    --color-secondary-700: #326580;
+    --color-secondary-800: #294f66;
+    --color-secondary-900: #203c4d;
+    --color-secondary-950: #13242f;
+}

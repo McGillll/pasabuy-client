@@ -60,5 +60,5 @@ definePageMeta({
 
 const currentYear = new Date().getFullYear()
 
-const { state, isSubmitting, authError, validate, onSubmit } = useLoginForm('/admin')
+const { state, isSubmitting, authError, validate, onSubmit } = useLoginForm('/admin', 'admin')
 </script>
