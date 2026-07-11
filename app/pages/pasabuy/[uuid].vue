@@ -47,8 +47,8 @@
                     </template>
 
                     <div class="divide-y divide-default">
-                        <div v-for="group in myOrderGroupedItems" :key="group.item.uuid" class="py-3 first:pt-0 last:pb-0">
-                            <OrderLineItem :group="group" />
+                        <div v-for="item in myOrder.items" :key="item.uuid" class="py-3 first:pt-0 last:pb-0">
+                            <OrderLineItem :item="item" />
                         </div>
                     </div>
 
@@ -367,9 +367,9 @@ interface MyOrderItem {
     product_name: string
     estimated_price: string
     actual_price: string | null
-    is_bonus: boolean
     is_out_of_stock: boolean
     quantity: number
+    bonus_quantity: number
     subtotal: string
 }
 
@@ -407,8 +407,6 @@ const isLoggedIn = computed(() => !!user.value)
 const isApproved = computed(() => user.value?.is_approved === true)
 
 const showBottomBar = computed(() => !!schedule.value && (!myOrder.value || editingOrder.value))
-
-const myOrderGroupedItems = computed(() => groupOrderItems(myOrder.value?.items ?? []))
 
 const categoryTabs = computed(() => {
     const seen = new Map<string, string>()

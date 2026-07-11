@@ -446,18 +446,18 @@
 
                     <div class="divide-y divide-default rounded-lg border border-default">
                         <div
-                            v-for="group in displayGroups"
-                            :key="group.item.uuid"
+                            v-for="item in displayItems"
+                            :key="item.uuid"
                             class="flex items-start justify-between gap-3 p-3"
                         >
-                            <template v-if="canEditOrderItems && editingProductUuid === group.item.product_uuid">
-                                <span class="flex-1 truncate font-medium text-highlighted">{{ group.item.product_name }}</span>
-                                <UBadge v-if="getScheduleProductStatus(group.item.product_uuid) === 'out_of_stock'" color="error" variant="subtle" size="sm">
+                            <template v-if="canEditOrderItems && editingProductUuid === item.product_uuid">
+                                <span class="flex-1 truncate font-medium text-highlighted">{{ item.product_name }}</span>
+                                <UBadge v-if="getScheduleProductStatus(item.product_uuid) === 'out_of_stock'" color="error" variant="subtle" size="sm">
                                     Out of stock
                                 </UBadge>
                                 <UInput
                                     v-else
-                                    v-model.number="findEditableItem(group.item.product_uuid)!.quantity"
+                                    v-model.number="findEditableItem(item.product_uuid)!.quantity"
                                     type="number"
                                     min="1"
                                     size="sm"
@@ -469,7 +469,7 @@
                                     color="error"
                                     variant="ghost"
                                     aria-label="Remove item"
-                                    @click="removeEditableItem(group.item.product_uuid!); editingProductUuid = null"
+                                    @click="removeEditableItem(item.product_uuid!); editingProductUuid = null"
                                 />
                                 <UButton
                                     icon="i-lucide-check"
@@ -483,31 +483,31 @@
                             <template v-else>
                                 <div class="min-w-0">
                                     <div class="flex flex-wrap items-center gap-2">
-                                        <p class="font-medium text-highlighted">{{ group.item.product_name }}</p>
-                                        <UBadge v-if="group.bonus" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
+                                        <p class="font-medium text-highlighted">{{ item.product_name }}</p>
+                                        <UBadge v-if="item.bonus_quantity > 0" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
                                     </div>
-                                    <p class="mt-0.5 text-sm text-muted">₱{{ group.item.actual_price ?? group.item.estimated_price }} × {{ group.item.quantity }}</p>
+                                    <p class="mt-0.5 text-sm text-muted">₱{{ item.actual_price ?? item.estimated_price }} × {{ item.quantity }}</p>
                                     <p
-                                        v-if="group.bonus"
+                                        v-if="item.bonus_quantity > 0"
                                         class="mt-1.5 inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"
                                     >
                                         <UIcon name="i-lucide-sparkles" class="size-3" />
-                                        +{{ group.bonus.quantity }} free
+                                        +{{ item.bonus_quantity }} free
                                     </p>
                                 </div>
                                 <div class="flex shrink-0 items-center gap-2 pt-0.5">
-                                    <UBadge v-if="group.item.is_out_of_stock" color="error" variant="subtle" size="sm">
+                                    <UBadge v-if="item.is_out_of_stock" color="error" variant="subtle" size="sm">
                                         Out of stock
                                     </UBadge>
-                                    <p v-else class="font-medium text-highlighted">₱{{ group.item.subtotal }}</p>
+                                    <p v-else class="font-medium text-highlighted">₱{{ item.subtotal }}</p>
                                     <UButton
-                                        v-if="canEditOrderItems && findEditableItem(group.item.product_uuid)"
+                                        v-if="canEditOrderItems && findEditableItem(item.product_uuid)"
                                         icon="i-lucide-pencil"
                                         size="xs"
                                         color="neutral"
                                         variant="ghost"
                                         aria-label="Edit item"
-                                        @click="editingProductUuid = group.item.product_uuid ?? null"
+                                        @click="editingProductUuid = item.product_uuid ?? null"
                                     />
                                 </div>
                             </template>
@@ -1053,7 +1053,6 @@ function cancelOrder(order: Order) {
 const isOrderModalOpen = ref(false)
 const viewingOrder = ref<Order | null>(null)
 const canEditOrderItems = computed(() => isClosed.value)
-const viewingOrderGroupedItems = computed(() => groupOrderItems(viewingOrder.value?.items ?? []))
 const editingProductUuid = ref<string | null>(null)
 
 interface EditableItem {
@@ -1066,11 +1065,12 @@ const editableItems = ref<EditableItem[]>([])
 const itemToAdd = ref<string | undefined>(undefined)
 const savingOrderItems = ref(false)
 
-// Existing order items still shown via viewingOrderGroupedItems; ones removed from editableItems drop out here.
-const displayGroups = computed(() => {
-    if (!canEditOrderItems.value) return viewingOrderGroupedItems.value
+// Existing order items still shown via viewingOrder.items; ones removed from editableItems drop out here.
+const displayItems = computed(() => {
+    const items = viewingOrder.value?.items ?? []
+    if (!canEditOrderItems.value) return items
     const editableUuids = new Set(editableItems.value.map((item) => item.product_uuid))
-    return viewingOrderGroupedItems.value.filter((group) => !group.item.product_uuid || editableUuids.has(group.item.product_uuid))
+    return items.filter((item) => !item.product_uuid || editableUuids.has(item.product_uuid))
 })
 
 // Items added via "Add a product" that aren't part of the saved order yet — shown as pending rows until saved.
@@ -1102,14 +1102,14 @@ function syncViewingOrder() {
 
     viewingOrder.value = updated
     editableItems.value = updated.items
-        .filter((item) => !item.is_bonus && item.product_uuid)
+        .filter((item) => item.product_uuid)
         .map((item) => ({ product_uuid: item.product_uuid!, product_name: item.product_name, quantity: item.quantity }))
 }
 
 function viewOrder(order: Order) {
     viewingOrder.value = order
     editableItems.value = order.items
-        .filter((item) => !item.is_bonus && item.product_uuid)
+        .filter((item) => item.product_uuid)
         .map((item) => ({ product_uuid: item.product_uuid!, product_name: item.product_name, quantity: item.quantity }))
     itemToAdd.value = undefined
     editingProductUuid.value = null

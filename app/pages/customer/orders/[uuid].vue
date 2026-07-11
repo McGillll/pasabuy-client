@@ -37,8 +37,8 @@
 
             <UCard :ui="{ body: 'p-0 sm:p-0' }">
                 <div class="divide-y divide-default">
-                    <div v-for="group in groupedItems" :key="group.item.uuid" class="p-4">
-                        <OrderLineItem :group="group" />
+                    <div v-for="item in order.items" :key="item.uuid" class="p-4">
+                        <OrderLineItem :item="item" />
                     </div>
                 </div>
 
@@ -83,9 +83,9 @@ interface OrderItem {
     product_name: string
     estimated_price: string
     actual_price: string | null
-    is_bonus: boolean
     is_out_of_stock: boolean
     quantity: number
+    bonus_quantity: number
     subtotal: string
 }
 
@@ -108,8 +108,6 @@ const order = ref<Order | null>(null)
 const loading = ref(true)
 const notFound = ref(false)
 const cancelling = ref(false)
-
-const groupedItems = computed(() => groupOrderItems(order.value?.items ?? []))
 
 async function loadOrder(silent = false) {
     if (!silent) loading.value = true

@@ -2,33 +2,31 @@
     <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2">
-                <p class="font-medium text-highlighted">{{ group.item.product_name }}</p>
-                <UBadge v-if="group.bonus" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
+                <p class="font-medium text-highlighted">{{ item.product_name }}</p>
+                <UBadge v-if="item.bonus_quantity > 0" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
             </div>
-            <p class="mt-0.5 text-sm text-muted">₱{{ group.item.actual_price ?? group.item.estimated_price }} × {{ group.item.quantity }}</p>
+            <p class="mt-0.5 text-sm text-muted">₱{{ item.actual_price ?? item.estimated_price }} × {{ item.quantity }}</p>
             <UBadge
-                v-if="group.bonus"
+                v-if="item.bonus_quantity > 0"
                 color="warning"
                 variant="subtle"
                 size="sm"
                 icon="i-lucide-sparkles"
                 class="mt-1.5"
             >
-                +{{ group.bonus.quantity }} free
+                +{{ item.bonus_quantity }} free
             </UBadge>
         </div>
         <div class="shrink-0 pt-0.5 text-right">
-            <UBadge v-if="group.item.is_out_of_stock" color="error" variant="subtle" size="sm">
+            <UBadge v-if="item.is_out_of_stock" color="error" variant="subtle" size="sm">
                 Out of stock
             </UBadge>
-            <p v-else class="font-medium text-highlighted">₱{{ group.item.subtotal }}</p>
+            <p v-else class="font-medium text-highlighted">₱{{ item.subtotal }}</p>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import type { OrderItemGroup } from '@/composables/useOrderItemGroups'
-
 interface LineItem {
     uuid: string
     product_name: string
@@ -36,10 +34,11 @@ interface LineItem {
     actual_price: string | null
     is_out_of_stock: boolean
     quantity: number
+    bonus_quantity: number
     subtotal: string
 }
 
 defineProps<{
-    group: OrderItemGroup<LineItem>
+    item: LineItem
 }>()
 </script>

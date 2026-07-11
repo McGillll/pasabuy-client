@@ -34,7 +34,7 @@
             </p>
 
             <template v-else>
-                <div class="hidden sm:block">
+                <div class="hidden sm:block max-h-80 overflow-y-auto">
                     <UTable :data="pendingOrders" :columns="orderColumns" :loading="loading">
                         <template #schedule-cell="{ row }">
                             <NuxtLink :to="`/admin/schedules/${row.original.scheduleUuid}`" class="text-primary hover:underline">
@@ -67,7 +67,7 @@
                         </template>
                     </UTable>
                 </div>
-                <div class="sm:hidden divide-y divide-default">
+                <div class="sm:hidden divide-y divide-default max-h-80 overflow-y-auto">
                     <ListCard v-for="order in pendingOrders" :key="order.uuid" tone="warning">
                         <template #title>
                             <p class="font-medium text-highlighted">{{ order.customer_name }}</p>

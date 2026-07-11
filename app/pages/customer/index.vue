@@ -84,8 +84,8 @@
                     </div>
 
                     <div class="divide-y divide-default rounded-lg border border-default">
-                        <div v-for="group in selectedOrderGroupedItems" :key="group.item.uuid" class="p-3">
-                            <OrderLineItem :group="group" />
+                        <div v-for="item in selectedOrder.items" :key="item.uuid" class="p-3">
+                            <OrderLineItem :item="item" />
                         </div>
                     </div>
 
@@ -116,9 +116,9 @@ interface OrderItem {
     product_name: string
     estimated_price: string
     actual_price: string | null
-    is_bonus: boolean
     is_out_of_stock: boolean
     quantity: number
+    bonus_quantity: number
     subtotal: string
 }
 
@@ -173,8 +173,6 @@ watch(page, loadOrders)
 const isDetailOpen = ref(false)
 const selectedOrder = ref<Order | null>(null)
 const cancellingOrder = ref(false)
-
-const selectedOrderGroupedItems = computed(() => groupOrderItems(selectedOrder.value?.items ?? []))
 
 function viewOrder(order: Order) {
     selectedOrder.value = order

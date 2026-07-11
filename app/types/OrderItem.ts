@@ -4,8 +4,8 @@ export interface OrderItem {
     product_name: string
     estimated_price: string
     actual_price: string | null
-    is_bonus: boolean
     is_out_of_stock: boolean
     quantity: number
+    bonus_quantity: number
     subtotal: string
 }
