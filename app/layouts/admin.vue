@@ -21,11 +21,20 @@
             />
 
             <div class="border-t border-default p-4">
-                <p class="text-sm font-medium text-highlighted truncate">{{ user?.first_name }} {{ user?.last_name }}</p>
-                <p class="text-xs text-muted truncate mb-3">{{ user?.email }}</p>
-                <UButton block size="md" color="neutral" variant="soft" icon="i-lucide-log-out" @click="logout('/login')">
-                    Log out
-                </UButton>
+                <UDropdownMenu :items="accountMenuItems" :content="{ align: 'start' }" :ui="{ content: 'w-56' }">
+                    <UButton
+                        block
+                        color="neutral"
+                        variant="ghost"
+                        trailing-icon="i-lucide-chevron-down"
+                        :ui="{ base: 'justify-between px-2 py-2 h-auto' }"
+                    >
+                        <div class="min-w-0 text-left">
+                            <p class="text-sm font-medium text-highlighted truncate">{{ user?.first_name }} {{ user?.last_name }}</p>
+                            <p class="text-xs text-muted truncate">{{ user?.email }}</p>
+                        </div>
+                    </UButton>
+                </UDropdownMenu>
             </div>
         </aside>
 
@@ -38,9 +47,16 @@
                         </div>
                         <span class="font-semibold text-highlighted">Pasabuy</span>
                     </div>
-                    <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-log-out" @click="logout('/login')">
-                        Log out
-                    </UButton>
+                    <UDropdownMenu :items="accountMenuItems" :content="{ align: 'end' }">
+                        <UButton
+                            color="neutral"
+                            variant="ghost"
+                            icon="i-lucide-user-round"
+                            size="sm"
+                            square
+                            aria-label="Account menu"
+                        />
+                    </UDropdownMenu>
                 </div>
             </header>
 
@@ -65,9 +81,15 @@
 </template>
 
 <script setup lang="ts">
-import type { NavigationMenuItem } from '@nuxt/ui'
+import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
 
 const { user, logout } = useAuth()
+
+const accountMenuItems = computed<DropdownMenuItem[]>(() => [
+    { label: 'My Account', icon: 'i-lucide-user', to: '/admin/account' },
+    { label: 'Settings', icon: 'i-lucide-settings', to: '/admin/settings' },
+    { label: 'Log out', icon: 'i-lucide-log-out', onSelect: () => logout('/login') }
+])
 
 const links: NavigationMenuItem[] = [
     { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/admin' },

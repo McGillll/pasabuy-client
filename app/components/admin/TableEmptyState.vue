@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col items-center gap-3" :class="padding">
         <UIcon :name="icon" class="size-8 text-dimmed" />
-        <p class="text-sm text-muted">{{ message }}</p>
+        <p class="text-sm text-muted text-center">{{ message }}</p>
         <UButton v-if="actionLabel" size="sm" icon="i-lucide-plus" @click="emit('action')">
             {{ actionLabel }}
         </UButton>

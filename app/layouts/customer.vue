@@ -9,10 +9,18 @@
                     <span class="font-semibold text-highlighted">Pasabuy</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <span class="hidden text-sm text-muted sm:inline">{{ user?.first_name }} {{ user?.last_name }}</span>
-                    <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-log-out" @click="logout('/customer/login')">
-                        Log out
-                    </UButton>
+                    <UDropdownMenu :items="accountMenuItems" :content="{ align: 'end' }">
+                        <UButton
+                            color="neutral"
+                            variant="ghost"
+                            trailing-icon="i-lucide-chevron-down"
+                            size="sm"
+                            aria-label="Account menu"
+                        >
+                            <span class="hidden sm:inline">{{ user?.first_name }} {{ user?.last_name }}</span>
+                            <UIcon name="i-lucide-user-round" class="sm:hidden size-5" />
+                        </UButton>
+                    </UDropdownMenu>
                 </div>
             </div>
         </header>
@@ -24,5 +32,12 @@
 </template>
 
 <script setup lang="ts">
+import type { DropdownMenuItem } from '@nuxt/ui'
+
 const { user, logout } = useAuth()
+
+const accountMenuItems = computed<DropdownMenuItem[]>(() => [
+    { label: 'My Account', icon: 'i-lucide-user', to: '/customer/account' },
+    { label: 'Log out', icon: 'i-lucide-log-out', onSelect: () => logout('/customer/login') }
+])
 </script>

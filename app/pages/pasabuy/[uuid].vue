@@ -14,7 +14,7 @@
                         <div v-if="schedule.pasabuy_schedule_date" class="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted">
                             <span class="inline-flex items-center gap-1.5">
                                 <UIcon name="i-lucide-alarm-clock" class="size-4 text-dimmed" />
-                                Order by {{ formatDate(schedule.pasabuy_schedule_date) }}
+                                Close by {{ formatDate(schedule.pasabuy_schedule_date) }}
                             </span>
                         </div>
                     </div>

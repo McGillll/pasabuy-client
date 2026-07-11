@@ -6,6 +6,18 @@ export interface LoginPayload {
     remember?: boolean
 }
 
+export interface UpdateProfilePayload {
+    first_name: string
+    last_name: string
+    email: string
+}
+
+export interface UpdatePasswordPayload {
+    current_password: string
+    password: string
+    password_confirmation: string
+}
+
 class AuthService extends BaseAPIService {
     async login(payload: LoginPayload): Promise<any> {
         return await this.request('/auth/login', 'POST', payload)
@@ -17,6 +29,14 @@ class AuthService extends BaseAPIService {
 
     async me(): Promise<any> {
         return await this.request('/auth/me', 'GET')
+    }
+
+    async updateProfile(payload: UpdateProfilePayload): Promise<any> {
+        return await this.request('/auth/me', 'PATCH', payload)
+    }
+
+    async updatePassword(payload: UpdatePasswordPayload): Promise<any> {
+        return await this.request('/auth/me/password', 'PATCH', payload)
     }
 }
 
