@@ -4,14 +4,52 @@
             <h1 class="text-xl font-semibold text-highlighted">Orders</h1>
         </div>
 
-        <div class="flex flex-col sm:flex-row gap-2">
-            <SearchInput v-model="search" placeholder="Search by customer name or contact…" />
-            <div class="flex flex-wrap gap-2">
-                <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full sm:w-40" />
-                <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full sm:w-44" />
-                <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full sm:w-44" />
+        <div class="space-y-3">
+            <SearchInput v-model="search" placeholder="Search by customer name or contact…" class="w-full" />
+
+            <div class="hidden sm:grid grid-cols-4 gap-2">
+                <USelect v-model="scheduleFilter" :items="scheduleFilterOptions" value-key="value" class="w-full" />
+                <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full" />
+                <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full" />
+                <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full" />
             </div>
+
+            <UButton
+                class="sm:hidden"
+                color="neutral"
+                variant="outline"
+                icon="i-lucide-list-filter"
+                @click="isFiltersOpen = true"
+            >
+                Filters
+                <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
+            </UButton>
         </div>
+
+        <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
+            <template #body>
+                <div class="space-y-4">
+                    <UFormField label="Schedule">
+                        <USelect v-model="scheduleFilter" :items="scheduleFilterOptions" value-key="value" class="w-full" />
+                    </UFormField>
+                    <UFormField label="Status">
+                        <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full" />
+                    </UFormField>
+                    <UFormField label="Payment status">
+                        <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full" />
+                    </UFormField>
+                    <UFormField label="Delivery status">
+                        <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full" />
+                    </UFormField>
+                </div>
+            </template>
+            <template #footer>
+                <div class="w-full flex items-center gap-2">
+                    <UButton class="flex-1" color="neutral" variant="outline" @click="clearFilters">Clear filters</UButton>
+                    <UButton class="flex-1" @click="isFiltersOpen = false">Done</UButton>
+                </div>
+            </template>
+        </USlideover>
 
         <UCard :ui="{ body: 'p-0 sm:p-0' }">
             <div class="hidden sm:block">
@@ -34,15 +72,15 @@
                         <OrderStatusBadge :status="row.original.status" />
                     </template>
                     <template #payment_status-cell="{ row }">
-                        <PaymentStatusBadge v-if="row.original.status !== 'cancelled'" :status="row.original.payment_status" />
+                        <PaymentStatusBadge v-if="row.original.status === 'confirmed'" :status="row.original.payment_status" />
                         <span v-else class="text-muted">—</span>
                     </template>
                     <template #delivery_status-cell="{ row }">
-                        <DeliveryStatusBadge v-if="row.original.status !== 'cancelled'" :status="row.original.delivery_status" />
+                        <DeliveryStatusBadge v-if="row.original.status === 'confirmed'" :status="row.original.delivery_status" />
                         <span v-else class="text-muted">—</span>
                     </template>
                     <template #actions-cell="{ row }">
-                        <div v-if="row.original.status !== 'cancelled'" class="flex items-center justify-end gap-2">
+                        <div v-if="row.original.status === 'confirmed'" class="flex items-center justify-end gap-2">
                             <UButton
                                 size="xs"
                                 color="neutral"
@@ -84,12 +122,12 @@
                         >
                             {{ order.pasabuy_schedule.title }}
                         </NuxtLink>
-                        <div v-if="order.status !== 'cancelled'" class="w-full flex items-center gap-2 mt-1.5">
+                        <div v-if="order.status === 'confirmed'" class="w-full flex items-center gap-2 mt-1.5">
                             <PaymentStatusBadge :status="order.payment_status" />
                             <DeliveryStatusBadge :status="order.delivery_status" />
                         </div>
                     </template>
-                    <template v-if="order.status !== 'cancelled'" #actions>
+                    <template v-if="order.status === 'confirmed'" #actions>
                         <UButton
                             :icon="order.delivery_status === 'not_delivered' ? 'i-lucide-truck' : 'i-lucide-package-check'"
                             size="sm"
@@ -214,12 +252,18 @@
 
 <script setup lang="ts">
 import { orderService } from '@/components/api/admin/OrderService'
+import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
 import APIError from '@/components/api/user/APIError'
 import type { Order } from '@/types/Order'
 import type { OrderPayment } from '@/types/OrderPayment'
 import type { TableColumn } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
+
+interface ScheduleOption {
+    uuid: string
+    title: string
+}
 
 const toast = useToast()
 const perPage = 15
@@ -230,8 +274,23 @@ const page = ref(1)
 const total = ref(0)
 const search = ref('')
 const statusFilter = ref('all')
+const scheduleFilter = ref('all')
 const paymentStatusFilter = ref('all')
 const deliveryStatusFilter = ref('all')
+const schedules = ref<ScheduleOption[]>([])
+const isFiltersOpen = ref(false)
+
+const activeFilterCount = computed(() =>
+    [statusFilter.value, scheduleFilter.value, paymentStatusFilter.value, deliveryStatusFilter.value]
+        .filter((value) => value !== 'all').length
+)
+
+function clearFilters() {
+    statusFilter.value = 'all'
+    scheduleFilter.value = 'all'
+    paymentStatusFilter.value = 'all'
+    deliveryStatusFilter.value = 'all'
+}
 
 const statusFilterOptions = [
     { label: 'All statuses', value: 'all' },
@@ -239,6 +298,11 @@ const statusFilterOptions = [
     { label: customerOrderStatusLabel.confirmed, value: 'confirmed' },
     { label: customerOrderStatusLabel.cancelled, value: 'cancelled' }
 ]
+
+const scheduleFilterOptions = computed(() => [
+    { label: 'All schedules', value: 'all' },
+    ...schedules.value.map((schedule) => ({ label: schedule.title, value: schedule.uuid }))
+])
 
 const paymentStatusFilterOptions = [
     { label: 'All payment statuses', value: 'all' },
@@ -263,6 +327,15 @@ const orderColumns: TableColumn<Order>[] = [
     { id: 'actions', header: '' }
 ]
 
+async function loadSchedules() {
+    try {
+        const response = await pasabuyScheduleService.fetchSchedules({ per_page: 100 })
+        schedules.value = response.data.data
+    } catch (error) {
+        toast.add({ title: 'Failed to load schedules', description: (error as APIError).message, color: 'error' })
+    }
+}
+
 async function loadOrders() {
     loading.value = true
     try {
@@ -271,6 +344,7 @@ async function loadOrders() {
             per_page: perPage,
             search: search.value || undefined,
             status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
+            schedule_uuid: scheduleFilter.value !== 'all' ? scheduleFilter.value : undefined,
             payment_status: paymentStatusFilter.value !== 'all' ? paymentStatusFilter.value : undefined,
             delivery_status: deliveryStatusFilter.value !== 'all' ? deliveryStatusFilter.value : undefined
         })
@@ -285,7 +359,7 @@ async function loadOrders() {
 
 watch(page, loadOrders)
 
-watch([statusFilter, paymentStatusFilter, deliveryStatusFilter], () => {
+watch([statusFilter, scheduleFilter, paymentStatusFilter, deliveryStatusFilter], () => {
     page.value = 1
     loadOrders()
 })
@@ -421,5 +495,8 @@ function deletePayment(payment: OrderPayment) {
     })
 }
 
-onMounted(loadOrders)
+onMounted(() => {
+    loadOrders()
+    loadSchedules()
+})
 </script>

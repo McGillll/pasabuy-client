@@ -9,16 +9,17 @@
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #products>
                 <div class="mt-4 space-y-4">
-                    <div class="flex flex-col sm:flex-row gap-2">
-                        <SearchInput v-model="productSearch" placeholder="Search products…" />
-                        <USelect
-                            v-model="productCategoryFilter"
-                            :items="categoryFilterOptions"
-                            value-key="value"
-                            placeholder="All categories"
-                            class="w-full sm:w-56"
-                        />
-                    </div>
+                    <SearchInput v-model="productSearch" placeholder="Search products…" />
+
+                    <UTabs
+                        v-if="categoryFilterTabs.length > 2"
+                        v-model="productCategoryFilter"
+                        :items="categoryFilterTabs"
+                        variant="pill"
+                        size="sm"
+                        class="w-full"
+                        :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0' }"
+                    />
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
                         <div class="hidden sm:block">
@@ -404,15 +405,15 @@ const productsLoading = ref(false)
 const productsPage = ref(1)
 const productsTotal = ref(0)
 const productSearch = ref('')
-const productCategoryFilter = ref<string | null>(null)
+const productCategoryFilter = ref('all')
 
 const categoryOptions = computed(() => [
     { label: 'Uncategorized', value: null },
     ...allCategories.value.map((category) => ({ label: category.name, value: category.uuid }))
 ])
 
-const categoryFilterOptions = computed(() => [
-    { label: 'All categories', value: null },
+const categoryFilterTabs = computed(() => [
+    { label: 'All', value: 'all' },
     ...allCategories.value.map((category) => ({ label: category.name, value: category.uuid }))
 ])
 
@@ -447,7 +448,7 @@ async function loadProducts() {
             page: productsPage.value,
             per_page: perPage,
             search: productSearch.value || undefined,
-            category_uuid: productCategoryFilter.value || undefined
+            category_uuid: productCategoryFilter.value !== 'all' ? productCategoryFilter.value : undefined
         })
         products.value = response.data.data
         productsTotal.value = response.data.total
