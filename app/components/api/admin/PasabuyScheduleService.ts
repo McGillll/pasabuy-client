@@ -86,10 +86,6 @@ class PasabuyScheduleService extends BaseAPIService {
         return await this.request(`/admin/orders/${uuid}/status`, 'PATCH', { status })
     }
 
-    async updateOrderDeliveryStatus(uuid: string, deliveryStatus: 'not_delivered' | 'delivered'): Promise<any> {
-        return await this.request(`/admin/orders/${uuid}/delivery-status`, 'PATCH', { delivery_status: deliveryStatus })
-    }
-
     async fetchScheduleSummary(uuid: string): Promise<any> {
         return await this.request(`/admin/pasabuy-schedules/${uuid}/summary`, 'GET')
     }

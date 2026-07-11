@@ -42,9 +42,9 @@ const emit = defineEmits<{
 }>()
 
 const toneClasses: Record<string, string> = {
-    error: 'border-l-[3px] border-error bg-error/5',
-    warning: 'border-l-[3px] border-warning bg-warning/5',
-    success: 'border-l-[3px] border-success bg-success/5',
-    neutral: 'border-l-[3px] border-default'
+    error: 'border-l-[3px] border-l-error',
+    warning: 'border-l-[3px] border-l-warning',
+    success: 'border-l-[3px] border-l-success',
+    neutral: 'border-l-[3px] border-l-default'
 }
 </script>

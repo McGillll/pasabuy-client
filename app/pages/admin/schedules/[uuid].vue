@@ -266,32 +266,10 @@
 
             <template #orders>
                 <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
-                    <template #header>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <USelect
-                                v-model="paymentStatusFilter"
-                                :items="paymentStatusFilterOptions"
-                                value-key="value"
-                                class="w-40"
-                            />
-                            <USelect
-                                v-model="deliveryStatusFilter"
-                                :items="deliveryStatusFilterOptions"
-                                value-key="value"
-                                class="w-40"
-                            />
-                        </div>
-                    </template>
                     <div class="hidden sm:block">
-                        <UTable :data="filteredOrders" :columns="orderColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
+                        <UTable :data="orders" :columns="orderColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
                             <template #status-cell="{ row }">
                                 <OrderStatusBadge :status="row.original.status" />
-                            </template>
-                            <template #payment_status-cell="{ row }">
-                                <PaymentStatusBadge :status="row.original.payment_status" />
-                            </template>
-                            <template #delivery_status-cell="{ row }">
-                                <DeliveryStatusBadge :status="row.original.delivery_status" />
                             </template>
                             <template #actions-cell="{ row }">
                                 <div class="flex items-center justify-end gap-2">
@@ -316,14 +294,6 @@
                                         </UButton>
                                     </template>
                                     <UButton
-                                        size="xs"
-                                        color="neutral"
-                                        variant="soft"
-                                        @click="toggleDeliveryStatus(row.original)"
-                                    >
-                                        {{ row.original.delivery_status === 'not_delivered' ? 'Mark delivered' : 'Mark not delivered' }}
-                                    </UButton>
-                                    <UButton
                                         icon="i-lucide-eye"
                                         size="xs"
                                         color="neutral"
@@ -340,7 +310,7 @@
                     </div>
                     <div class="sm:hidden divide-y divide-default">
                         <ListCard
-                            v-for="order in filteredOrders"
+                            v-for="order in orders"
                             :key="order.uuid"
                             clickable
                             :tone="orderStatusColor[order.status]"
@@ -355,8 +325,6 @@
                             <template #meta>
                                 <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
                                 <OrderStatusBadge :status="order.status" />
-                                <PaymentStatusBadge :status="order.payment_status" />
-                                <DeliveryStatusBadge :status="order.delivery_status" />
                             </template>
                             <template #actions>
                                 <template v-if="order.status === 'pending'">
@@ -378,18 +346,10 @@
                                         @click.stop="cancelOrder(order)"
                                     />
                                 </template>
-                                <UButton
-                                    :icon="order.delivery_status === 'not_delivered' ? 'i-lucide-truck' : 'i-lucide-package-check'"
-                                    size="sm"
-                                    color="neutral"
-                                    variant="ghost"
-                                    :aria-label="order.delivery_status === 'not_delivered' ? 'Mark delivered' : 'Mark not delivered'"
-                                    @click.stop="toggleDeliveryStatus(order)"
-                                />
                                 <UIcon name="i-lucide-chevron-right" class="size-4 text-dimmed" />
                             </template>
                         </ListCard>
-                        <TableEmptyState v-if="filteredOrders.length === 0" icon="i-lucide-receipt" message="No orders yet." />
+                        <TableEmptyState v-if="orders.length === 0" icon="i-lucide-receipt" message="No orders yet." />
                     </div>
                 </UCard>
             </template>
@@ -481,8 +441,6 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <OrderStatusBadge :status="viewingOrder.status" />
-                            <PaymentStatusBadge :status="viewingOrder.payment_status" />
-                            <DeliveryStatusBadge :status="viewingOrder.delivery_status" />
                         </div>
                     </div>
 
@@ -641,29 +599,6 @@ const pendingOrderCount = computed(() =>
     orders.value.filter((o) => o.status === 'pending').length
 )
 
-const paymentStatusFilter = ref('all')
-const deliveryStatusFilter = ref('all')
-
-const paymentStatusFilterOptions = [
-    { label: 'All payment statuses', value: 'all' },
-    { label: paymentStatusLabel.unpaid, value: 'unpaid' },
-    { label: paymentStatusLabel.partially_paid, value: 'partially_paid' },
-    { label: paymentStatusLabel.paid, value: 'paid' }
-]
-
-const deliveryStatusFilterOptions = [
-    { label: 'All delivery statuses', value: 'all' },
-    { label: deliveryStatusLabel.not_delivered, value: 'not_delivered' },
-    { label: deliveryStatusLabel.delivered, value: 'delivered' }
-]
-
-const filteredOrders = computed(() =>
-    orders.value.filter((order) => {
-        if (paymentStatusFilter.value !== 'all' && order.payment_status !== paymentStatusFilter.value) return false
-        if (deliveryStatusFilter.value !== 'all' && order.delivery_status !== deliveryStatusFilter.value) return false
-        return true
-    })
-)
 const isClosed = computed(() => schedule.value?.status === 'closed')
 const isFinished = computed(() => schedule.value?.status === 'finished')
 const isLocked = computed(() => isClosed.value || isFinished.value)
@@ -810,6 +745,7 @@ async function confirmSelectedPrice() {
 
         toast.add({ title: 'Price confirmed', description: parts.join(', '), color: 'success' })
         await Promise.all([refreshOrders(), refreshSummary()])
+        syncViewingOrder()
     } catch (error) {
         toast.add({ title: 'Confirm failed', description: (error as APIError).message, color: 'error' })
     } finally {
@@ -1114,27 +1050,6 @@ function cancelOrder(order: Order) {
     })
 }
 
-async function setDeliveryStatus(order: Order, deliveryStatus: 'not_delivered' | 'delivered') {
-    try {
-        const response = await pasabuyScheduleService.updateOrderDeliveryStatus(order.uuid, deliveryStatus)
-        order.delivery_status = response.data.delivery_status
-        toast.add({ title: `Order marked as ${deliveryStatusLabel[response.data.delivery_status].toLowerCase()}`, color: 'success' })
-    } catch (error) {
-        toast.add({ title: 'Update failed', description: (error as APIError).message, color: 'error' })
-    }
-}
-
-function toggleDeliveryStatus(order: Order) {
-    const nextStatus = order.delivery_status === 'not_delivered' ? 'delivered' : 'not_delivered'
-    askConfirm({
-        title: nextStatus === 'delivered' ? 'Mark as delivered?' : 'Mark as not delivered?',
-        description: `Mark ${order.customer_name}'s order as ${deliveryStatusLabel[nextStatus].toLowerCase()}?`,
-        confirmLabel: nextStatus === 'delivered' ? 'Mark delivered' : 'Mark not delivered',
-        color: nextStatus === 'delivered' ? 'success' : 'primary',
-        action: () => setDeliveryStatus(order, nextStatus)
-    })
-}
-
 const isOrderModalOpen = ref(false)
 const viewingOrder = ref<Order | null>(null)
 const canEditOrderItems = computed(() => isClosed.value)
@@ -1179,6 +1094,17 @@ const addableProductOptions = computed(() => {
         .filter((sp) => !usedUuids.has(sp.product.uuid))
         .map((sp) => ({ label: sp.product.name, value: sp.product.uuid }))
 })
+
+function syncViewingOrder() {
+    if (!viewingOrder.value) return
+    const updated = orders.value.find((o) => o.uuid === viewingOrder.value!.uuid)
+    if (!updated) return
+
+    viewingOrder.value = updated
+    editableItems.value = updated.items
+        .filter((item) => !item.is_bonus && item.product_uuid)
+        .map((item) => ({ product_uuid: item.product_uuid!, product_name: item.product_name, quantity: item.quantity }))
+}
 
 function viewOrder(order: Order) {
     viewingOrder.value = order
@@ -1231,8 +1157,6 @@ const orderColumns: TableColumn<Order>[] = [
     { accessorKey: 'customer_contact', header: 'Contact' },
     { accessorKey: 'total_amount', header: 'Total' },
     { accessorKey: 'status', header: 'Status' },
-    { accessorKey: 'payment_status', header: 'Payment' },
-    { accessorKey: 'delivery_status', header: 'Delivery' },
     { id: 'actions', header: '' }
 ]
 

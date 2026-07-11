@@ -87,6 +87,7 @@ const { user, logout } = useAuth()
 
 const accountMenuItems = computed<DropdownMenuItem[]>(() => [
     { label: 'My Account', icon: 'i-lucide-user', to: '/admin/account' },
+    { label: 'Customers', icon: 'i-lucide-users', to: '/admin/customers' },
     { label: 'Settings', icon: 'i-lucide-settings', to: '/admin/settings' },
     { label: 'Log out', icon: 'i-lucide-log-out', onSelect: () => logout('/login') }
 ])
@@ -95,13 +96,13 @@ const links: NavigationMenuItem[] = [
     { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/admin' },
     { label: 'Products', icon: 'i-lucide-package', to: '/admin/products' },
     { label: 'Pasabuy Schedules', icon: 'i-lucide-calendar-clock', to: '/admin/schedules' },
-    { label: 'Customers', icon: 'i-lucide-users', to: '/admin/customers' }
+    { label: 'Orders', icon: 'i-lucide-receipt', to: '/admin/orders' }
 ]
 
 const mobileLinks: NavigationMenuItem[] = [
     { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/admin' },
     { label: 'Products', icon: 'i-lucide-package', to: '/admin/products' },
     { label: 'Schedules', icon: 'i-lucide-calendar-clock', to: '/admin/schedules' },
-    { label: 'Customers', icon: 'i-lucide-users', to: '/admin/customers' }
+    { label: 'Orders', icon: 'i-lucide-receipt', to: '/admin/orders' }
 ]
 </script>
