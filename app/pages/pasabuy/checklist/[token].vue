@@ -1,10 +1,17 @@
 <template>
     <div class="min-h-screen bg-default px-4 py-8">
         <div class="mx-auto max-w-2xl space-y-6">
-            <div v-if="loading" class="text-center text-muted">Loading…</div>
+            <Transition
+                enter-active-class="transition-opacity duration-300"
+                leave-active-class="transition-opacity duration-300"
+                enter-from-class="opacity-0"
+                leave-to-class="opacity-0"
+            >
+                <SplashScreen v-if="loading" />
+            </Transition>
 
             <UAlert
-                v-else-if="errorMessage"
+                v-if="!loading && errorMessage"
                 color="error"
                 variant="subtle"
                 icon="i-lucide-circle-alert"

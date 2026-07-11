@@ -1,8 +1,15 @@
 <template>
     <div class="mx-auto max-w-2xl space-y-6">
-        <div v-if="loading" class="text-center text-muted">Loading…</div>
+        <Transition
+            enter-active-class="transition-opacity duration-300"
+            leave-active-class="transition-opacity duration-300"
+            enter-from-class="opacity-0"
+            leave-to-class="opacity-0"
+        >
+            <SplashScreen v-if="loading" />
+        </Transition>
 
-        <UAlert v-else-if="notFound" color="error" variant="subtle" title="Order not found" description="This order doesn't exist or isn't yours." />
+        <UAlert v-if="!loading && notFound" color="error" variant="subtle" title="Order not found" description="This order doesn't exist or isn't yours." />
 
         <template v-else-if="order">
             <div class="flex items-center justify-between gap-3">

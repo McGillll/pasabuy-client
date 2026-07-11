@@ -2,9 +2,16 @@
     <div class="min-h-screen bg-default px-4 py-8" :class="{ 'pb-32 lg:pb-8': showBottomBar }">
         <div class="mx-auto max-w-2xl space-y-6 lg:max-w-5xl lg:grid lg:grid-cols-[1fr_320px] lg:items-start lg:gap-8 lg:space-y-0">
         <div class="space-y-6">
-            <div v-if="loading" class="text-center text-muted">Loading…</div>
+            <Transition
+                enter-active-class="transition-opacity duration-300"
+                leave-active-class="transition-opacity duration-300"
+                enter-from-class="opacity-0"
+                leave-to-class="opacity-0"
+            >
+                <SplashScreen v-if="loading" />
+            </Transition>
 
-            <UAlert v-else-if="notFound" color="error" variant="subtle" title="Pasabuy not found" description="This link doesn't point to a valid pasabuy." />
+            <UAlert v-if="!loading && notFound" color="error" variant="subtle" title="Pasabuy not found" description="This link doesn't point to a valid pasabuy." />
 
             <template v-else-if="schedule">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
