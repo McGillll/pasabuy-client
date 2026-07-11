@@ -53,8 +53,9 @@ export function useLoginForm(defaultRedirect: string, expectedRole?: string) {
                 return
             }
 
-            const redirect = (route.query.redirect as string) || defaultRedirect
-            await navigateTo(redirect)
+            const redirect = route.query.redirect as string | undefined
+            const target = redirect && redirect.startsWith(defaultRedirect) ? redirect : defaultRedirect
+            await navigateTo(target)
         } catch (error) {
             authError.value = error instanceof APIError ? error.message : 'Something went wrong. Please try again.'
         } finally {
