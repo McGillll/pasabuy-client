@@ -114,6 +114,10 @@ function applyBroadcastUpdate(updatedItem: ChecklistItem) {
     }
 }
 
+function applyBroadcastRegenerated(payload: { items: ChecklistItem[] }) {
+    checklistItems.value = payload.items
+}
+
 const { $echo } = useNuxtApp()
 let channel: ReturnType<typeof $echo.channel> | null = null
 
@@ -121,6 +125,7 @@ onMounted(async () => {
     await load()
     channel = $echo.channel(`checklist.${token}`)
     channel.listen('.checklist.item.toggled', applyBroadcastUpdate)
+    channel.listen('.checklist.regenerated', applyBroadcastRegenerated)
 })
 
 onUnmounted(() => {

@@ -33,7 +33,7 @@
                         variant="subtle"
                         icon="i-lucide-lock"
                         title="This schedule is closed"
-                        description="Reopen it below to edit the title, description, or cutoff."
+                        description="Reopen it below to edit the title, description, or pasabuy date."
                         class="max-w-lg mb-4"
                     />
                     <UAlert
@@ -52,10 +52,7 @@
                         <UFormField label="Description">
                             <UTextarea v-model="detailsForm.description" :disabled="isLocked" class="w-full" />
                         </UFormField>
-                        <UFormField label="Cutoff (optional)">
-                            <UInput v-model="detailsForm.cutoffAt" type="datetime-local" :disabled="isLocked" class="w-full" />
-                        </UFormField>
-                        <UFormField label="Pasabuy date" hint="The date you'll go to the store" required>
+                        <UFormField label="Pasabuy date" hint="The date you'll go to the store — ordering closes once this date arrives" required>
                             <UInput v-model="detailsForm.pasabuyScheduleDate" type="date" required :disabled="isLocked" class="w-full" />
                         </UFormField>
                         <UButton type="submit" :loading="savingDetails" :disabled="isLocked">
@@ -394,31 +391,37 @@
                                 Confirmed
                             </UBadge>
                         </div>
-                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-                            <UFormField label="Actual price">
-                                <UInput
-                                    v-model.number="confirmForm.actual_price"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    placeholder="0.00"
-                                    :disabled="confirmForm.product_status === 'out_of_stock'"
-                                    class="w-full"
-                                >
-                                    <template #leading>
-                                        <span class="text-sm text-dimmed">₱</span>
-                                    </template>
-                                </UInput>
-                            </UFormField>
-                            <UFormField label="Product status">
-                                <USelect
-                                    v-model="confirmForm.product_status"
-                                    :items="productStatusOptions"
-                                    value-key="value"
-                                    class="w-full"
-                                />
-                            </UFormField>
-                            <UButton size="sm" :loading="confirmForm.saving" @click="confirmSelectedPrice">
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                                <UFormField label="Actual price">
+                                    <UInput
+                                        v-model.number="confirmForm.actual_price"
+                                        type="number"
+                                        inputmode="decimal"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="0.00"
+                                        :disabled="confirmForm.product_status === 'out_of_stock'"
+                                        class="w-full"
+                                    >
+                                        <template #leading>
+                                            <span class="text-sm text-dimmed">₱</span>
+                                        </template>
+                                    </UInput>
+                                </UFormField>
+                                <UFormField label="Product status">
+                                    <USelect
+                                        v-model="confirmForm.product_status"
+                                        :items="productStatusOptions"
+                                        value-key="value"
+                                        class="w-full"
+                                    />
+                                </UFormField>
+                                <UButton size="sm" class="hidden sm:inline-flex" :loading="confirmForm.saving" @click="confirmSelectedPrice">
+                                    Confirm
+                                </UButton>
+                            </div>
+                            <UButton block class="sm:hidden" :loading="confirmForm.saving" @click="confirmSelectedPrice">
                                 Confirm
                             </UButton>
                         </div>
@@ -642,18 +645,10 @@ function handleStatusTabChange(value: string | number) {
 const detailsForm = reactive({
     title: '',
     description: '',
-    cutoffAt: '',
     pasabuyScheduleDate: ''
 })
 const savingDetails = ref(false)
 const changingStatus = ref(false)
-
-function isoToDatetimeLocal(iso: string | null): string {
-    if (!iso) return ''
-    const date = new Date(iso)
-    const pad = (n: number) => String(n).padStart(2, '0')
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
-}
 
 const productStatusOptions = [
     { label: 'None', value: 'none' },
@@ -834,11 +829,16 @@ function applyBroadcastChecklistUpdate(updatedItem: ChecklistItem) {
     if (item) Object.assign(item, updatedItem)
 }
 
+function applyBroadcastChecklistRegenerated(payload: { items: ChecklistItem[] }) {
+    checklistItems.value = payload.items
+}
+
 function subscribeChecklistChannel(token: string) {
     if (checklistShareToken.value) $echo.leaveChannel(`checklist.${checklistShareToken.value}`)
     checklistShareToken.value = token
     checklistChannel = $echo.channel(`checklist.${token}`)
     checklistChannel.listen('.checklist.item.toggled', applyBroadcastChecklistUpdate)
+    checklistChannel.listen('.checklist.regenerated', applyBroadcastChecklistRegenerated)
 }
 
 function stopChecklistLiveSync() {
@@ -904,7 +904,6 @@ async function loadAll() {
 
         detailsForm.title = schedule.value!.title
         detailsForm.description = schedule.value!.description ?? ''
-        detailsForm.cutoffAt = isoToDatetimeLocal(schedule.value!.cutoff_at)
         detailsForm.pasabuyScheduleDate = schedule.value!.pasabuy_schedule_date ?? ''
 
         await loadChecklist()
@@ -931,7 +930,6 @@ async function saveDetails() {
         const response = await pasabuyScheduleService.updateSchedule(uuid, {
             title: detailsForm.title,
             description: detailsForm.description,
-            cutoff_at: detailsForm.cutoffAt || null,
             pasabuy_schedule_date: detailsForm.pasabuyScheduleDate
         })
         schedule.value = { ...schedule.value!, ...response.data }

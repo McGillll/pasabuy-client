@@ -7,22 +7,18 @@
             <UAlert v-else-if="notFound" color="error" variant="subtle" title="Pasabuy not found" description="This link doesn't point to a valid pasabuy." />
 
             <template v-else-if="schedule">
-                <div class="flex items-start justify-between gap-3">
-                    <div>
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="min-w-0">
                         <h1 class="text-2xl font-semibold text-highlighted">{{ schedule.title }}</h1>
                         <p v-if="schedule.description" class="mt-1 text-muted">{{ schedule.description }}</p>
-                        <div v-if="schedule.cutoff_at || schedule.pasabuy_schedule_date" class="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted">
-                            <span v-if="schedule.cutoff_at" class="inline-flex items-center gap-1.5">
+                        <div v-if="schedule.pasabuy_schedule_date" class="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted">
+                            <span class="inline-flex items-center gap-1.5">
                                 <UIcon name="i-lucide-alarm-clock" class="size-4 text-dimmed" />
-                                Order by {{ formatDate(schedule.cutoff_at) }}
-                            </span>
-                            <span v-if="schedule.pasabuy_schedule_date" class="inline-flex items-center gap-1.5">
-                                <UIcon name="i-lucide-truck" class="size-4 text-dimmed" />
-                                Delivery on {{ formatDate(schedule.pasabuy_schedule_date) }}
+                                Order by {{ formatDate(schedule.pasabuy_schedule_date) }}
                             </span>
                         </div>
                     </div>
-                    <UButton v-if="isLoggedIn" size="sm" color="neutral" variant="soft" icon="i-lucide-receipt" to="/customer">
+                    <UButton v-if="isLoggedIn" size="sm" color="neutral" variant="soft" icon="i-lucide-receipt" to="/customer" class="self-start">
                         My Orders
                     </UButton>
                 </div>
@@ -66,6 +62,16 @@
                 </UCard>
 
                 <template v-if="!myOrder || editingOrder">
+                    <UTabs
+                        v-if="categoryTabs.length > 2"
+                        v-model="selectedCategory"
+                        :items="categoryTabs"
+                        variant="pill"
+                        size="sm"
+                        class="hidden w-full lg:flex"
+                        :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0' }"
+                    />
+
                     <UInput
                         v-if="catalog.length > 5"
                         v-model="productSearch"
@@ -201,6 +207,16 @@
         </div>
 
         <div v-if="showBottomBar" class="fixed inset-x-0 bottom-0 border-t border-default bg-default/95 backdrop-blur-sm lg:hidden">
+            <UTabs
+                v-if="categoryTabs.length > 2"
+                v-model="selectedCategory"
+                :items="categoryTabs"
+                variant="pill"
+                size="sm"
+                class="w-full border-b border-default"
+                :ui="{ root: 'px-4 py-2', list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0' }"
+            />
+
             <div class="mx-auto max-w-2xl space-y-3 px-4 py-3">
                 <template v-if="!isLoggedIn">
                     <div class="flex items-center justify-between gap-3">
@@ -221,7 +237,6 @@
                 </template>
 
                 <template v-else>
-                    <UAlert v-if="submitError" color="error" variant="subtle" :title="submitError" />
                     <div class="flex items-center justify-between gap-3">
                         <div>
                             <p class="text-xs text-muted">{{ itemCount }} item{{ itemCount === 1 ? '' : 's' }}</p>
@@ -229,11 +244,11 @@
                         </div>
                         <UButton
                             size="lg"
-                            :loading="submitting"
+                            icon="i-lucide-shopping-cart"
                             :disabled="!schedule?.is_open || !hasItems"
-                            @click="submitOrder"
+                            @click="isCartOpen = true"
                         >
-                            {{ editingOrder ? 'Update order' : 'Place order' }}
+                            View cart
                         </UButton>
                     </div>
                 </template>
@@ -250,6 +265,82 @@
                 >
             </template>
         </UModal>
+
+        <USlideover
+            v-model:open="isCartOpen"
+            side="bottom"
+            title="Your cart"
+            :description="`${itemCount} item${itemCount === 1 ? '' : 's'}`"
+        >
+            <template #body>
+                <div v-if="cartItems.length === 0" class="flex flex-col items-center gap-3 py-10">
+                    <UIcon name="i-lucide-shopping-cart" class="size-8 text-dimmed" />
+                    <p class="text-sm text-muted">Your cart is empty.</p>
+                </div>
+
+                <div v-else class="divide-y divide-default">
+                    <div v-for="product in cartItems" :key="product.uuid" class="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
+                        <img
+                            v-if="product.image_url"
+                            :src="product.image_url"
+                            class="size-12 shrink-0 rounded-lg object-cover"
+                            alt=""
+                        >
+                        <div v-else class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-elevated text-dimmed">
+                            <UIcon name="i-lucide-image" class="size-5" />
+                        </div>
+
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate font-medium text-highlighted">{{ product.name }}</p>
+                            <p class="text-sm font-medium text-primary">
+                                ₱{{ (Number(product.default_price) * quantities[product.uuid]!).toFixed(2) }}
+                            </p>
+                        </div>
+
+                        <div class="flex shrink-0 items-center gap-2">
+                            <UButton
+                                icon="i-lucide-minus"
+                                size="xs"
+                                color="neutral"
+                                variant="soft"
+                                :aria-label="`Decrease quantity for ${product.name}`"
+                                :disabled="!schedule?.is_open"
+                                @click="decrement(product)"
+                            />
+                            <span class="w-6 text-center font-medium">{{ quantities[product.uuid] || 0 }}</span>
+                            <UButton
+                                icon="i-lucide-plus"
+                                size="xs"
+                                color="neutral"
+                                variant="soft"
+                                :aria-label="`Increase quantity for ${product.name}`"
+                                :disabled="!schedule?.is_open"
+                                @click="increment(product)"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <template #footer>
+                <div class="w-full space-y-3">
+                    <UAlert v-if="submitError" color="error" variant="subtle" :title="submitError" />
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm text-muted">Total</p>
+                        <p class="text-lg font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
+                    </div>
+                    <UButton
+                        block
+                        size="lg"
+                        :loading="submitting"
+                        :disabled="!schedule?.is_open || !hasItems"
+                        @click="submitOrder"
+                    >
+                        {{ editingOrder ? 'Update order' : 'Place order' }}
+                    </UButton>
+                </div>
+            </template>
+        </USlideover>
     </div>
 </template>
 
@@ -297,6 +388,8 @@ const notFound = ref(false)
 const productSearch = ref('')
 
 const quantities = ref<Record<string, number>>({})
+const selectedCategory = ref('all')
+const isCartOpen = ref(false)
 
 const submitting = ref(false)
 const submitError = ref<string | null>(null)
@@ -310,11 +403,24 @@ const showBottomBar = computed(() => !!schedule.value && (!myOrder.value || edit
 
 const myOrderGroupedItems = computed(() => groupOrderItems(myOrder.value?.items ?? []))
 
+const categoryTabs = computed(() => {
+    const seen = new Map<string, string>()
+    for (const product of catalog.value) {
+        if (product.category) seen.set(product.category.uuid, product.category.name)
+    }
+    return [{ label: 'All', value: 'all' }, ...Array.from(seen, ([value, label]) => ({ label, value }))]
+})
+
 const filteredProducts = computed(() => {
     const query = productSearch.value.trim().toLowerCase()
-    if (!query) return catalog.value
-    return catalog.value.filter((product) => product.name.toLowerCase().includes(query))
+    return catalog.value.filter((product) => {
+        if (query && !product.name.toLowerCase().includes(query)) return false
+        if (selectedCategory.value !== 'all' && product.category?.uuid !== selectedCategory.value) return false
+        return true
+    })
 })
+
+const cartItems = computed(() => catalog.value.filter((product) => (quantities.value[product.uuid] || 0) > 0))
 
 const total = computed(() => {
     return catalog.value.reduce((sum, product) => {
@@ -436,6 +542,7 @@ async function submitOrder() {
             const response = await customerOrderService.updateMyOrder(myOrder.value.uuid, items)
             myOrder.value = response.data
             editingOrder.value = false
+            isCartOpen.value = false
             toast.add({ title: 'Order updated', color: 'success' })
         } else {
             const response = await customerOrderService.placeOrder(uuid, items)

@@ -3,7 +3,6 @@ import BaseAPIService from '@/components/api/BaseAPIService'
 export interface SchedulePayload {
     title: string
     description?: string
-    cutoff_at?: string | null
     pasabuy_schedule_date: string
     status?: 'open' | 'closed' | 'finished'
 }

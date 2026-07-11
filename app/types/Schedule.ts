@@ -12,7 +12,6 @@ export interface Schedule {
     uuid: string
     title: string
     description: string | null
-    cutoff_at: string | null
     pasabuy_schedule_date: string | null
     status: 'open' | 'closed' | 'finished'
     is_open: boolean
