@@ -1,5 +1,5 @@
 <template>
-    <div class="max-w-3xl space-y-6">
+    <div class="max-w-3xl space-y-6" @touchstart="onTabsTouchStart" @touchmove="onTabsTouchMove" @touchend="onTabsTouchEnd">
         <div>
             <h1 class="text-xl font-semibold text-highlighted">Settings</h1>
             <p class="mt-1 text-sm text-muted">Manage your business information and invoice rules.</p>
@@ -8,6 +8,8 @@
         <ClientOnly>
             <UTabs v-model="activeTab" :items="tabs" class="w-full">
                 <template #business>
+                <div class="overflow-hidden">
+                <div :style="panelStyle">
                     <UCard class="mt-4">
                         <UForm :state="businessState" :validate="validateBusiness" class="space-y-4" @submit="onSubmitBusiness">
                             <UFormField label="Business name" name="business_name" required>
@@ -25,9 +27,13 @@
                             <BaseButton type="submit" :loading="savingBusiness" :disabled="businessLoading">Save changes</BaseButton>
                         </UForm>
                     </UCard>
+                </div>
+                </div>
                 </template>
 
                 <template #invoice>
+                <div class="overflow-hidden">
+                <div :style="panelStyle">
                     <UCard class="mt-4">
                         <UForm :state="invoiceState" :validate="validateInvoice" class="space-y-6" @submit="onSubmitInvoice">
                             <div>
@@ -100,6 +106,8 @@
                             <BaseButton type="submit" :loading="savingInvoice" :disabled="invoiceLoading">Save changes</BaseButton>
                         </UForm>
                     </UCard>
+                </div>
+                </div>
                 </template>
             </UTabs>
 
@@ -125,11 +133,16 @@ useHead({ title: 'Settings' })
 
 const toast = useToast()
 
-const activeTab = ref('business')
+const activeTab = ref<'business' | 'invoice'>('business')
 const tabs: TabsItem[] = [
     { label: 'Business', icon: 'i-lucide-store', value: 'business', slot: 'business' },
     { label: 'Invoice', icon: 'i-lucide-receipt-text', value: 'invoice', slot: 'invoice' }
 ]
+
+const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd: onTabsTouchEnd, panelStyle } = useSwipeTabs(
+    activeTab,
+    computed(() => tabs.map((tab) => tab.value as 'business' | 'invoice'))
+)
 
 // ---- Business info ----
 

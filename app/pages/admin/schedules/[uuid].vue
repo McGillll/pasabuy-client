@@ -15,7 +15,7 @@
         description="This schedule may have been deleted, or the link is incorrect."
     />
 
-    <div v-else class="space-y-6">
+    <div v-else class="space-y-6" @touchstart="onTabsTouchStart" @touchmove="onTabsTouchMove" @touchend="onTabsTouchEnd">
         <div>
             <h1 class="text-xl font-semibold text-highlighted">{{ schedule.title }}</h1>
         </div>
@@ -23,12 +23,7 @@
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #details>
                 <div class="overflow-hidden">
-                <div
-                    :style="panelStyle"
-                    @touchstart="onTabsTouchStart"
-                    @touchmove="onTabsTouchMove"
-                    @touchend="onTabsTouchEnd"
-                >
+                <div :style="panelStyle">
                 <UCard class="mt-4">
                     <div class="mb-4 flex items-center gap-2">
                         <UInput :model-value="publicLink" readonly class="w-full sm:w-96" />
@@ -86,12 +81,7 @@
 
             <template #summary>
                 <div class="overflow-hidden">
-                <div
-                    :style="panelStyle"
-                    @touchstart="onTabsTouchStart"
-                    @touchmove="onTabsTouchMove"
-                    @touchend="onTabsTouchEnd"
-                >
+                <div :style="panelStyle">
                 <UTabs v-model="activeSummaryTab" :items="summaryTabs" class="w-full mt-4">
                     <template #pricing>
                         <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
@@ -283,12 +273,7 @@
 
             <template #orders>
                 <div class="overflow-hidden">
-                <div
-                    :style="panelStyle"
-                    @touchstart="onTabsTouchStart"
-                    @touchmove="onTabsTouchMove"
-                    @touchend="onTabsTouchEnd"
-                >
+                <div :style="panelStyle">
                 <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
                     <div class="hidden sm:block">
                         <UTable :data="orders" :columns="orderColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">

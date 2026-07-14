@@ -1,5 +1,5 @@
 <template>
-    <div class="space-y-4">
+    <div class="space-y-4" @touchstart="onTabsTouchStart" @touchmove="onTabsTouchMove" @touchend="onTabsTouchEnd">
         <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold text-highlighted">Customers</h1>
         </div>
@@ -7,13 +7,7 @@
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #approved>
                 <div class="overflow-hidden">
-                <div
-                    class="mt-4 space-y-4"
-                    :style="panelStyle"
-                    @touchstart="onTabsTouchStart"
-                    @touchmove="onTabsTouchMove"
-                    @touchend="onTabsTouchEnd"
-                >
+                <div class="mt-4 space-y-4" :style="panelStyle">
                     <SearchInput v-model="search" placeholder="Search customers…" />
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
@@ -80,13 +74,7 @@
 
             <template #pending>
                 <div class="overflow-hidden">
-                <div
-                    class="mt-4 space-y-4"
-                    :style="panelStyle"
-                    @touchstart="onTabsTouchStart"
-                    @touchmove="onTabsTouchMove"
-                    @touchend="onTabsTouchEnd"
-                >
+                <div class="mt-4 space-y-4" :style="panelStyle">
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
                         <div class="hidden sm:block">
                             <UTable

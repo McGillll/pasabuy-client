@@ -1,5 +1,5 @@
 <template>
-    <div class="space-y-4">
+    <div class="space-y-4" @touchstart="onTabsTouchStart" @touchmove="onTabsTouchMove" @touchend="onTabsTouchEnd">
         <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold text-highlighted">Products</h1>
             <BaseButton v-if="activeTab === 'products'" icon="i-lucide-plus" class="hidden sm:inline-flex" @click="openProductCreateModal">Add Product</BaseButton>
@@ -12,13 +12,7 @@
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #products>
                 <div class="overflow-hidden">
-                <div
-                    class="mt-4 space-y-4"
-                    :style="panelStyle"
-                    @touchstart="onTabsTouchStart"
-                    @touchmove="onTabsTouchMove"
-                    @touchend="onTabsTouchEnd"
-                >
+                <div class="mt-4 space-y-4" :style="panelStyle">
                     <SearchInput v-model="productSearch" placeholder="Search products…" />
 
                     <UTabs
@@ -147,13 +141,7 @@
 
             <template #categories>
                 <div class="overflow-hidden">
-                <div
-                    class="mt-4 space-y-4"
-                    :style="panelStyle"
-                    @touchstart="onTabsTouchStart"
-                    @touchmove="onTabsTouchMove"
-                    @touchend="onTabsTouchEnd"
-                >
+                <div class="mt-4 space-y-4" :style="panelStyle">
                     <SearchInput v-model="categorySearch" placeholder="Search categories…" />
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
