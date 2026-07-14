@@ -15,7 +15,7 @@
         description="This schedule may have been deleted, or the link is incorrect."
     />
 
-    <div v-else class="space-y-6" @touchstart="onTabsTouchStart" @touchmove="onTabsTouchMove" @touchend="onTabsTouchEnd">
+    <div v-else class="min-h-full space-y-6" @touchstart="onTabsTouchStart" @touchmove="onTabsTouchMove" @touchend="onTabsTouchEnd">
         <div>
             <h1 class="text-xl font-semibold text-highlighted">{{ schedule.title }}</h1>
         </div>

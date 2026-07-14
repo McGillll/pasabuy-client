@@ -1,5 +1,5 @@
 <template>
-    <div class="max-w-3xl space-y-6" @touchstart="onTabsTouchStart" @touchmove="onTabsTouchMove" @touchend="onTabsTouchEnd">
+    <div class="min-h-full max-w-3xl space-y-6" @touchstart="onTabsTouchStart" @touchmove="onTabsTouchMove" @touchend="onTabsTouchEnd">
         <div>
             <h1 class="text-xl font-semibold text-highlighted">Settings</h1>
             <p class="mt-1 text-sm text-muted">Manage your business information and invoice rules.</p>

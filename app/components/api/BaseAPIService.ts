@@ -44,25 +44,14 @@ class BaseAPIService {
             return await $fetch<any>(requestUrl, config)
         } catch (error: any) {
             if (error?.name === 'AbortError') throw error
-            switch (error.response?.status) {
-                case 400:
-                    throw new APIError(error.response._data)
-                case 404:
-                case 422:
-                    throw new APIError(error.response._data)
-                case 429:
-                    throw new APIError(error.response._data)
-                case 401:
-                    this.revokeAccess()
-                case 500:
-                    throw new APIError({
-                        message: "Server error. Please try again. If the problem persists, contact your system administrator"
-                    })
-                default:
-                    throw new APIError({
-                        message: "Something went wrong. Please try again. If the problem persists, contact your system administrator"
-                    })
+            if (error.response?.status === 401 && localStorage.getItem('_token')) {
+                this.revokeAccess()
             }
+            const responseMessage = error.response?._data?.message
+            throw new APIError({
+                message: responseMessage ?? "Something went wrong. Please try again. If the problem persists, contact your system administrator",
+                errors: error.response?._data?.errors,
+            })
         }
     }
 
