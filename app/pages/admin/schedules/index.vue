@@ -195,6 +195,14 @@ const total = ref(0)
 const search = ref('')
 const monthFilter = ref<number | null>(null)
 const yearFilter = ref<number | null>(null)
+const isFiltersOpen = ref(false)
+
+const activeFilterCount = computed(() => [monthFilter.value, yearFilter.value].filter((value) => value !== null).length)
+
+function clearFilters() {
+    monthFilter.value = null
+    yearFilter.value = null
+}
 
 const monthFilterOptions = [
     { label: 'All months', value: null },
