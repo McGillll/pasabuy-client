@@ -144,9 +144,43 @@
             view-only
         >
             <div v-if="selectedOrder" class="space-y-4">
-                <div class="flex items-center justify-between text-sm">
-                    <span class="text-muted">Total</span>
-                    <span class="font-medium text-highlighted">₱{{ selectedOrder.total_amount }}</span>
+                <div v-if="invoiceLoading" class="space-y-2">
+                    <USkeleton class="h-5 w-full" />
+                    <USkeleton class="h-5 w-full" />
+                    <USkeleton class="h-5 w-full" />
+                </div>
+                <div v-else-if="invoice" class="space-y-1.5 rounded-lg border border-default p-3 text-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-muted">Subtotal</span>
+                        <span>₱{{ invoice.subtotal.toFixed(2) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-muted">Markup</span>
+                        <span>₱{{ invoice.markup_amount.toFixed(2) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between font-medium text-highlighted">
+                        <span>Invoice total</span>
+                        <span>₱{{ invoice.invoice_total.toFixed(2) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-muted">Due date</span>
+                        <div class="flex items-center gap-2">
+                            <span>{{ invoice.due_date ? formatDate(invoice.due_date) : 'Not yet set' }}</span>
+                            <UBadge v-if="invoice.is_overdue" color="error" variant="subtle" size="sm">Overdue</UBadge>
+                        </div>
+                    </div>
+                    <div v-if="invoice.interest_amount > 0" class="flex items-center justify-between text-error">
+                        <span>Interest ({{ invoice.elapsed_periods }} {{ invoice.elapsed_periods === 1 ? 'period' : 'periods' }})</span>
+                        <span>₱{{ invoice.interest_amount.toFixed(2) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-muted">Amount paid</span>
+                        <span>₱{{ invoice.amount_paid.toFixed(2) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-default pt-1.5 font-medium text-highlighted">
+                        <span>Balance due</span>
+                        <span>₱{{ invoice.balance_due.toFixed(2) }}</span>
+                    </div>
                 </div>
 
                 <div class="hidden sm:block">
@@ -227,6 +261,7 @@
 import { orderService } from '@/components/api/admin/OrderService'
 import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
 import APIError from '@/components/api/user/APIError'
+import type { Invoice } from '@/types/Invoice'
 import type { Order } from '@/types/Order'
 import type { OrderPayment } from '@/types/OrderPayment'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
@@ -382,6 +417,8 @@ const selectedOrder = ref<Order | null>(null)
 const payments = ref<OrderPayment[]>([])
 const paymentsLoading = ref(false)
 const recordingPayment = ref(false)
+const invoice = ref<Invoice | null>(null)
+const invoiceLoading = ref(false)
 
 const paymentMethodOptions = [
     { label: 'Cash', value: 'cash' },
@@ -427,11 +464,23 @@ async function loadPayments(orderUuid: string) {
     }
 }
 
+async function loadInvoice(orderUuid: string) {
+    invoiceLoading.value = true
+    try {
+        const response = await orderService.fetchInvoice(orderUuid)
+        invoice.value = response.data
+    } catch (error) {
+        toast.add({ title: 'Failed to load invoice', description: (error as APIError).message, color: 'error' })
+    } finally {
+        invoiceLoading.value = false
+    }
+}
+
 async function openPaymentsModal(order: Order) {
     selectedOrder.value = order
     resetPaymentForm()
     isPaymentsModalOpen.value = true
-    await loadPayments(order.uuid)
+    await Promise.all([loadPayments(order.uuid), loadInvoice(order.uuid)])
 }
 
 async function submitPayment() {
@@ -451,7 +500,7 @@ async function submitPayment() {
         })
         resetPaymentForm()
         toast.add({ title: 'Payment recorded', color: 'success' })
-        await Promise.all([loadPayments(selectedOrder.value.uuid), loadOrders()])
+        await Promise.all([loadPayments(selectedOrder.value.uuid), loadInvoice(selectedOrder.value.uuid), loadOrders()])
     } catch (error) {
         toast.add({ title: 'Failed to record payment', description: (error as APIError).message, color: 'error' })
     } finally {
@@ -472,7 +521,7 @@ function deletePayment(payment: OrderPayment) {
             try {
                 await orderService.deletePayment(order.uuid, payment.uuid)
                 toast.add({ title: 'Payment removed', color: 'success' })
-                await Promise.all([loadPayments(order.uuid), loadOrders()])
+                await Promise.all([loadPayments(order.uuid), loadInvoice(order.uuid), loadOrders()])
             } catch (error) {
                 toast.add({ title: 'Failed to remove payment', description: (error as APIError).message, color: 'error' })
             }

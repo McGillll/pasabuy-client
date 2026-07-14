@@ -28,6 +28,10 @@ class OrderService extends BaseAPIService {
     async deletePayment(orderUuid: string, paymentUuid: string): Promise<any> {
         return await this.request(`/admin/orders/${orderUuid}/payments/${paymentUuid}`, 'DELETE')
     }
+
+    async fetchInvoice(orderUuid: string): Promise<any> {
+        return await this.request(`/admin/orders/${orderUuid}/invoice`, 'GET')
+    }
 }
 
 export const orderService = new OrderService()
