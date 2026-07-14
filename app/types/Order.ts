@@ -10,7 +10,13 @@ export interface Order {
     total_amount: string
     is_editable: boolean
     is_cancellable: boolean
-    pasabuy_schedule: { uuid: string; title: string; pasabuy_schedule_date: string | null } | null
+    pasabuy_schedule: {
+        uuid: string
+        title: string
+        pasabuy_schedule_date: string | null
+        status: 'open' | 'closed' | 'finished'
+        is_open: boolean
+    } | null
     items: OrderItem[]
     created_at: string
 }

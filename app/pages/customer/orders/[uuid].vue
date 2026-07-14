@@ -35,7 +35,9 @@
                 description="The seller will reach out to confirm."
             />
 
-            <UCard :ui="{ body: 'p-0 sm:p-0' }">
+            <OrderInvoice v-if="isFinished" :order="order" />
+
+            <UCard v-else :ui="{ body: 'p-0 sm:p-0' }">
                 <div class="divide-y divide-default">
                     <div v-for="item in order.items" :key="item.uuid" class="p-4">
                         <OrderLineItem :item="item" />
@@ -55,7 +57,7 @@
                     All orders
                 </BaseButton>
 
-                <div class="flex flex-wrap items-center gap-2">
+                <div v-if="!isFinished" class="flex flex-wrap items-center gap-2">
                     <BaseButton
                         v-if="order.is_editable && order.pasabuy_schedule"
                         variant="soft"
@@ -74,30 +76,9 @@
 <script setup lang="ts">
 import { customerOrderService } from '@/components/api/customer/CustomerOrderService'
 import APIError from '@/components/api/user/APIError'
+import type { Order } from '@/types/Order'
 
 definePageMeta({ layout: 'customer', middleware: 'customer-auth' })
-
-interface OrderItem {
-    uuid: string
-    product_uuid: string
-    product_name: string
-    estimated_price: string
-    actual_price: string | null
-    is_out_of_stock: boolean
-    quantity: number
-    bonus_quantity: number
-    subtotal: string
-}
-
-interface Order {
-    uuid: string
-    status: 'pending' | 'confirmed' | 'cancelled'
-    total_amount: string
-    is_editable: boolean
-    is_cancellable: boolean
-    pasabuy_schedule: { uuid: string; title: string } | null
-    items: OrderItem[]
-}
 
 const route = useRoute()
 const toast = useToast()
@@ -108,6 +89,8 @@ const order = ref<Order | null>(null)
 const loading = ref(true)
 const notFound = ref(false)
 const cancelling = ref(false)
+
+const isFinished = computed(() => order.value?.pasabuy_schedule?.status === 'finished')
 
 async function loadOrder(silent = false) {
     if (!silent) loading.value = true
