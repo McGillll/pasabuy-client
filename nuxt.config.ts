@@ -7,7 +7,17 @@ export default defineNuxtConfig({
       title: 'Pasabuy',
       titleTemplate: 'Pasabuy · %s',
       link: [
-        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
+        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16.png' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        { rel: 'manifest', href: '/manifest.webmanifest' }
+      ],
+      meta: [
+        { name: 'theme-color', content: '#4274d9' },
+        { name: 'mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+        { name: 'apple-mobile-web-app-title', content: 'Pasabuy' }
       ]
     }
   },
