@@ -2,6 +2,12 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+  app: {
+    head: {
+      title: 'Pasabuy',
+      titleTemplate: (titleChunk) => titleChunk ? `Pasabuy · ${titleChunk}` : 'Pasabuy'
+    }
+  },
   modules: ['@nuxt/ui'],
   css: ['~/assets/css/main.css'],
   components: [{ path: '~/components', pathPrefix: false }],
