@@ -104,11 +104,10 @@
                     </template>
                 </UTable>
             </div>
-            <div class="sm:hidden divide-y divide-default">
+            <div class="sm:hidden space-y-2 p-2">
                 <ListCard v-for="order in orders" :key="order.uuid">
                     <template #title>
                         <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
-                        <OrderStatusBadge :status="order.status" />
                     </template>
                     <template #subtitle>
                         {{ order.customer_contact }}
@@ -122,10 +121,6 @@
                         >
                             {{ order.pasabuy_schedule.title }}
                         </NuxtLink>
-                        <div v-if="order.status === 'confirmed'" class="w-full flex items-center gap-2 mt-1.5">
-                            <PaymentStatusBadge :status="order.payment_status" />
-                            <DeliveryStatusBadge :status="order.delivery_status" />
-                        </div>
                     </template>
                     <template v-if="order.status === 'confirmed'" #actions>
                         <UButton
@@ -144,6 +139,13 @@
                             aria-label="Manage payments"
                             @click="openPaymentsModal(order)"
                         />
+                    </template>
+                    <template #status>
+                        <OrderStatusBadge :status="order.status" />
+                        <template v-if="order.status === 'confirmed'">
+                            <PaymentStatusBadge :status="order.payment_status" />
+                            <DeliveryStatusBadge :status="order.delivery_status" />
+                        </template>
                     </template>
                 </ListCard>
                 <TableEmptyState v-if="orders.length === 0" icon="i-lucide-receipt" message="No orders found." />
@@ -188,7 +190,7 @@
                             </template>
                         </UTable>
                     </div>
-                    <div class="sm:hidden divide-y divide-default">
+                    <div class="sm:hidden space-y-2 p-2">
                         <ListCard v-for="payment in payments" :key="payment.uuid">
                             <template #title>
                                 <p class="font-medium text-highlighted">₱{{ payment.amount }}</p>

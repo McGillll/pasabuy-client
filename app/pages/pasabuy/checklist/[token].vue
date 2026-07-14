@@ -26,11 +26,10 @@
                 </div>
 
                 <UCard :ui="{ body: 'p-0 sm:p-0' }">
-                    <div class="divide-y divide-default">
+                    <div class="space-y-2 p-2">
                         <ListCard
                             v-for="item in checklistItems"
                             :key="item.product_uuid"
-                            :tone="item.return_quantity > 0 ? 'error' : item.additional_quantity > 0 ? 'warning' : undefined"
                             :dimmed="item.is_checked"
                         >
                             <template #leading>
@@ -49,7 +48,7 @@
                             <template #subtitle>
                                 {{ item.category_name ?? '—' }}
                             </template>
-                            <template #meta>
+                            <template v-if="item.additional_quantity > 0 || item.return_quantity > 0" #status>
                                 <UBadge v-if="item.additional_quantity > 0" color="warning" variant="subtle" size="sm">
                                     +{{ item.additional_quantity }} more
                                 </UBadge>

@@ -5,25 +5,44 @@
             <UButton icon="i-lucide-plus" @click="openCreateModal">New Schedule</UButton>
         </div>
 
-        <div class="flex flex-col sm:flex-row gap-2">
-            <SearchInput v-model="search" placeholder="Search schedules…" />
-            <div class="flex gap-2">
-                <USelect
-                    v-model="monthFilter"
-                    :items="monthFilterOptions"
-                    value-key="value"
-                    placeholder="All months"
-                    class="w-full sm:w-40"
-                />
-                <USelect
-                    v-model="yearFilter"
-                    :items="yearFilterOptions"
-                    value-key="value"
-                    placeholder="All years"
-                    class="w-full sm:w-32"
-                />
+        <div class="space-y-3">
+            <SearchInput v-model="search" placeholder="Search schedules…" class="w-full" />
+
+            <div class="hidden sm:grid grid-cols-2 gap-2">
+                <USelect v-model="monthFilter" :items="monthFilterOptions" value-key="value" placeholder="All months" class="w-full" />
+                <USelect v-model="yearFilter" :items="yearFilterOptions" value-key="value" placeholder="All years" class="w-full" />
             </div>
+
+            <UButton
+                class="sm:hidden"
+                color="neutral"
+                variant="outline"
+                icon="i-lucide-list-filter"
+                @click="isFiltersOpen = true"
+            >
+                Filters
+                <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
+            </UButton>
         </div>
+
+        <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
+            <template #body>
+                <div class="space-y-4">
+                    <UFormField label="Month">
+                        <USelect v-model="monthFilter" :items="monthFilterOptions" value-key="value" placeholder="All months" class="w-full" />
+                    </UFormField>
+                    <UFormField label="Year">
+                        <USelect v-model="yearFilter" :items="yearFilterOptions" value-key="value" placeholder="All years" class="w-full" />
+                    </UFormField>
+                </div>
+            </template>
+            <template #footer>
+                <div class="w-full flex items-center gap-2">
+                    <UButton class="flex-1" color="neutral" variant="outline" @click="clearFilters">Clear filters</UButton>
+                    <UButton class="flex-1" @click="isFiltersOpen = false">Done</UButton>
+                </div>
+            </template>
+        </USlideover>
 
         <UCard :ui="{ body: 'p-0 sm:p-0' }">
             <div class="hidden sm:block">
@@ -78,19 +97,17 @@
                     </template>
                 </UTable>
             </div>
-            <div class="sm:hidden divide-y divide-default">
+            <div class="sm:hidden space-y-2 p-2">
                 <ListCard
                     v-for="scheduleRow in schedules"
                     :key="scheduleRow.uuid"
                     clickable
-                    :tone="scheduleStatusColor[scheduleRow.status]"
                     @click="navigateTo(`/admin/schedules/${scheduleRow.uuid}`)"
                 >
                     <template #title>
                         <p class="font-medium text-highlighted">{{ scheduleRow.title }}</p>
                     </template>
                     <template #meta>
-                        <StatusBadge :color="scheduleStatusColor[scheduleRow.status]" :label="scheduleRow.status" />
                         <span class="text-muted">{{ scheduleRow.pasabuy_schedule_date ? formatDate(scheduleRow.pasabuy_schedule_date) : '—' }}</span>
                     </template>
                     <template #actions>
@@ -105,6 +122,9 @@
                             @click.stop="closeSchedule(scheduleRow)"
                         />
                         <UIcon name="i-lucide-chevron-right" class="size-4 text-dimmed" />
+                    </template>
+                    <template #status>
+                        <StatusBadge :color="scheduleStatusColor[scheduleRow.status]" :label="scheduleRow.status" />
                     </template>
                 </ListCard>
                 <TableEmptyState

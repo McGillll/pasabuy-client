@@ -48,7 +48,7 @@
                                 </template>
                             </UTable>
                         </div>
-                        <div class="sm:hidden divide-y divide-default">
+                        <div class="sm:hidden space-y-2 p-2">
                             <ListCard v-for="customer in approvedCustomers" :key="customer.uuid">
                                 <template #title>
                                     <p class="font-medium text-highlighted">{{ customer.first_name }} {{ customer.last_name }}</p>
@@ -125,7 +125,7 @@
                                 </template>
                             </UTable>
                         </div>
-                        <div class="sm:hidden divide-y divide-default">
+                        <div class="sm:hidden space-y-2 p-2">
                             <ListCard v-for="customer in pendingCustomers" :key="customer.uuid">
                                 <template #title>
                                     <p class="font-medium text-highlighted">{{ customer.first_name }} {{ customer.last_name }}</p>
@@ -187,8 +187,8 @@
                         </template>
                     </UTable>
                 </div>
-                <div class="sm:hidden divide-y divide-default">
-                    <ListCard v-for="order in customerOrders" :key="order.uuid" :tone="orderStatusColor[order.status]">
+                <div class="sm:hidden space-y-2 p-2">
+                    <ListCard v-for="order in customerOrders" :key="order.uuid">
                         <template #title>
                             <NuxtLink
                                 v-if="order.pasabuy_schedule"

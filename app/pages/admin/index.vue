@@ -67,8 +67,8 @@
                         </template>
                     </UTable>
                 </div>
-                <div class="sm:hidden divide-y divide-default max-h-80 overflow-y-auto">
-                    <ListCard v-for="order in pendingOrders" :key="order.uuid" tone="warning">
+                <div class="sm:hidden space-y-2 p-2 max-h-80 overflow-y-auto">
+                    <ListCard v-for="order in pendingOrders" :key="order.uuid">
                         <template #title>
                             <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
                         </template>

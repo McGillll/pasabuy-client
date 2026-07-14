@@ -48,8 +48,8 @@
                     </template>
                 </UTable>
             </div>
-            <div class="sm:hidden divide-y divide-default">
-                <ListCard v-for="order in orders" :key="order.uuid" clickable :tone="customerOrderStatusColor[order.status]" @click="viewOrder(order)">
+            <div class="sm:hidden space-y-2 p-2">
+                <ListCard v-for="order in orders" :key="order.uuid" clickable @click="viewOrder(order)">
                     <template #title>
                         <span v-if="order.pasabuy_schedule" class="font-medium text-highlighted">
                             {{ order.pasabuy_schedule.title }}
@@ -57,8 +57,10 @@
                     </template>
                     <template #meta>
                         <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
-                        <OrderStatusBadge :status="order.status" />
                         <span class="text-muted">{{ formatDate(order.created_at) }}</span>
+                    </template>
+                    <template #status>
+                        <OrderStatusBadge :status="order.status" />
                     </template>
                 </ListCard>
                 <div v-if="orders.length === 0" class="flex flex-col items-center gap-3 py-10">

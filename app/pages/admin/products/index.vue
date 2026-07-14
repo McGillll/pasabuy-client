@@ -88,7 +88,7 @@
                                 </template>
                             </UTable>
                         </div>
-                        <div class="sm:hidden divide-y divide-default">
+                        <div class="sm:hidden space-y-2 p-2">
                             <ListCard v-for="product in products" :key="product.uuid" :dimmed="!product.is_active">
                                 <template #leading>
                                     <img
@@ -110,10 +110,6 @@
                                 <template #meta>
                                     <span class="text-muted">{{ product.category?.name ?? '—' }}</span>
                                     <span class="font-medium text-highlighted">₱{{ product.default_price }}</span>
-                                    <StatusBadge
-                                        :color="product.is_active ? 'success' : 'neutral'"
-                                        :label="product.is_active ? 'Active' : 'Inactive'"
-                                    />
                                 </template>
                                 <template #actions>
                                     <UButton
@@ -131,6 +127,12 @@
                                         variant="ghost"
                                         aria-label="Delete product"
                                         @click="onDeleteProduct(product)"
+                                    />
+                                </template>
+                                <template #status>
+                                    <StatusBadge
+                                        :color="product.is_active ? 'success' : 'neutral'"
+                                        :label="product.is_active ? 'Active' : 'Inactive'"
                                     />
                                 </template>
                             </ListCard>
@@ -204,19 +206,13 @@
                                 </template>
                             </UTable>
                         </div>
-                        <div class="sm:hidden divide-y divide-default">
+                        <div class="sm:hidden space-y-2 p-2">
                             <ListCard v-for="category in categories" :key="category.uuid" :dimmed="!category.is_active">
                                 <template #title>
                                     <p class="font-medium text-highlighted">{{ category.name }}</p>
                                 </template>
                                 <template #subtitle>
                                     <span v-if="category.description" class="truncate">{{ category.description }}</span>
-                                </template>
-                                <template #meta>
-                                    <StatusBadge
-                                        :color="category.is_active ? 'success' : 'neutral'"
-                                        :label="category.is_active ? 'Active' : 'Inactive'"
-                                    />
                                 </template>
                                 <template #actions>
                                     <UButton
@@ -234,6 +230,12 @@
                                         variant="ghost"
                                         aria-label="Delete category"
                                         @click="onDeleteCategory(category)"
+                                    />
+                                </template>
+                                <template #status>
+                                    <StatusBadge
+                                        :color="category.is_active ? 'success' : 'neutral'"
+                                        :label="category.is_active ? 'Active' : 'Inactive'"
                                     />
                                 </template>
                             </ListCard>

@@ -115,12 +115,11 @@
                                     </template>
                                 </UTable>
                             </div>
-                            <div class="sm:hidden divide-y divide-default">
+                            <div class="sm:hidden space-y-2 p-2">
                                 <ListCard
                                     v-for="item in summary"
                                     :key="item.product_uuid"
                                     clickable
-                                    :tone="getScheduleProductStatus(item.product_uuid) === 'out_of_stock' ? 'error' : getScheduleProductStatus(item.product_uuid) === 'b1t1' ? 'warning' : undefined"
                                     @click="openBuyersModal(item)"
                                 >
                                     <template #title>
@@ -131,15 +130,17 @@
                                     </template>
                                     <template #meta>
                                         <span class="text-muted">₱{{ item.default_price }} × {{ getDisplayQuantity(item) }}</span>
-                                        <UBadge v-if="getScheduleProductStatus(item.product_uuid) === 'b1t1'" color="warning" variant="subtle" size="sm">
-                                            B1T1
-                                        </UBadge>
                                     </template>
                                     <template #actions>
                                         <span v-if="getScheduleProductStatus(item.product_uuid) === 'out_of_stock'" class="text-sm font-medium text-error">
                                             Out of stock
                                         </span>
                                         <span v-else class="font-medium text-highlighted">₱{{ item.subtotal }}</span>
+                                    </template>
+                                    <template v-if="getScheduleProductStatus(item.product_uuid) === 'b1t1'" #status>
+                                        <UBadge color="warning" variant="subtle" size="sm">
+                                            B1T1
+                                        </UBadge>
                                     </template>
                                 </ListCard>
                                 <TableEmptyState v-if="summary.length === 0" icon="i-lucide-clipboard-list" message="No orders yet — the checklist fills in once customers order." />
@@ -226,11 +227,10 @@
                                     </template>
                                 </UTable>
                             </div>
-                            <div class="sm:hidden divide-y divide-default">
+                            <div class="sm:hidden space-y-2 p-2">
                                 <ListCard
                                     v-for="item in checklistItems"
                                     :key="item.product_uuid"
-                                    :tone="item.return_quantity > 0 ? 'error' : item.additional_quantity > 0 ? 'warning' : undefined"
                                 >
                                     <template #leading>
                                         <UCheckbox
@@ -248,7 +248,7 @@
                                     <template #subtitle>
                                         {{ item.category_name ?? '—' }}
                                     </template>
-                                    <template #meta>
+                                    <template v-if="item.additional_quantity > 0 || item.return_quantity > 0" #status>
                                         <UBadge v-if="item.additional_quantity > 0" color="warning" variant="subtle" size="sm">
                                             +{{ item.additional_quantity }} more
                                         </UBadge>
@@ -308,12 +308,11 @@
                             </template>
                         </UTable>
                     </div>
-                    <div class="sm:hidden divide-y divide-default">
+                    <div class="sm:hidden space-y-2 p-2">
                         <ListCard
                             v-for="order in orders"
                             :key="order.uuid"
                             clickable
-                            :tone="orderStatusColor[order.status]"
                             @click="viewOrder(order)"
                         >
                             <template #title>
@@ -324,7 +323,6 @@
                             </template>
                             <template #meta>
                                 <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
-                                <OrderStatusBadge :status="order.status" />
                             </template>
                             <template #actions>
                                 <template v-if="order.status === 'pending'">
@@ -347,6 +345,9 @@
                                     />
                                 </template>
                                 <UIcon name="i-lucide-chevron-right" class="size-4 text-dimmed" />
+                            </template>
+                            <template #status>
+                                <OrderStatusBadge :status="order.status" />
                             </template>
                         </ListCard>
                         <TableEmptyState v-if="orders.length === 0" icon="i-lucide-receipt" message="No orders yet." />
@@ -371,14 +372,16 @@
                             </template>
                         </UTable>
                     </div>
-                    <div class="sm:hidden divide-y divide-default">
-                        <ListCard v-for="buyer in buyers" :key="buyer.customer_name + buyer.quantity" :tone="orderStatusColor[buyer.status]">
+                    <div class="sm:hidden space-y-2 p-2">
+                        <ListCard v-for="buyer in buyers" :key="buyer.customer_name + buyer.quantity">
                             <template #title>
                                 <p class="font-medium text-highlighted">{{ buyer.customer_name }}</p>
                             </template>
                             <template #meta>
                                 <span class="text-muted">Qty {{ buyer.quantity }}</span>
                                 <span class="font-medium text-highlighted">₱{{ buyer.subtotal }}</span>
+                            </template>
+                            <template #status>
                                 <OrderStatusBadge :status="buyer.status" />
                             </template>
                         </ListCard>
