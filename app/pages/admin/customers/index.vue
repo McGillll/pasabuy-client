@@ -6,7 +6,14 @@
 
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #approved>
-                <div class="mt-4 space-y-4">
+                <div class="overflow-hidden">
+                <div
+                    class="mt-4 space-y-4"
+                    :style="panelStyle"
+                    @touchstart="onTabsTouchStart"
+                    @touchmove="onTabsTouchMove"
+                    @touchend="onTabsTouchEnd"
+                >
                     <SearchInput v-model="search" placeholder="Search customers…" />
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
@@ -23,7 +30,7 @@
                                 </template>
                                 <template #actions-cell="{ row }">
                                     <div class="flex justify-end gap-2">
-                                        <UButton
+                                        <BaseButton
                                             size="sm"
                                             color="neutral"
                                             variant="ghost"
@@ -31,8 +38,8 @@
                                             @click="viewOrders(row.original)"
                                         >
                                             View orders
-                                        </UButton>
-                                        <UButton
+                                        </BaseButton>
+                                        <BaseButton
                                             size="sm"
                                             color="error"
                                             variant="ghost"
@@ -40,7 +47,7 @@
                                             @click="revokeCustomer(row.original)"
                                         >
                                             Revoke
-                                        </UButton>
+                                        </BaseButton>
                                     </div>
                                 </template>
                                 <template #empty>
@@ -49,7 +56,7 @@
                             </UTable>
                         </div>
                         <div class="sm:hidden space-y-2 p-2">
-                            <ListCard v-for="customer in approvedCustomers" :key="customer.uuid">
+                            <ListCard v-for="customer in approvedCustomers" :key="customer.uuid" :actions="approvedCustomerActions(customer)">
                                 <template #title>
                                     <p class="font-medium text-highlighted">{{ customer.first_name }} {{ customer.last_name }}</p>
                                 </template>
@@ -58,26 +65,6 @@
                                 </template>
                                 <template #meta>
                                     <span class="text-muted">{{ customer.contact_number ?? '—' }}</span>
-                                </template>
-                                <template #actions>
-                                    <UButton
-                                        size="sm"
-                                        color="neutral"
-                                        variant="ghost"
-                                        trailing-icon="i-lucide-arrow-right"
-                                        @click="viewOrders(customer)"
-                                    >
-                                        View orders
-                                    </UButton>
-                                    <UButton
-                                        size="sm"
-                                        color="error"
-                                        variant="ghost"
-                                        :loading="actingOn === customer.uuid"
-                                        @click="revokeCustomer(customer)"
-                                    >
-                                        Revoke
-                                    </UButton>
                                 </template>
                             </ListCard>
                             <TableEmptyState v-if="approvedCustomers.length === 0" icon="i-lucide-users" message="No approved customers found." />
@@ -88,10 +75,18 @@
                         <UPagination v-model:page="approvedPage" :total="approvedTotal" :items-per-page="perPage" />
                     </div>
                 </div>
+                </div>
             </template>
 
             <template #pending>
-                <div class="mt-4 space-y-4">
+                <div class="overflow-hidden">
+                <div
+                    class="mt-4 space-y-4"
+                    :style="panelStyle"
+                    @touchstart="onTabsTouchStart"
+                    @touchmove="onTabsTouchMove"
+                    @touchend="onTabsTouchEnd"
+                >
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
                         <div class="hidden sm:block">
                             <UTable
@@ -109,7 +104,7 @@
                                 </template>
                                 <template #actions-cell="{ row }">
                                     <div class="flex justify-end">
-                                        <UButton
+                                        <BaseButton
                                             size="sm"
                                             color="success"
                                             variant="soft"
@@ -117,7 +112,7 @@
                                             @click="approveCustomer(row.original)"
                                         >
                                             Approve
-                                        </UButton>
+                                        </BaseButton>
                                     </div>
                                 </template>
                                 <template #empty>
@@ -126,7 +121,7 @@
                             </UTable>
                         </div>
                         <div class="sm:hidden space-y-2 p-2">
-                            <ListCard v-for="customer in pendingCustomers" :key="customer.uuid">
+                            <ListCard v-for="customer in pendingCustomers" :key="customer.uuid" :actions="pendingCustomerActions(customer)">
                                 <template #title>
                                     <p class="font-medium text-highlighted">{{ customer.first_name }} {{ customer.last_name }}</p>
                                 </template>
@@ -137,17 +132,6 @@
                                     <span class="text-muted">{{ customer.contact_number ?? '—' }}</span>
                                     <span class="text-muted">{{ formatDate(customer.created_at) }}</span>
                                 </template>
-                                <template #actions>
-                                    <UButton
-                                        size="sm"
-                                        color="success"
-                                        variant="soft"
-                                        :loading="actingOn === customer.uuid"
-                                        @click="approveCustomer(customer)"
-                                    >
-                                        Approve
-                                    </UButton>
-                                </template>
                             </ListCard>
                             <TableEmptyState v-if="pendingCustomers.length === 0" icon="i-lucide-user-check" message="No pending registrations." />
                         </div>
@@ -157,56 +141,56 @@
                         <UPagination v-model:page="pendingPage" :total="pendingTotal" :items-per-page="perPage" />
                     </div>
                 </div>
+                </div>
             </template>
         </UTabs>
 
-        <UModal
+        <BaseModal
             v-model:open="isOrdersModalOpen"
             :title="selectedCustomer ? `${selectedCustomer.first_name} ${selectedCustomer.last_name}'s orders` : 'Orders'"
+            view-only
         >
-            <template #body>
-                <div class="hidden sm:block">
-                    <UTable :data="customerOrders" :columns="orderColumns" :loading="loadingOrders">
-                        <template #pasabuy_schedule-cell="{ row }">
-                            <NuxtLink
-                                v-if="row.original.pasabuy_schedule"
-                                :to="`/admin/schedules/${row.original.pasabuy_schedule.uuid}`"
-                                class="text-primary hover:underline"
-                            >
-                                {{ row.original.pasabuy_schedule.title }}
-                            </NuxtLink>
-                        </template>
-                        <template #status-cell="{ row }">
-                            <OrderStatusBadge :status="row.original.status" />
-                        </template>
-                        <template #created_at-cell="{ row }">
-                            <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
-                        </template>
-                        <template #empty>
-                            <TableEmptyState icon="i-lucide-receipt" message="No orders yet." />
-                        </template>
-                    </UTable>
-                </div>
-                <div class="sm:hidden space-y-2 p-2">
-                    <ListCard v-for="order in customerOrders" :key="order.uuid">
-                        <template #title>
-                            <NuxtLink
-                                v-if="order.pasabuy_schedule"
-                                :to="`/admin/schedules/${order.pasabuy_schedule.uuid}`"
-                                class="font-medium text-primary hover:underline"
-                            >
-                                {{ order.pasabuy_schedule.title }}
-                            </NuxtLink>
-                        </template>
-                        <template #meta>
-                            <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
-                            <span class="text-muted">{{ formatDate(order.created_at) }}</span>
-                        </template>
-                    </ListCard>
-                    <TableEmptyState v-if="customerOrders.length === 0" icon="i-lucide-receipt" message="No orders yet." />
-                </div>
-            </template>
-        </UModal>
+            <div class="hidden sm:block">
+                <UTable :data="customerOrders" :columns="orderColumns" :loading="loadingOrders">
+                    <template #pasabuy_schedule-cell="{ row }">
+                        <NuxtLink
+                            v-if="row.original.pasabuy_schedule"
+                            :to="`/admin/schedules/${row.original.pasabuy_schedule.uuid}`"
+                            class="text-primary hover:underline"
+                        >
+                            {{ row.original.pasabuy_schedule.title }}
+                        </NuxtLink>
+                    </template>
+                    <template #status-cell="{ row }">
+                        <OrderStatusBadge :status="row.original.status" />
+                    </template>
+                    <template #created_at-cell="{ row }">
+                        <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
+                    </template>
+                    <template #empty>
+                        <TableEmptyState icon="i-lucide-receipt" message="No orders yet." />
+                    </template>
+                </UTable>
+            </div>
+            <div class="sm:hidden space-y-2 p-2">
+                <ListCard v-for="order in customerOrders" :key="order.uuid">
+                    <template #title>
+                        <NuxtLink
+                            v-if="order.pasabuy_schedule"
+                            :to="`/admin/schedules/${order.pasabuy_schedule.uuid}`"
+                            class="font-medium text-primary hover:underline"
+                        >
+                            {{ order.pasabuy_schedule.title }}
+                        </NuxtLink>
+                    </template>
+                    <template #meta>
+                        <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
+                        <span class="text-muted">{{ formatDate(order.created_at) }}</span>
+                    </template>
+                </ListCard>
+                <TableEmptyState v-if="customerOrders.length === 0" icon="i-lucide-receipt" message="No orders yet." />
+            </div>
+        </BaseModal>
 
         <ConfirmDialogModal
             v-model:open="confirmDialog.open"
@@ -223,7 +207,7 @@
 <script setup lang="ts">
 import { customerService } from '@/components/api/admin/CustomerService'
 import APIError from '@/components/api/user/APIError'
-import type { TableColumn, TabsItem } from '@nuxt/ui'
+import type { DropdownMenuItem, TableColumn, TabsItem } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
@@ -266,6 +250,11 @@ const tabs = computed<TabsItem[]>(() => [
         badge: pendingTotal.value > 0 ? pendingTotal.value : undefined
     }
 ])
+
+const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd: onTabsTouchEnd, panelStyle } = useSwipeTabs(
+    activeTab,
+    computed(() => tabs.value.map((tab) => tab.value as 'approved' | 'pending'))
+)
 
 const approvedColumns: TableColumn<Customer>[] = [
     { id: 'customer', header: 'Customer' },
@@ -400,6 +389,19 @@ function revokeCustomer(customer: Customer) {
             }
         }
     })
+}
+
+function approvedCustomerActions(customer: Customer): DropdownMenuItem[] {
+    return [
+        { label: 'View orders', icon: 'i-lucide-arrow-right', onSelect: () => viewOrders(customer) },
+        { label: 'Revoke', icon: 'i-lucide-user-x', color: 'error', onSelect: () => revokeCustomer(customer) }
+    ]
+}
+
+function pendingCustomerActions(customer: Customer): DropdownMenuItem[] {
+    return [
+        { label: 'Approve', icon: 'i-lucide-check', color: 'success', onSelect: () => approveCustomer(customer) }
+    ]
 }
 
 onMounted(() => {

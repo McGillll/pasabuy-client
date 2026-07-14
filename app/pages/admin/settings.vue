@@ -19,7 +19,7 @@
                 <UFormField label="Address" name="address">
                     <UTextarea v-model="state.address" :disabled="loading" class="w-full" :rows="3" />
                 </UFormField>
-                <UButton type="submit" :loading="saving" :disabled="loading">Save changes</UButton>
+                <BaseButton type="submit" :loading="saving" :disabled="loading">Save changes</BaseButton>
             </UForm>
         </UCard>
     </div>

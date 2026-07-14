@@ -9,7 +9,7 @@
         class="w-full"
     >
         <template #trailing>
-            <UButton
+            <BaseButton
                 color="neutral"
                 variant="ghost"
                 size="xs"

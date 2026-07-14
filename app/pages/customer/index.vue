@@ -36,9 +36,9 @@
                         <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
                     </template>
                     <template #actions-cell="{ row }">
-                        <UButton size="sm" color="neutral" variant="ghost" @click="viewOrder(row.original)">
+                        <BaseButton size="sm" color="neutral" variant="ghost" @click="viewOrder(row.original)">
                             View
-                        </UButton>
+                        </BaseButton>
                     </template>
                     <template #empty>
                         <div class="flex flex-col items-center gap-3 py-10">
@@ -74,34 +74,33 @@
             <UPagination v-model:page="page" :total="total" :items-per-page="perPage" />
         </div>
 
-        <UModal
+        <BaseModal
             v-model:open="isDetailOpen"
             :title="selectedOrder?.pasabuy_schedule?.title ?? 'Order details'"
+            view-only
         >
-            <template #body>
-                <div v-if="selectedOrder" class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <OrderStatusBadge :status="selectedOrder.status" />
-                        <span class="text-sm text-muted">{{ formatDate(selectedOrder.created_at) }}</span>
-                    </div>
+            <div v-if="selectedOrder" class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <OrderStatusBadge :status="selectedOrder.status" />
+                    <span class="text-sm text-muted">{{ formatDate(selectedOrder.created_at) }}</span>
+                </div>
 
-                    <div class="divide-y divide-default rounded-lg border border-default">
-                        <div v-for="item in selectedOrder.items" :key="item.uuid" class="p-3">
-                            <OrderLineItem :item="item" />
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between border-t border-default pt-3 font-medium text-highlighted">
-                        <span>Total</span>
-                        <span>₱{{ selectedOrder.total_amount }}</span>
-                    </div>
-
-                    <div v-if="selectedOrder.is_cancellable" class="flex items-center justify-end gap-2">
-                        <CancelOrderControl :loading="cancellingOrder" @confirm="cancelSelectedOrder" />
+                <div class="divide-y divide-default rounded-lg border border-default">
+                    <div v-for="item in selectedOrder.items" :key="item.uuid" class="p-3">
+                        <OrderLineItem :item="item" />
                     </div>
                 </div>
-            </template>
-        </UModal>
+
+                <div class="flex items-center justify-between border-t border-default pt-3 font-medium text-highlighted">
+                    <span>Total</span>
+                    <span>₱{{ selectedOrder.total_amount }}</span>
+                </div>
+
+                <div v-if="selectedOrder.is_cancellable" class="flex items-center justify-end gap-2">
+                    <CancelOrderControl :loading="cancellingOrder" @confirm="cancelSelectedOrder" />
+                </div>
+            </div>
+        </BaseModal>
     </div>
 </template>
 

@@ -2,13 +2,23 @@
     <div class="space-y-4">
         <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold text-highlighted">Products</h1>
-            <UButton v-if="activeTab === 'products'" icon="i-lucide-plus" @click="openProductCreateModal">Add Product</UButton>
-            <UButton v-else icon="i-lucide-plus" @click="openCategoryCreateModal">Add Category</UButton>
+            <BaseButton v-if="activeTab === 'products'" icon="i-lucide-plus" class="hidden sm:inline-flex" @click="openProductCreateModal">Add Product</BaseButton>
+            <BaseButton v-else icon="i-lucide-plus" class="hidden sm:inline-flex" @click="openCategoryCreateModal">Add Category</BaseButton>
         </div>
+
+        <FabButton v-if="activeTab === 'products'" aria-label="Add product" @click="openProductCreateModal" />
+        <FabButton v-else aria-label="Add category" @click="openCategoryCreateModal" />
 
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #products>
-                <div class="mt-4 space-y-4">
+                <div class="overflow-hidden">
+                <div
+                    class="mt-4 space-y-4"
+                    :style="panelStyle"
+                    @touchstart="onTabsTouchStart"
+                    @touchmove="onTabsTouchMove"
+                    @touchend="onTabsTouchEnd"
+                >
                     <SearchInput v-model="productSearch" placeholder="Search products…" />
 
                     <UTabs
@@ -60,7 +70,7 @@
                                 </template>
                                 <template #actions-cell="{ row }">
                                     <div class="flex justify-end gap-1">
-                                        <UButton
+                                        <BaseButton
                                             icon="i-lucide-pencil"
                                             size="sm"
                                             color="neutral"
@@ -68,7 +78,7 @@
                                             aria-label="Edit product"
                                             @click="openProductEditModal(row.original)"
                                         />
-                                        <UButton
+                                        <BaseButton
                                             icon="i-lucide-trash-2"
                                             size="sm"
                                             color="error"
@@ -89,7 +99,7 @@
                             </UTable>
                         </div>
                         <div class="sm:hidden space-y-2 p-2">
-                            <ListCard v-for="product in products" :key="product.uuid" :dimmed="!product.is_active">
+                            <ListCard v-for="product in products" :key="product.uuid" :dimmed="!product.is_active" :actions="productActions(product)">
                                 <template #leading>
                                     <img
                                         v-if="product.image_url"
@@ -110,24 +120,6 @@
                                 <template #meta>
                                     <span class="text-muted">{{ product.category?.name ?? '—' }}</span>
                                     <span class="font-medium text-highlighted">₱{{ product.default_price }}</span>
-                                </template>
-                                <template #actions>
-                                    <UButton
-                                        icon="i-lucide-pencil"
-                                        size="sm"
-                                        color="neutral"
-                                        variant="ghost"
-                                        aria-label="Edit product"
-                                        @click="openProductEditModal(product)"
-                                    />
-                                    <UButton
-                                        icon="i-lucide-trash-2"
-                                        size="sm"
-                                        color="error"
-                                        variant="ghost"
-                                        aria-label="Delete product"
-                                        @click="onDeleteProduct(product)"
-                                    />
                                 </template>
                                 <template #status>
                                     <StatusBadge
@@ -150,10 +142,18 @@
                         <UPagination v-model:page="productsPage" :total="productsTotal" :items-per-page="perPage" />
                     </div>
                 </div>
+                </div>
             </template>
 
             <template #categories>
-                <div class="mt-4 space-y-4">
+                <div class="overflow-hidden">
+                <div
+                    class="mt-4 space-y-4"
+                    :style="panelStyle"
+                    @touchstart="onTabsTouchStart"
+                    @touchmove="onTabsTouchMove"
+                    @touchend="onTabsTouchEnd"
+                >
                     <SearchInput v-model="categorySearch" placeholder="Search categories…" />
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
@@ -178,7 +178,7 @@
                                 </template>
                                 <template #actions-cell="{ row }">
                                     <div class="flex justify-end gap-1">
-                                        <UButton
+                                        <BaseButton
                                             icon="i-lucide-pencil"
                                             size="sm"
                                             color="neutral"
@@ -186,7 +186,7 @@
                                             aria-label="Edit category"
                                             @click="openCategoryEditModal(row.original)"
                                         />
-                                        <UButton
+                                        <BaseButton
                                             icon="i-lucide-trash-2"
                                             size="sm"
                                             color="error"
@@ -207,30 +207,12 @@
                             </UTable>
                         </div>
                         <div class="sm:hidden space-y-2 p-2">
-                            <ListCard v-for="category in categories" :key="category.uuid" :dimmed="!category.is_active">
+                            <ListCard v-for="category in categories" :key="category.uuid" :dimmed="!category.is_active" :actions="categoryActions(category)">
                                 <template #title>
                                     <p class="font-medium text-highlighted">{{ category.name }}</p>
                                 </template>
                                 <template #subtitle>
                                     <span v-if="category.description" class="truncate">{{ category.description }}</span>
-                                </template>
-                                <template #actions>
-                                    <UButton
-                                        icon="i-lucide-pencil"
-                                        size="sm"
-                                        color="neutral"
-                                        variant="ghost"
-                                        aria-label="Edit category"
-                                        @click="openCategoryEditModal(category)"
-                                    />
-                                    <UButton
-                                        icon="i-lucide-trash-2"
-                                        size="sm"
-                                        color="error"
-                                        variant="ghost"
-                                        aria-label="Delete category"
-                                        @click="onDeleteCategory(category)"
-                                    />
                                 </template>
                                 <template #status>
                                     <StatusBadge
@@ -253,119 +235,120 @@
                         <UPagination v-model:page="categoriesPage" :total="categoriesTotal" :items-per-page="perPage" />
                     </div>
                 </div>
+                </div>
             </template>
         </UTabs>
 
-        <UModal
+        <BaseModal
             v-model:open="isProductModalOpen"
             :title="editingProduct ? 'Edit Product' : 'Add Product'"
-            :ui="{ content: 'sm:max-w-2xl' }"
+            size="xl"
+            show-default-footer
+            form-id="product-form"
+            :confirm-label="editingProduct ? 'Save' : 'Create'"
+            :loading="savingProduct"
         >
-            <template #body>
-                <form id="product-form" class="space-y-6" @submit.prevent="onSaveProduct">
-                    <div class="flex flex-col sm:flex-row gap-6">
-                        <div class="sm:w-48 shrink-0 space-y-4">
-                            <UFormField label="Image">
-                                <UFileUpload v-model="productForm.image" accept="image/*">
-                                    <template #default="{ open }">
-                                        <div class="flex items-center gap-3 sm:flex-col sm:items-stretch">
-                                            <div
-                                                class="relative shrink-0 size-24 sm:size-auto sm:w-full sm:aspect-square rounded-lg overflow-hidden ring-1 ring-default bg-elevated cursor-pointer"
-                                                @click="open()"
+            <form id="product-form" class="space-y-6" @submit.prevent="onSaveProduct">
+                <div class="flex flex-col sm:flex-row gap-6">
+                    <div class="sm:w-48 shrink-0 space-y-4">
+                        <UFormField label="Image">
+                            <UFileUpload v-model="productForm.image" accept="image/*">
+                                <template #default="{ open }">
+                                    <div class="flex items-center gap-3 sm:flex-col sm:items-stretch">
+                                        <div
+                                            class="relative shrink-0 size-24 sm:size-auto sm:w-full sm:aspect-square rounded-lg overflow-hidden ring-1 ring-default bg-elevated cursor-pointer"
+                                            @click="open()"
+                                        >
+                                            <img
+                                                v-if="productImagePreviewUrl"
+                                                :src="productImagePreviewUrl"
+                                                class="size-full object-cover"
+                                                alt=""
                                             >
-                                                <img
-                                                    v-if="productImagePreviewUrl"
-                                                    :src="productImagePreviewUrl"
-                                                    class="size-full object-cover"
-                                                    alt=""
-                                                >
-                                                <div v-else class="flex items-center justify-center size-full text-dimmed">
-                                                    <UIcon name="i-lucide-image-plus" class="size-6" />
-                                                </div>
-                                                <UButton
-                                                    v-if="productForm.image"
-                                                    icon="i-lucide-x"
-                                                    size="2xs"
-                                                    color="neutral"
-                                                    variant="solid"
-                                                    class="absolute top-1 right-1 rounded-full"
-                                                    aria-label="Remove selected image"
-                                                    @click.stop="productForm.image = null"
-                                                />
+                                            <div v-else class="flex items-center justify-center size-full text-dimmed">
+                                                <UIcon name="i-lucide-image-plus" class="size-6" />
                                             </div>
-                                            <UButton
-                                                :label="productImagePreviewUrl ? 'Change photo' : 'Add photo'"
+                                            <BaseButton
+                                                v-if="productForm.image"
+                                                icon="i-lucide-x"
+                                                size="xs"
                                                 color="neutral"
-                                                variant="outline"
-                                                size="sm"
-                                                @click="open()"
+                                                variant="solid"
+                                                class="absolute top-1 right-1 rounded-full"
+                                                aria-label="Remove selected image"
+                                                @click.stop="productForm.image = null"
                                             />
                                         </div>
-                                    </template>
-                                </UFileUpload>
-                            </UFormField>
-                            <UFormField label="Active">
-                                <USwitch v-model="productForm.is_active" label="Product is active" />
-                            </UFormField>
-                        </div>
-                        <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <UFormField label="Name" required>
-                                <UInput v-model="productForm.name" class="w-full" />
-                            </UFormField>
-                            <UFormField label="Default price" required>
-                                <UInput v-model.number="productForm.default_price" type="number" min="0" step="0.01" class="w-full">
-                                    <template #leading>
-                                        <span class="text-sm text-dimmed">₱</span>
-                                    </template>
-                                </UInput>
-                            </UFormField>
-                            <UFormField label="Category">
-                                <USelect
-                                    v-model="productForm.category_id"
-                                    :items="categoryOptions"
-                                    value-key="value"
-                                    class="w-full"
-                                />
-                            </UFormField>
-                            <UFormField label="Default product status">
-                                <USelect
-                                    v-model="productForm.default_product_status"
-                                    :items="productStatusOptions"
-                                    value-key="value"
-                                    class="w-full"
-                                />
-                            </UFormField>
-                            <UFormField label="Description" class="sm:col-span-2">
-                                <UTextarea v-model="productForm.description" class="w-full" :rows="3" />
-                            </UFormField>
-                        </div>
+                                        <BaseButton
+                                            :label="productImagePreviewUrl ? 'Change photo' : 'Add photo'"
+                                            color="neutral"
+                                            variant="outline"
+                                            size="sm"
+                                            @click="open()"
+                                        />
+                                    </div>
+                                </template>
+                            </UFileUpload>
+                        </UFormField>
+                        <UFormField label="Active">
+                            <USwitch v-model="productForm.is_active" label="Product is active" />
+                        </UFormField>
                     </div>
-                </form>
-            </template>
-            <template #footer>
-                <div class="flex justify-end gap-2 w-full">
-                    <UButton color="neutral" variant="soft" @click="isProductModalOpen = false">Cancel</UButton>
-                    <UButton type="submit" form="product-form" :loading="savingProduct">Save</UButton>
+                    <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <UFormField label="Name" required>
+                            <UInput v-model="productForm.name" class="w-full" />
+                        </UFormField>
+                        <UFormField label="Default price" required>
+                            <UInput v-model.number="productForm.default_price" type="number" min="0" step="0.01" class="w-full">
+                                <template #leading>
+                                    <span class="text-sm text-dimmed">₱</span>
+                                </template>
+                            </UInput>
+                        </UFormField>
+                        <UFormField label="Category">
+                            <USelect
+                                v-model="productForm.category_id"
+                                :items="categoryOptions"
+                                value-key="value"
+                                class="w-full"
+                            />
+                        </UFormField>
+                        <UFormField label="Default product status">
+                            <USelect
+                                v-model="productForm.default_product_status"
+                                :items="productStatusOptions"
+                                value-key="value"
+                                class="w-full"
+                            />
+                        </UFormField>
+                        <UFormField label="Description" class="sm:col-span-2">
+                            <UTextarea v-model="productForm.description" class="w-full" :rows="3" />
+                        </UFormField>
+                    </div>
                 </div>
-            </template>
-        </UModal>
+            </form>
+        </BaseModal>
 
-        <UModal v-model:open="isCategoryModalOpen" :title="editingCategory ? 'Edit Category' : 'Add Category'">
-            <template #body>
-                <form class="space-y-4" @submit.prevent="onSaveCategory">
-                    <UFormField label="Name" required>
-                        <UInput v-model="categoryForm.name" class="w-full" />
-                    </UFormField>
-                    <UFormField label="Description">
-                        <UTextarea v-model="categoryForm.description" class="w-full" />
-                    </UFormField>
-                    <UFormField label="Active">
-                        <UCheckbox v-model="categoryForm.is_active" label="Category is active" />
-                    </UFormField>
-                    <UButton type="submit" block :loading="savingCategory">Save</UButton>
-                </form>
-            </template>
-        </UModal>
+        <BaseModal
+            v-model:open="isCategoryModalOpen"
+            :title="editingCategory ? 'Edit Category' : 'Add Category'"
+            show-default-footer
+            form-id="category-form"
+            :confirm-label="editingCategory ? 'Save' : 'Create'"
+            :loading="savingCategory"
+        >
+            <form id="category-form" class="space-y-4" @submit.prevent="onSaveCategory">
+                <UFormField label="Name" required>
+                    <UInput v-model="categoryForm.name" class="w-full" />
+                </UFormField>
+                <UFormField label="Description">
+                    <UTextarea v-model="categoryForm.description" class="w-full" />
+                </UFormField>
+                <UFormField label="Active">
+                    <UCheckbox v-model="categoryForm.is_active" label="Category is active" />
+                </UFormField>
+            </form>
+        </BaseModal>
 
         <ConfirmDialogModal
             v-model:open="confirmDialog.open"
@@ -385,7 +368,7 @@ import { productCategoryService } from '@/components/api/admin/ProductCategorySe
 import APIError from '@/components/api/user/APIError'
 import type { Product } from '@/types/Product'
 import type { Category } from '@/types/Category'
-import type { TableColumn, TabsItem } from '@nuxt/ui'
+import type { DropdownMenuItem, TableColumn, TabsItem } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
@@ -398,6 +381,11 @@ const tabs = computed<TabsItem[]>(() => [
     { label: 'Products', icon: 'i-lucide-package', value: 'products', slot: 'products' },
     { label: 'Categories', icon: 'i-lucide-tags', value: 'categories', slot: 'categories' }
 ])
+
+const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd: onTabsTouchEnd, panelStyle } = useSwipeTabs(
+    activeTab,
+    computed(() => tabs.value.map((tab) => tab.value as 'products' | 'categories'))
+)
 
 // ---- Products ----
 
@@ -559,6 +547,13 @@ function onDeleteProduct(product: Product) {
     })
 }
 
+function productActions(product: Product): DropdownMenuItem[] {
+    return [
+        { label: 'Edit', icon: 'i-lucide-pencil', onSelect: () => openProductEditModal(product) },
+        { label: 'Delete', icon: 'i-lucide-trash-2', color: 'error', onSelect: () => onDeleteProduct(product) }
+    ]
+}
+
 // ---- Categories ----
 
 const categoriesLoading = ref(false)
@@ -656,6 +651,13 @@ function onDeleteCategory(category: Category) {
             await loadCategoryOptions()
         }
     })
+}
+
+function categoryActions(category: Category): DropdownMenuItem[] {
+    return [
+        { label: 'Edit', icon: 'i-lucide-pencil', onSelect: () => openCategoryEditModal(category) },
+        { label: 'Delete', icon: 'i-lucide-trash-2', color: 'error', onSelect: () => onDeleteCategory(category) }
+    ]
 }
 
 onMounted(() => {

@@ -10,7 +10,7 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <UDropdownMenu :items="accountMenuItems" :content="{ align: 'end' }">
-                        <UButton
+                        <BaseButton
                             color="neutral"
                             variant="ghost"
                             trailing-icon="i-lucide-chevron-down"
@@ -19,7 +19,7 @@
                         >
                             <span class="hidden sm:inline">{{ user?.first_name }} {{ user?.last_name }}</span>
                             <UIcon name="i-lucide-user-round" class="sm:hidden size-5" />
-                        </UButton>
+                        </BaseButton>
                     </UDropdownMenu>
                 </div>
             </div>

@@ -22,7 +22,7 @@
 
             <div class="border-t border-default p-4">
                 <UDropdownMenu :items="accountMenuItems" :content="{ align: 'start' }" :ui="{ content: 'w-56' }">
-                    <UButton
+                    <BaseButton
                         block
                         color="neutral"
                         variant="ghost"
@@ -33,7 +33,7 @@
                             <p class="text-sm font-medium text-highlighted truncate">{{ user?.first_name }} {{ user?.last_name }}</p>
                             <p class="text-xs text-muted truncate">{{ user?.email }}</p>
                         </div>
-                    </UButton>
+                    </BaseButton>
                 </UDropdownMenu>
             </div>
         </aside>
@@ -48,7 +48,7 @@
                         <span class="font-semibold text-highlighted">Pasabuy</span>
                     </div>
                     <UDropdownMenu :items="accountMenuItems" :content="{ align: 'end' }">
-                        <UButton
+                        <BaseButton
                             color="neutral"
                             variant="ghost"
                             icon="i-lucide-user-round"

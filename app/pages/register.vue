@@ -57,9 +57,9 @@
                     <PasswordInput v-model="state.password_confirmation" autocomplete="new-password" />
                 </UFormField>
 
-                <UButton type="submit" block size="xl" :loading="isSubmitting">
+                <BaseButton type="submit" block size="xl" :loading="isSubmitting">
                     Create account
-                </UButton>
+                </BaseButton>
             </UForm>
         </template>
 

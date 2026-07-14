@@ -14,7 +14,7 @@
                 <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full" />
             </div>
 
-            <UButton
+            <BaseButton
                 class="sm:hidden"
                 color="neutral"
                 variant="outline"
@@ -23,7 +23,7 @@
             >
                 Filters
                 <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
-            </UButton>
+            </BaseButton>
         </div>
 
         <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
@@ -45,8 +45,8 @@
             </template>
             <template #footer>
                 <div class="w-full flex items-center gap-2">
-                    <UButton class="flex-1" color="neutral" variant="outline" @click="clearFilters">Clear filters</UButton>
-                    <UButton class="flex-1" @click="isFiltersOpen = false">Done</UButton>
+                    <BaseButton class="flex-1" color="neutral" variant="outline" @click="clearFilters">Clear filters</BaseButton>
+                    <BaseButton class="flex-1" @click="isFiltersOpen = false">Done</BaseButton>
                 </div>
             </template>
         </USlideover>
@@ -81,15 +81,15 @@
                     </template>
                     <template #actions-cell="{ row }">
                         <div v-if="row.original.status === 'confirmed'" class="flex items-center justify-end gap-2">
-                            <UButton
+                            <BaseButton
                                 size="xs"
                                 color="neutral"
                                 variant="soft"
                                 @click="toggleDeliveryStatus(row.original)"
                             >
                                 {{ row.original.delivery_status === 'not_delivered' ? 'Mark delivered' : 'Mark not delivered' }}
-                            </UButton>
-                            <UButton
+                            </BaseButton>
+                            <BaseButton
                                 icon="i-lucide-wallet"
                                 size="xs"
                                 color="neutral"
@@ -105,7 +105,7 @@
                 </UTable>
             </div>
             <div class="sm:hidden space-y-2 p-2">
-                <ListCard v-for="order in orders" :key="order.uuid">
+                <ListCard v-for="order in orders" :key="order.uuid" :actions="orderActions(order)">
                     <template #title>
                         <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
                     </template>
@@ -121,24 +121,6 @@
                         >
                             {{ order.pasabuy_schedule.title }}
                         </NuxtLink>
-                    </template>
-                    <template v-if="order.status === 'confirmed'" #actions>
-                        <UButton
-                            :icon="order.delivery_status === 'not_delivered' ? 'i-lucide-truck' : 'i-lucide-package-check'"
-                            size="sm"
-                            color="neutral"
-                            variant="ghost"
-                            :aria-label="order.delivery_status === 'not_delivered' ? 'Mark delivered' : 'Mark not delivered'"
-                            @click="toggleDeliveryStatus(order)"
-                        />
-                        <UButton
-                            icon="i-lucide-wallet"
-                            size="sm"
-                            color="neutral"
-                            variant="ghost"
-                            aria-label="Manage payments"
-                            @click="openPaymentsModal(order)"
-                        />
                     </template>
                     <template #status>
                         <OrderStatusBadge :status="order.status" />
@@ -156,89 +138,78 @@
             <UPagination v-model:page="page" :total="total" :items-per-page="perPage" />
         </div>
 
-        <UModal
+        <BaseModal
             v-model:open="isPaymentsModalOpen"
             :title="selectedOrder ? `${selectedOrder.customer_name}'s payments` : 'Payments'"
+            view-only
         >
-            <template #body>
-                <div v-if="selectedOrder" class="space-y-4">
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-muted">Total</span>
-                        <span class="font-medium text-highlighted">₱{{ selectedOrder.total_amount }}</span>
-                    </div>
-
-                    <div class="hidden sm:block">
-                        <UTable :data="payments" :columns="paymentColumns" :loading="paymentsLoading">
-                            <template #method-cell="{ row }">
-                                <span class="capitalize">{{ row.original.method.replace('_', ' ') }}</span>
-                            </template>
-                            <template #paid_at-cell="{ row }">
-                                {{ formatDate(row.original.paid_at) }}
-                            </template>
-                            <template #actions-cell="{ row }">
-                                <UButton
-                                    icon="i-lucide-trash-2"
-                                    size="xs"
-                                    color="error"
-                                    variant="ghost"
-                                    aria-label="Delete payment"
-                                    @click="deletePayment(row.original)"
-                                />
-                            </template>
-                            <template #empty>
-                                <TableEmptyState icon="i-lucide-wallet" message="No payments recorded yet." padding="py-6" />
-                            </template>
-                        </UTable>
-                    </div>
-                    <div class="sm:hidden space-y-2 p-2">
-                        <ListCard v-for="payment in payments" :key="payment.uuid">
-                            <template #title>
-                                <p class="font-medium text-highlighted">₱{{ payment.amount }}</p>
-                            </template>
-                            <template #subtitle>
-                                <span class="capitalize">{{ payment.method.replace('_', ' ') }}</span> · {{ formatDate(payment.paid_at) }}
-                            </template>
-                            <template #actions>
-                                <UButton
-                                    icon="i-lucide-trash-2"
-                                    size="sm"
-                                    color="error"
-                                    variant="ghost"
-                                    aria-label="Delete payment"
-                                    @click="deletePayment(payment)"
-                                />
-                            </template>
-                        </ListCard>
-                        <TableEmptyState v-if="payments.length === 0" icon="i-lucide-wallet" message="No payments recorded yet." padding="py-6" />
-                    </div>
-
-                    <form class="space-y-3 border-t border-default pt-4" @submit.prevent="submitPayment">
-                        <div class="grid grid-cols-2 gap-3">
-                            <UFormField label="Amount" required>
-                                <UInput v-model.number="paymentForm.amount" type="number" inputmode="decimal" min="0.01" step="0.01" class="w-full">
-                                    <template #leading>
-                                        <span class="text-sm text-dimmed">₱</span>
-                                    </template>
-                                </UInput>
-                            </UFormField>
-                            <UFormField label="Method" required>
-                                <USelect v-model="paymentForm.method" :items="paymentMethodOptions" value-key="value" class="w-full" />
-                            </UFormField>
-                        </div>
-                        <UFormField label="Paid on" required>
-                            <UInput v-model="paymentForm.paid_at" type="date" required class="w-full" />
-                        </UFormField>
-                        <UFormField label="Reference number">
-                            <UInput v-model="paymentForm.reference_number" class="w-full" />
-                        </UFormField>
-                        <UFormField label="Notes">
-                            <UTextarea v-model="paymentForm.notes" class="w-full" />
-                        </UFormField>
-                        <UButton type="submit" block :loading="recordingPayment">Record payment</UButton>
-                    </form>
+            <div v-if="selectedOrder" class="space-y-4">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-muted">Total</span>
+                    <span class="font-medium text-highlighted">₱{{ selectedOrder.total_amount }}</span>
                 </div>
-            </template>
-        </UModal>
+
+                <div class="hidden sm:block">
+                    <UTable :data="payments" :columns="paymentColumns" :loading="paymentsLoading">
+                        <template #method-cell="{ row }">
+                            <span class="capitalize">{{ row.original.method.replace('_', ' ') }}</span>
+                        </template>
+                        <template #paid_at-cell="{ row }">
+                            {{ formatDate(row.original.paid_at) }}
+                        </template>
+                        <template #actions-cell="{ row }">
+                            <BaseButton
+                                icon="i-lucide-trash-2"
+                                size="xs"
+                                color="error"
+                                variant="ghost"
+                                aria-label="Delete payment"
+                                @click="deletePayment(row.original)"
+                            />
+                        </template>
+                        <template #empty>
+                            <TableEmptyState icon="i-lucide-wallet" message="No payments recorded yet." padding="py-6" />
+                        </template>
+                    </UTable>
+                </div>
+                <div class="sm:hidden space-y-2 p-2">
+                    <ListCard v-for="payment in payments" :key="payment.uuid" :actions="paymentActions(payment)">
+                        <template #title>
+                            <p class="font-medium text-highlighted">₱{{ payment.amount }}</p>
+                        </template>
+                        <template #subtitle>
+                            <span class="capitalize">{{ payment.method.replace('_', ' ') }}</span> · {{ formatDate(payment.paid_at) }}
+                        </template>
+                    </ListCard>
+                    <TableEmptyState v-if="payments.length === 0" icon="i-lucide-wallet" message="No payments recorded yet." padding="py-6" />
+                </div>
+
+                <form class="space-y-3 border-t border-default pt-4" @submit.prevent="submitPayment">
+                    <div class="grid grid-cols-2 gap-3">
+                        <UFormField label="Amount" required>
+                            <UInput v-model.number="paymentForm.amount" type="number" inputmode="decimal" min="0.01" step="0.01" class="w-full">
+                                <template #leading>
+                                    <span class="text-sm text-dimmed">₱</span>
+                                </template>
+                            </UInput>
+                        </UFormField>
+                        <UFormField label="Method" required>
+                            <USelect v-model="paymentForm.method" :items="paymentMethodOptions" value-key="value" class="w-full" />
+                        </UFormField>
+                    </div>
+                    <UFormField label="Paid on" required>
+                        <UInput v-model="paymentForm.paid_at" type="date" required class="w-full" />
+                    </UFormField>
+                    <UFormField label="Reference number">
+                        <UInput v-model="paymentForm.reference_number" class="w-full" />
+                    </UFormField>
+                    <UFormField label="Notes">
+                        <UTextarea v-model="paymentForm.notes" class="w-full" />
+                    </UFormField>
+                    <BaseButton type="submit" block :loading="recordingPayment">Record payment</BaseButton>
+                </form>
+            </div>
+        </BaseModal>
 
         <ConfirmDialogModal
             v-model:open="confirmDialog.open"
@@ -258,7 +229,7 @@ import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleSe
 import APIError from '@/components/api/user/APIError'
 import type { Order } from '@/types/Order'
 import type { OrderPayment } from '@/types/OrderPayment'
-import type { TableColumn } from '@nuxt/ui'
+import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
@@ -394,6 +365,18 @@ function toggleDeliveryStatus(order: Order) {
     })
 }
 
+function orderActions(order: Order): DropdownMenuItem[] {
+    if (order.status !== 'confirmed') return []
+    return [
+        {
+            label: order.delivery_status === 'not_delivered' ? 'Mark delivered' : 'Mark not delivered',
+            icon: order.delivery_status === 'not_delivered' ? 'i-lucide-truck' : 'i-lucide-package-check',
+            onSelect: () => toggleDeliveryStatus(order)
+        },
+        { label: 'Manage payments', icon: 'i-lucide-wallet', onSelect: () => openPaymentsModal(order) }
+    ]
+}
+
 const isPaymentsModalOpen = ref(false)
 const selectedOrder = ref<Order | null>(null)
 const payments = ref<OrderPayment[]>([])
@@ -495,6 +478,12 @@ function deletePayment(payment: OrderPayment) {
             }
         }
     })
+}
+
+function paymentActions(payment: OrderPayment): DropdownMenuItem[] {
+    return [
+        { label: 'Delete payment', icon: 'i-lucide-trash-2', color: 'error', onSelect: () => deletePayment(payment) }
+    ]
 }
 
 onMounted(() => {

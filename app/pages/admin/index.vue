@@ -43,7 +43,7 @@
                         </template>
                         <template #actions-cell="{ row }">
                             <div class="flex items-center gap-2">
-                                <UButton
+                                <BaseButton
                                     v-if="row.original.scheduleStatus === 'closed'"
                                     size="xs"
                                     color="success"
@@ -52,9 +52,9 @@
                                     @click="setOrderStatus(row.original, 'confirmed')"
                                 >
                                     Confirm
-                                </UButton>
+                                </BaseButton>
                                 <span v-else class="text-xs text-dimmed">Close schedule to confirm</span>
-                                <UButton
+                                <BaseButton
                                     size="xs"
                                     color="error"
                                     variant="soft"
@@ -62,13 +62,13 @@
                                     @click="cancelOrder(row.original)"
                                 >
                                     Cancel
-                                </UButton>
+                                </BaseButton>
                             </div>
                         </template>
                     </UTable>
                 </div>
                 <div class="sm:hidden space-y-2 p-2 max-h-80 overflow-y-auto">
-                    <ListCard v-for="order in pendingOrders" :key="order.uuid">
+                    <ListCard v-for="order in pendingOrders" :key="order.uuid" :actions="pendingOrderActions(order)">
                         <template #title>
                             <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
                         </template>
@@ -80,27 +80,6 @@
                         <template #meta>
                             <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
                         </template>
-                        <template #actions>
-                            <UButton
-                                v-if="order.scheduleStatus === 'closed'"
-                                icon="i-lucide-check"
-                                size="sm"
-                                color="success"
-                                variant="ghost"
-                                aria-label="Confirm order"
-                                :loading="actingOn === order.uuid"
-                                @click="setOrderStatus(order, 'confirmed')"
-                            />
-                            <UButton
-                                icon="i-lucide-x"
-                                size="sm"
-                                color="error"
-                                variant="ghost"
-                                aria-label="Cancel order"
-                                :loading="actingOn === order.uuid"
-                                @click="cancelOrder(order)"
-                            />
-                        </template>
                     </ListCard>
                 </div>
             </template>
@@ -110,7 +89,7 @@
             <template #header>
                 <div class="flex items-center justify-between">
                     <h2 class="font-medium">Recent schedules</h2>
-                    <UButton to="/admin/schedules" size="xs" color="neutral" variant="ghost">View all</UButton>
+                    <BaseButton to="/admin/schedules" size="xs" color="neutral" variant="ghost">View all</BaseButton>
                 </div>
             </template>
 
@@ -146,7 +125,7 @@
 import { productService } from '@/components/api/admin/ProductService'
 import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
 import APIError from '@/components/api/user/APIError'
-import type { TableColumn } from '@nuxt/ui'
+import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
@@ -263,6 +242,15 @@ function cancelOrder(order: PendingOrder) {
         color: 'error',
         action: () => setOrderStatus(order, 'cancelled')
     })
+}
+
+function pendingOrderActions(order: PendingOrder): DropdownMenuItem[] {
+    return [
+        ...(order.scheduleStatus === 'closed'
+            ? [{ label: 'Confirm order', icon: 'i-lucide-check', color: 'success' as const, loading: actingOn.value === order.uuid, onSelect: () => setOrderStatus(order, 'confirmed') }]
+            : []),
+        { label: 'Cancel order', icon: 'i-lucide-x', color: 'error', loading: actingOn.value === order.uuid, onSelect: () => cancelOrder(order) }
+    ]
 }
 
 onMounted(loadDashboard)

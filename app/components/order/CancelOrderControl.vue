@@ -1,17 +1,17 @@
 <template>
     <template v-if="!confirming">
-        <UButton color="error" variant="ghost" size="sm" @click="() => { confirming = true }">
+        <BaseButton color="error" variant="ghost" size="sm" @click="() => { confirming = true }">
             Cancel order
-        </UButton>
+        </BaseButton>
     </template>
     <template v-else>
         <span class="text-sm text-muted">Are you sure?</span>
-        <UButton color="error" :loading="loading" @click="() => emit('confirm')">
+        <BaseButton color="error" :loading="loading" @click="() => emit('confirm')">
             Yes, cancel
-        </UButton>
-        <UButton color="neutral" variant="soft" @click="() => { confirming = false }">
+        </BaseButton>
+        <BaseButton color="neutral" variant="soft" @click="() => { confirming = false }">
             No
-        </UButton>
+        </BaseButton>
     </template>
 </template>
 

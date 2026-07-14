@@ -2,8 +2,10 @@
     <div class="space-y-4">
         <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold text-highlighted">Pasabuy Schedules</h1>
-            <UButton icon="i-lucide-plus" @click="openCreateModal">New Schedule</UButton>
+            <BaseButton icon="i-lucide-plus" class="hidden sm:inline-flex" @click="openCreateModal">New Schedule</BaseButton>
         </div>
+
+        <FabButton aria-label="New schedule" @click="openCreateModal" />
 
         <div class="space-y-3">
             <SearchInput v-model="search" placeholder="Search schedules…" class="w-full" />
@@ -13,7 +15,7 @@
                 <USelect v-model="yearFilter" :items="yearFilterOptions" value-key="value" placeholder="All years" class="w-full" />
             </div>
 
-            <UButton
+            <BaseButton
                 class="sm:hidden"
                 color="neutral"
                 variant="outline"
@@ -22,7 +24,7 @@
             >
                 Filters
                 <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
-            </UButton>
+            </BaseButton>
         </div>
 
         <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
@@ -38,8 +40,8 @@
             </template>
             <template #footer>
                 <div class="w-full flex items-center gap-2">
-                    <UButton class="flex-1" color="neutral" variant="outline" @click="clearFilters">Clear filters</UButton>
-                    <UButton class="flex-1" @click="isFiltersOpen = false">Done</UButton>
+                    <BaseButton class="flex-1" color="neutral" variant="outline" @click="clearFilters">Clear filters</BaseButton>
+                    <BaseButton class="flex-1" @click="isFiltersOpen = false">Done</BaseButton>
                 </div>
             </template>
         </USlideover>
@@ -65,7 +67,7 @@
                     </template>
                     <template #actions-cell="{ row }">
                         <div class="flex justify-end gap-2">
-                            <UButton
+                            <BaseButton
                                 v-if="row.original.status === 'open'"
                                 size="sm"
                                 color="neutral"
@@ -75,8 +77,8 @@
                                 @click="closeSchedule(row.original)"
                             >
                                 Close
-                            </UButton>
-                            <UButton
+                            </BaseButton>
+                            <BaseButton
                                 size="sm"
                                 color="neutral"
                                 variant="ghost"
@@ -84,7 +86,7 @@
                                 :to="`/admin/schedules/${row.original.uuid}`"
                             >
                                 Manage
-                            </UButton>
+                            </BaseButton>
                         </div>
                     </template>
                     <template #empty>
@@ -102,6 +104,8 @@
                     v-for="scheduleRow in schedules"
                     :key="scheduleRow.uuid"
                     clickable
+                    :chevron="false"
+                    :actions="scheduleActions(scheduleRow)"
                     @click="navigateTo(`/admin/schedules/${scheduleRow.uuid}`)"
                 >
                     <template #title>
@@ -109,19 +113,6 @@
                     </template>
                     <template #meta>
                         <span class="text-muted">{{ scheduleRow.pasabuy_schedule_date ? formatDate(scheduleRow.pasabuy_schedule_date) : '—' }}</span>
-                    </template>
-                    <template #actions>
-                        <UButton
-                            v-if="scheduleRow.status === 'open'"
-                            size="sm"
-                            color="neutral"
-                            variant="ghost"
-                            icon="i-lucide-lock"
-                            aria-label="Close schedule"
-                            :loading="closingUuid === scheduleRow.uuid"
-                            @click.stop="closeSchedule(scheduleRow)"
-                        />
-                        <UIcon name="i-lucide-chevron-right" class="size-4 text-dimmed" />
                     </template>
                     <template #status>
                         <StatusBadge :color="scheduleStatusColor[scheduleRow.status]" :label="scheduleRow.status" />
@@ -141,22 +132,26 @@
             <UPagination v-model:page="page" :total="total" :items-per-page="perPage" />
         </div>
 
-        <UModal v-model:open="isModalOpen" title="New Pasabuy Schedule">
-            <template #body>
-                <form class="space-y-4" @submit.prevent="onCreate">
-                    <UFormField label="Title" required>
-                        <UInput v-model="form.title" class="w-full" />
-                    </UFormField>
-                    <UFormField label="Description">
-                        <UTextarea v-model="form.description" class="w-full" />
-                    </UFormField>
-                    <UFormField label="Pasabuy date" hint="The date you'll go to the store" required>
-                        <UInput v-model="form.pasabuy_schedule_date" type="date" required class="w-full" />
-                    </UFormField>
-                    <UButton type="submit" block :loading="saving">Create</UButton>
-                </form>
-            </template>
-        </UModal>
+        <BaseModal
+            v-model:open="isModalOpen"
+            title="New Pasabuy Schedule"
+            show-default-footer
+            form-id="schedule-create-form"
+            confirm-label="Create"
+            :loading="saving"
+        >
+            <form id="schedule-create-form" class="space-y-4" @submit.prevent="onCreate">
+                <UFormField label="Title" required>
+                    <UInput v-model="form.title" class="w-full" />
+                </UFormField>
+                <UFormField label="Description">
+                    <UTextarea v-model="form.description" class="w-full" />
+                </UFormField>
+                <UFormField label="Pasabuy date" hint="The date you'll go to the store" required>
+                    <UInput v-model="form.pasabuy_schedule_date" type="date" required class="w-full" />
+                </UFormField>
+            </form>
+        </BaseModal>
 
         <ConfirmDialogModal
             v-model:open="confirmDialog.open"
@@ -173,7 +168,7 @@
 <script setup lang="ts">
 import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
 import APIError from '@/components/api/user/APIError'
-import type { TableColumn } from '@nuxt/ui'
+import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
@@ -320,6 +315,18 @@ function closeSchedule(scheduleRow: Schedule) {
             }
         }
     })
+}
+
+function scheduleActions(scheduleRow: Schedule): DropdownMenuItem[] {
+    if (scheduleRow.status !== 'open') return []
+    return [
+        {
+            label: 'Close schedule',
+            icon: 'i-lucide-lock',
+            loading: closingUuid.value === scheduleRow.uuid,
+            onSelect: () => closeSchedule(scheduleRow)
+        }
+    ]
 }
 
 onMounted(loadSchedules)

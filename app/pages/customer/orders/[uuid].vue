@@ -51,19 +51,19 @@
             </UCard>
 
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <UButton color="neutral" variant="soft" icon="i-lucide-receipt" to="/customer">
+                <BaseButton color="neutral" variant="soft" icon="i-lucide-receipt" to="/customer">
                     All orders
-                </UButton>
+                </BaseButton>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    <UButton
+                    <BaseButton
                         v-if="order.is_editable && order.pasabuy_schedule"
                         variant="soft"
                         icon="i-lucide-pencil"
                         :to="`/pasabuy/${order.pasabuy_schedule.uuid}`"
                     >
                         Edit order
-                    </UButton>
+                    </BaseButton>
                     <CancelOrderControl v-if="order.is_cancellable" :loading="cancelling" @confirm="cancelOrder" />
                 </div>
             </div>

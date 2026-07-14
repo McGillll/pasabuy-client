@@ -35,14 +35,14 @@
                 <UCheckbox v-model="state.rememberMe" label="Remember me" size="lg" />
             </div>
 
-            <UButton
+            <BaseButton
                 type="submit"
                 block
                 size="xl"
                 :loading="isSubmitting"
             >
                 Sign in
-            </UButton>
+            </BaseButton>
         </UForm>
 
         <template #footer>

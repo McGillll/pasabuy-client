@@ -25,9 +25,11 @@
                 </div>
             </div>
 
-            <div v-if="$slots.actions" class="flex shrink-0 items-center gap-1">
-                <slot name="actions" />
-            </div>
+            <UDropdownMenu v-if="actions?.length" :items="actions" :content="{ align: 'end' }">
+                <ListCardButton icon="i-lucide-ellipsis-vertical" aria-label="More actions" @click.stop />
+            </UDropdownMenu>
+
+            <UIcon v-if="clickable && chevron" name="i-lucide-chevron-right" class="size-4 shrink-0 text-dimmed" />
         </div>
 
         <div v-if="$slots.status" class="flex flex-wrap items-center gap-2 border-t border-default px-4 py-2">
@@ -37,10 +39,16 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import type { DropdownMenuItem } from '@nuxt/ui'
+
+withDefaults(defineProps<{
     clickable?: boolean
+    chevron?: boolean
     dimmed?: boolean
-}>()
+    actions?: DropdownMenuItem[]
+}>(), {
+    chevron: true
+})
 
 const emit = defineEmits<{
     click: []

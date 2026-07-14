@@ -22,10 +22,17 @@
 
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #details>
+                <div class="overflow-hidden">
+                <div
+                    :style="panelStyle"
+                    @touchstart="onTabsTouchStart"
+                    @touchmove="onTabsTouchMove"
+                    @touchend="onTabsTouchEnd"
+                >
                 <UCard class="mt-4">
                     <div class="mb-4 flex items-center gap-2">
                         <UInput :model-value="publicLink" readonly class="w-full sm:w-96" />
-                        <UButton icon="i-lucide-copy" color="neutral" variant="soft" @click="copyLink">Copy link</UButton>
+                        <BaseButton icon="i-lucide-copy" color="neutral" variant="soft" @click="copyLink">Copy link</BaseButton>
                     </div>
 
                     <UAlert
@@ -56,9 +63,9 @@
                         <UFormField label="Pasabuy date" hint="The date you'll go to the store — ordering closes once this date arrives" required>
                             <UInput v-model="detailsForm.pasabuyScheduleDate" type="date" required :disabled="isLocked" class="w-full" />
                         </UFormField>
-                        <UButton type="submit" :loading="savingDetails" :disabled="isLocked">
+                        <BaseButton type="submit" :loading="savingDetails" :disabled="isLocked">
                             Save details
-                        </UButton>
+                        </BaseButton>
                     </form>
 
                     <div class="my-6 border-t border-default" />
@@ -73,9 +80,18 @@
                         />
                     </div>
                 </UCard>
+                </div>
+                </div>
             </template>
 
             <template #summary>
+                <div class="overflow-hidden">
+                <div
+                    :style="panelStyle"
+                    @touchstart="onTabsTouchStart"
+                    @touchmove="onTabsTouchMove"
+                    @touchend="onTabsTouchEnd"
+                >
                 <UTabs v-model="activeSummaryTab" :items="summaryTabs" class="w-full mt-4">
                     <template #pricing>
                         <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
@@ -120,6 +136,7 @@
                                     v-for="item in summary"
                                     :key="item.product_uuid"
                                     clickable
+                                    :chevron="false"
                                     @click="openBuyersModal(item)"
                                 >
                                     <template #title>
@@ -130,9 +147,7 @@
                                     </template>
                                     <template #meta>
                                         <span class="text-muted">₱{{ item.default_price }} × {{ getDisplayQuantity(item) }}</span>
-                                    </template>
-                                    <template #actions>
-                                        <span v-if="getScheduleProductStatus(item.product_uuid) === 'out_of_stock'" class="text-sm font-medium text-error">
+                                        <span v-if="getScheduleProductStatus(item.product_uuid) === 'out_of_stock'" class="font-medium text-error">
                                             Out of stock
                                         </span>
                                         <span v-else class="font-medium text-highlighted">₱{{ item.subtotal }}</span>
@@ -160,7 +175,7 @@
                                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <h2 class="font-medium">Shopping checklist</h2>
                                     <div class="flex flex-wrap items-center gap-2">
-                                        <UButton
+                                        <BaseButton
                                             icon="i-lucide-user-plus"
                                             color="neutral"
                                             variant="soft"
@@ -170,8 +185,8 @@
                                             @click="copyChecklistShareLink"
                                         >
                                             Share with helper
-                                        </UButton>
-                                        <UButton
+                                        </BaseButton>
+                                        <BaseButton
                                             icon="i-lucide-shield-off"
                                             color="neutral"
                                             variant="ghost"
@@ -182,8 +197,8 @@
                                             @click="regenerateChecklistShareLinkAction"
                                         >
                                             <span class="hidden sm:inline">Revoke link</span>
-                                        </UButton>
-                                        <UButton
+                                        </BaseButton>
+                                        <BaseButton
                                             icon="i-lucide-refresh-cw"
                                             color="neutral"
                                             variant="soft"
@@ -194,7 +209,7 @@
                                             @click="() => regenerateChecklist()"
                                         >
                                             <span class="hidden sm:inline">Regenerate</span>
-                                        </UButton>
+                                        </BaseButton>
                                     </div>
                                 </div>
                             </template>
@@ -262,9 +277,18 @@
                         </UCard>
                     </template>
                 </UTabs>
+                </div>
+                </div>
             </template>
 
             <template #orders>
+                <div class="overflow-hidden">
+                <div
+                    :style="panelStyle"
+                    @touchstart="onTabsTouchStart"
+                    @touchmove="onTabsTouchMove"
+                    @touchend="onTabsTouchEnd"
+                >
                 <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
                     <div class="hidden sm:block">
                         <UTable :data="orders" :columns="orderColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
@@ -274,7 +298,7 @@
                             <template #actions-cell="{ row }">
                                 <div class="flex items-center justify-end gap-2">
                                     <template v-if="row.original.status === 'pending'">
-                                        <UButton
+                                        <BaseButton
                                             v-if="isClosed"
                                             size="xs"
                                             color="success"
@@ -282,18 +306,18 @@
                                             @click="confirmOrder(row.original)"
                                         >
                                             Confirm
-                                        </UButton>
+                                        </BaseButton>
                                         <span v-else class="text-xs text-dimmed">Close schedule to confirm</span>
-                                        <UButton
+                                        <BaseButton
                                             size="xs"
                                             color="error"
                                             variant="soft"
                                             @click="cancelOrder(row.original)"
                                         >
                                             Cancel
-                                        </UButton>
+                                        </BaseButton>
                                     </template>
-                                    <UButton
+                                    <BaseButton
                                         icon="i-lucide-eye"
                                         size="xs"
                                         color="neutral"
@@ -313,6 +337,8 @@
                             v-for="order in orders"
                             :key="order.uuid"
                             clickable
+                            :chevron="false"
+                            :actions="orderActions(order)"
                             @click="viewOrder(order)"
                         >
                             <template #title>
@@ -324,28 +350,6 @@
                             <template #meta>
                                 <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
                             </template>
-                            <template #actions>
-                                <template v-if="order.status === 'pending'">
-                                    <UButton
-                                        v-if="isClosed"
-                                        icon="i-lucide-check"
-                                        size="sm"
-                                        color="success"
-                                        variant="ghost"
-                                        aria-label="Confirm order"
-                                        @click.stop="confirmOrder(order)"
-                                    />
-                                    <UButton
-                                        icon="i-lucide-x"
-                                        size="sm"
-                                        color="error"
-                                        variant="ghost"
-                                        aria-label="Cancel order"
-                                        @click.stop="cancelOrder(order)"
-                                    />
-                                </template>
-                                <UIcon name="i-lucide-chevron-right" class="size-4 text-dimmed" />
-                            </template>
                             <template #status>
                                 <OrderStatusBadge :status="order.status" />
                             </template>
@@ -353,220 +357,228 @@
                         <TableEmptyState v-if="orders.length === 0" icon="i-lucide-receipt" message="No orders yet." />
                     </div>
                 </UCard>
+                </div>
+                </div>
             </template>
         </UTabs>
 
-        <UModal
+        <BaseModal
             v-model:open="isBuyersModalOpen"
             :title="selectedSummaryItem ? selectedSummaryItem.product_name : 'Buyers'"
+            view-only
         >
-            <template #body>
-                <div class="space-y-4">
-                    <div class="hidden sm:block">
-                        <UTable :data="buyers" :columns="buyerColumns" :loading="buyersLoading">
-                            <template #status-cell="{ row }">
-                                <OrderStatusBadge :status="row.original.status" />
-                            </template>
-                            <template #empty>
-                                <TableEmptyState icon="i-lucide-users" message="No buyers yet." padding="py-6" />
-                            </template>
-                        </UTable>
-                    </div>
-                    <div class="sm:hidden space-y-2 p-2">
-                        <ListCard v-for="buyer in buyers" :key="buyer.customer_name + buyer.quantity">
-                            <template #title>
-                                <p class="font-medium text-highlighted">{{ buyer.customer_name }}</p>
-                            </template>
-                            <template #meta>
-                                <span class="text-muted">Qty {{ buyer.quantity }}</span>
-                                <span class="font-medium text-highlighted">₱{{ buyer.subtotal }}</span>
-                            </template>
-                            <template #status>
-                                <OrderStatusBadge :status="buyer.status" />
-                            </template>
-                        </ListCard>
-                        <TableEmptyState v-if="buyers.length === 0" icon="i-lucide-users" message="No buyers yet." padding="py-6" />
-                    </div>
+            <div class="space-y-4">
+                <div class="hidden sm:block">
+                    <UTable :data="buyers" :columns="buyerColumns" :loading="buyersLoading">
+                        <template #status-cell="{ row }">
+                            <OrderStatusBadge :status="row.original.status" />
+                        </template>
+                        <template #empty>
+                            <TableEmptyState icon="i-lucide-users" message="No buyers yet." padding="py-6" />
+                        </template>
+                    </UTable>
+                </div>
+                <div class="sm:hidden space-y-2 p-2">
+                    <ListCard v-for="buyer in buyers" :key="buyer.customer_name + buyer.quantity">
+                        <template #title>
+                            <p class="font-medium text-highlighted">{{ buyer.customer_name }}</p>
+                        </template>
+                        <template #meta>
+                            <span class="text-muted">Qty {{ buyer.quantity }}</span>
+                            <span class="font-medium text-highlighted">₱{{ buyer.subtotal }}</span>
+                        </template>
+                        <template #status>
+                            <OrderStatusBadge :status="buyer.status" />
+                        </template>
+                    </ListCard>
+                    <TableEmptyState v-if="buyers.length === 0" icon="i-lucide-users" message="No buyers yet." padding="py-6" />
+                </div>
 
-                    <div v-if="canConfirmPrice" class="border-t border-default pt-4">
-                        <div class="mb-2 flex items-center justify-between gap-2">
-                            <span class="text-xs font-medium uppercase tracking-wide text-dimmed">In-store price</span>
-                            <UBadge v-if="selectedScheduleProduct?.price_confirmed_at" color="success" variant="subtle" size="sm">
-                                Confirmed
-                            </UBadge>
-                        </div>
-                        <div class="space-y-3">
-                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-                                <UFormField label="Actual price">
-                                    <UInput
-                                        v-model.number="confirmForm.actual_price"
-                                        type="number"
-                                        inputmode="decimal"
-                                        min="0"
-                                        step="0.01"
-                                        placeholder="0.00"
-                                        :disabled="confirmForm.product_status === 'out_of_stock'"
-                                        class="w-full"
-                                    >
-                                        <template #leading>
-                                            <span class="text-sm text-dimmed">₱</span>
-                                        </template>
-                                    </UInput>
-                                </UFormField>
-                                <UFormField label="Product status">
-                                    <USelect
-                                        v-model="confirmForm.product_status"
-                                        :items="productStatusOptions"
-                                        value-key="value"
-                                        class="w-full"
-                                    />
-                                </UFormField>
-                                <UButton size="sm" class="hidden sm:inline-flex" :loading="confirmForm.saving" @click="confirmSelectedPrice">
-                                    Confirm
-                                </UButton>
-                            </div>
-                            <UButton block class="sm:hidden" :loading="confirmForm.saving" @click="confirmSelectedPrice">
+                <div v-if="canConfirmPrice" class="border-t border-default pt-4">
+                    <div class="mb-2 flex items-center justify-between gap-2">
+                        <span class="text-xs font-medium uppercase tracking-wide text-dimmed">In-store price</span>
+                        <UBadge v-if="selectedScheduleProduct?.price_confirmed_at" color="success" variant="subtle" size="sm">
+                            Confirmed
+                        </UBadge>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                            <UFormField label="Actual price">
+                                <UInput
+                                    v-model.number="confirmForm.actual_price"
+                                    type="number"
+                                    inputmode="decimal"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    :disabled="confirmForm.product_status === 'out_of_stock'"
+                                    class="w-full"
+                                >
+                                    <template #leading>
+                                        <span class="text-sm text-dimmed">₱</span>
+                                    </template>
+                                </UInput>
+                            </UFormField>
+                            <UFormField label="Product status">
+                                <USelect
+                                    v-model="confirmForm.product_status"
+                                    :items="productStatusOptions"
+                                    value-key="value"
+                                    class="w-full"
+                                />
+                            </UFormField>
+                            <BaseButton size="sm" class="hidden sm:inline-flex" :loading="confirmForm.saving" @click="confirmSelectedPrice">
                                 Confirm
-                            </UButton>
+                            </BaseButton>
                         </div>
+                        <BaseButton block class="sm:hidden" :loading="confirmForm.saving" @click="confirmSelectedPrice">
+                            Confirm
+                        </BaseButton>
                     </div>
                 </div>
-            </template>
-        </UModal>
+            </div>
+        </BaseModal>
 
-        <UModal v-model:open="isOrderModalOpen" title="Order details">
-            <template #body>
-                <div v-if="viewingOrder" class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="font-medium text-highlighted">{{ viewingOrder.customer_name }}</p>
-                            <p class="text-sm text-muted">{{ viewingOrder.customer_contact }}</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <OrderStatusBadge :status="viewingOrder.status" />
-                        </div>
+        <BaseModal v-model:open="isOrderModalOpen" title="Order details" view-only>
+            <div v-if="viewingOrder" class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium text-highlighted">{{ viewingOrder.customer_name }}</p>
+                        <p class="text-sm text-muted">{{ viewingOrder.customer_contact }}</p>
                     </div>
+                    <div class="flex items-center gap-2">
+                        <OrderStatusBadge :status="viewingOrder.status" />
+                    </div>
+                </div>
 
-                    <div class="divide-y divide-default rounded-lg border border-default">
-                        <div
-                            v-for="item in displayItems"
-                            :key="item.uuid"
-                            class="flex items-start justify-between gap-3 p-3"
-                        >
-                            <template v-if="canEditOrderItems && editingProductUuid === item.product_uuid">
-                                <span class="flex-1 truncate font-medium text-highlighted">{{ item.product_name }}</span>
-                                <UBadge v-if="getScheduleProductStatus(item.product_uuid) === 'out_of_stock'" color="error" variant="subtle" size="sm">
-                                    Out of stock
-                                </UBadge>
-                                <UInput
-                                    v-else
-                                    v-model.number="findEditableItem(item.product_uuid)!.quantity"
-                                    type="number"
-                                    min="1"
-                                    size="sm"
-                                    class="w-20"
-                                />
-                                <UButton
-                                    icon="i-lucide-x"
-                                    size="xs"
-                                    color="error"
-                                    variant="ghost"
-                                    aria-label="Remove item"
-                                    @click="removeEditableItem(item.product_uuid!); editingProductUuid = null"
-                                />
-                                <UButton
-                                    icon="i-lucide-check"
-                                    size="xs"
-                                    color="neutral"
-                                    variant="ghost"
-                                    aria-label="Done editing"
-                                    @click="editingProductUuid = null"
-                                />
-                            </template>
-                            <template v-else>
-                                <div class="min-w-0">
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <p class="font-medium text-highlighted">{{ item.product_name }}</p>
-                                        <UBadge v-if="item.bonus_quantity > 0" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
-                                    </div>
-                                    <p class="mt-0.5 text-sm text-muted">₱{{ item.actual_price ?? item.estimated_price }} × {{ item.quantity }}</p>
-                                    <p
-                                        v-if="item.bonus_quantity > 0"
-                                        class="mt-1.5 inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"
-                                    >
-                                        <UIcon name="i-lucide-sparkles" class="size-3" />
-                                        +{{ item.bonus_quantity }} free
-                                    </p>
-                                </div>
-                                <div class="flex shrink-0 items-center gap-2 pt-0.5">
-                                    <UBadge v-if="item.is_out_of_stock" color="error" variant="subtle" size="sm">
-                                        Out of stock
-                                    </UBadge>
-                                    <p v-else class="font-medium text-highlighted">₱{{ item.subtotal }}</p>
-                                    <UButton
-                                        v-if="canEditOrderItems && findEditableItem(item.product_uuid)"
-                                        icon="i-lucide-pencil"
-                                        size="xs"
-                                        color="neutral"
-                                        variant="ghost"
-                                        aria-label="Edit item"
-                                        @click="editingProductUuid = item.product_uuid ?? null"
-                                    />
-                                </div>
-                            </template>
-                        </div>
-                        <div
-                            v-for="newItem in pendingNewItems"
-                            :key="newItem.product_uuid"
-                            class="flex items-center gap-3 p-3"
-                        >
-                            <span class="flex-1 truncate font-medium text-highlighted">{{ newItem.product_name }}</span>
-                            <UBadge color="neutral" variant="subtle" size="sm">New</UBadge>
-                            <UInput v-model.number="newItem.quantity" type="number" min="1" size="sm" class="w-20" />
-                            <UButton
+                <div class="divide-y divide-default rounded-lg border border-default">
+                    <div
+                        v-for="item in displayItems"
+                        :key="item.uuid"
+                        class="flex items-start justify-between gap-3 p-3"
+                    >
+                        <template v-if="canEditOrderItems && editingProductUuid === item.product_uuid">
+                            <span class="flex-1 truncate font-medium text-highlighted">{{ item.product_name }}</span>
+                            <UBadge v-if="getScheduleProductStatus(item.product_uuid) === 'out_of_stock'" color="error" variant="subtle" size="sm">
+                                Out of stock
+                            </UBadge>
+                            <UInput
+                                v-else
+                                v-model.number="findEditableItem(item.product_uuid)!.quantity"
+                                type="number"
+                                min="1"
+                                size="sm"
+                                class="w-20"
+                            />
+                            <BaseButton
                                 icon="i-lucide-x"
                                 size="xs"
                                 color="error"
                                 variant="ghost"
                                 aria-label="Remove item"
-                                @click="removeEditableItem(newItem.product_uuid)"
+                                @click="removeEditableItem(item.product_uuid!); editingProductUuid = null"
                             />
-                        </div>
+                            <BaseButton
+                                icon="i-lucide-check"
+                                size="xs"
+                                color="neutral"
+                                variant="ghost"
+                                aria-label="Done editing"
+                                @click="editingProductUuid = null"
+                            />
+                        </template>
+                        <template v-else>
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <p class="font-medium text-highlighted">{{ item.product_name }}</p>
+                                    <UBadge v-if="item.bonus_quantity > 0" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
+                                </div>
+                                <p class="mt-0.5 text-sm text-muted">₱{{ item.actual_price ?? item.estimated_price }} × {{ getLineQuantity(item) }}</p>
+                                <p
+                                    v-if="item.bonus_quantity > 0"
+                                    class="mt-1.5 inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"
+                                >
+                                    <UIcon name="i-lucide-sparkles" class="size-3" />
+                                    +{{ item.bonus_quantity }} free
+                                </p>
+                            </div>
+                            <div class="flex shrink-0 items-center gap-2 pt-0.5">
+                                <UBadge v-if="item.is_out_of_stock" color="error" variant="subtle" size="sm">
+                                    Out of stock
+                                </UBadge>
+                                <p v-else class="font-medium text-highlighted">₱{{ getLineSubtotal(item).toFixed(2) }}</p>
+                                <BaseButton
+                                    v-if="canEditOrderItems && findEditableItem(item.product_uuid)"
+                                    icon="i-lucide-pencil"
+                                    size="xs"
+                                    color="neutral"
+                                    variant="ghost"
+                                    aria-label="Edit item"
+                                    @click="editingProductUuid = item.product_uuid ?? null"
+                                />
+                            </div>
+                        </template>
                     </div>
-
-                    <div v-if="canEditOrderItems" class="flex items-center gap-2">
-                        <USelect
-                            v-model="itemToAdd"
-                            :items="addableProductOptions"
-                            value-key="value"
-                            placeholder="Add a product…"
-                            class="flex-1"
+                    <div
+                        v-for="newItem in pendingNewItems"
+                        :key="newItem.product_uuid"
+                        class="flex items-center gap-3 p-3"
+                    >
+                        <span class="flex-1 truncate font-medium text-highlighted">{{ newItem.product_name }}</span>
+                        <UBadge color="neutral" variant="subtle" size="sm">New</UBadge>
+                        <UInput v-model.number="newItem.quantity" type="number" min="1" size="sm" class="w-20" />
+                        <BaseButton
+                            icon="i-lucide-x"
+                            size="xs"
+                            color="error"
+                            variant="ghost"
+                            aria-label="Remove item"
+                            @click="removeEditableItem(newItem.product_uuid)"
                         />
-                        <UButton
-                            icon="i-lucide-plus"
-                            size="sm"
-                            color="neutral"
-                            variant="soft"
-                            :disabled="!itemToAdd"
-                            @click="addEditableItem"
-                        >
-                            Add
-                        </UButton>
                     </div>
-
-                    <div class="flex items-center justify-between border-t border-default pt-3 font-medium text-highlighted">
-                        <span>Total</span>
-                        <span>₱{{ viewingOrder.total_amount }}</span>
-                    </div>
-
-                    <div v-if="canEditOrderItems" class="flex justify-end">
-                        <UButton :loading="savingOrderItems" @click="saveOrderItems">Save changes</UButton>
-                    </div>
-
-                    <p class="text-xs text-dimmed">Placed {{ formatDate(viewingOrder.created_at) }}</p>
                 </div>
-            </template>
-        </UModal>
+
+                <div v-if="canEditOrderItems" class="flex items-center gap-2">
+                    <USelect
+                        v-model="itemToAdd"
+                        :items="addableProductOptions"
+                        value-key="value"
+                        placeholder="Add a product…"
+                        class="flex-1"
+                    />
+                    <BaseButton
+                        icon="i-lucide-plus"
+                        size="sm"
+                        color="neutral"
+                        variant="soft"
+                        :disabled="!itemToAdd"
+                        @click="addEditableItem"
+                    >
+                        Add
+                    </BaseButton>
+                </div>
+
+                <div class="flex items-center justify-between border-t border-default pt-3 font-medium text-highlighted">
+                    <span>Total</span>
+                    <span>₱{{ draftOrderTotal !== null ? draftOrderTotal.toFixed(2) : viewingOrder.total_amount }}</span>
+                </div>
+
+                <div v-if="canEditOrderItems" class="flex justify-end gap-2">
+                    <BaseButton
+                        v-if="hasUnsavedOrderItemChanges"
+                        color="neutral"
+                        variant="soft"
+                        :disabled="savingOrderItems"
+                        @click="revertOrderItems"
+                    >
+                        Revert changes
+                    </BaseButton>
+                    <BaseButton :loading="savingOrderItems" @click="saveOrderItems">Save changes</BaseButton>
+                </div>
+
+                <p class="text-xs text-dimmed">Placed {{ formatDate(viewingOrder.created_at) }}</p>
+            </div>
+        </BaseModal>
 
         <ConfirmDialogModal
             v-model:open="confirmDialog.open"
@@ -585,7 +597,8 @@ import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleSe
 import APIError from '@/components/api/user/APIError'
 import type { Schedule, ScheduleProduct, ScheduleSummaryItem, ChecklistItem, ProductBuyer } from '@/types/Schedule'
 import type { Order } from '@/types/Order'
-import type { TableColumn, TabsItem } from '@nuxt/ui'
+import type { OrderItem } from '@/types/OrderItem'
+import type { DropdownMenuItem, TableColumn, TabsItem } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
@@ -619,6 +632,11 @@ const tabs = computed<TabsItem[]>(() => [
         badge: pendingOrderCount.value > 0 ? pendingOrderCount.value : undefined
     }
 ])
+
+const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd: onTabsTouchEnd, panelStyle } = useSwipeTabs(
+    activeTab,
+    computed(() => tabs.value.map((tab) => tab.value as string))
+)
 
 const activeSummaryTab = ref('pricing')
 
@@ -1053,6 +1071,14 @@ function cancelOrder(order: Order) {
     })
 }
 
+function orderActions(order: Order): DropdownMenuItem[] {
+    if (order.status !== 'pending') return []
+    return [
+        ...(isClosed.value ? [{ label: 'Confirm order', icon: 'i-lucide-check', color: 'success' as const, onSelect: () => confirmOrder(order) }] : []),
+        { label: 'Cancel order', icon: 'i-lucide-x', color: 'error', onSelect: () => cancelOrder(order) }
+    ]
+}
+
 const isOrderModalOpen = ref(false)
 const viewingOrder = ref<Order | null>(null)
 const canEditOrderItems = computed(() => isClosed.value)
@@ -1065,8 +1091,19 @@ interface EditableItem {
 }
 
 const editableItems = ref<EditableItem[]>([])
+const originalEditableItems = ref<EditableItem[]>([])
 const itemToAdd = ref<string | undefined>(undefined)
 const savingOrderItems = ref(false)
+
+const hasUnsavedOrderItemChanges = computed(() =>
+    JSON.stringify(editableItems.value) !== JSON.stringify(originalEditableItems.value)
+)
+
+function buildEditableItems(order: Order): EditableItem[] {
+    return order.items
+        .filter((item) => item.product_uuid)
+        .map((item) => ({ product_uuid: item.product_uuid!, product_name: item.product_name, quantity: item.quantity }))
+}
 
 // Existing order items still shown via viewingOrder.items; ones removed from editableItems drop out here.
 const displayItems = computed(() => {
@@ -1091,6 +1128,33 @@ function getScheduleProductStatus(productUuid: string) {
     return schedule.value?.products.find((sp) => sp.product.uuid === productUuid)?.product_status
 }
 
+function getScheduleProductPrice(productUuid: string) {
+    const sp = schedule.value?.products.find((p) => p.product.uuid === productUuid)
+    if (!sp) return 0
+    return sp.actual_price !== null && sp.actual_price !== undefined ? Number(sp.actual_price) : Number(sp.product.default_price)
+}
+
+// Live preview of the order total while editing, since viewingOrder.total_amount only updates after Save.
+const draftOrderTotal = computed(() => {
+    if (!canEditOrderItems.value) return null
+    return editableItems.value.reduce((sum, item) => {
+        if (getScheduleProductStatus(item.product_uuid) === 'out_of_stock') return sum
+        return sum + getScheduleProductPrice(item.product_uuid) * item.quantity
+    }, 0)
+})
+
+// Per-line quantity/subtotal preview while editing — displayItems still holds the server-saved values.
+function getLineQuantity(item: OrderItem) {
+    if (!canEditOrderItems.value || !item.product_uuid) return item.quantity
+    return findEditableItem(item.product_uuid)?.quantity ?? item.quantity
+}
+
+function getLineSubtotal(item: OrderItem) {
+    if (!canEditOrderItems.value || !item.product_uuid) return Number(item.subtotal)
+    if (getScheduleProductStatus(item.product_uuid) === 'out_of_stock') return 0
+    return getScheduleProductPrice(item.product_uuid) * getLineQuantity(item)
+}
+
 const addableProductOptions = computed(() => {
     const usedUuids = new Set(editableItems.value.map((item) => item.product_uuid))
     return (schedule.value?.products ?? [])
@@ -1104,16 +1168,14 @@ function syncViewingOrder() {
     if (!updated) return
 
     viewingOrder.value = updated
-    editableItems.value = updated.items
-        .filter((item) => item.product_uuid)
-        .map((item) => ({ product_uuid: item.product_uuid!, product_name: item.product_name, quantity: item.quantity }))
+    editableItems.value = buildEditableItems(updated)
+    originalEditableItems.value = buildEditableItems(updated)
 }
 
 function viewOrder(order: Order) {
     viewingOrder.value = order
-    editableItems.value = order.items
-        .filter((item) => item.product_uuid)
-        .map((item) => ({ product_uuid: item.product_uuid!, product_name: item.product_name, quantity: item.quantity }))
+    editableItems.value = buildEditableItems(order)
+    originalEditableItems.value = buildEditableItems(order)
     itemToAdd.value = undefined
     editingProductUuid.value = null
     isOrderModalOpen.value = true
@@ -1132,6 +1194,12 @@ function addEditableItem() {
     itemToAdd.value = undefined
 }
 
+function revertOrderItems() {
+    editableItems.value = originalEditableItems.value.map((item) => ({ ...item }))
+    editingProductUuid.value = null
+    itemToAdd.value = undefined
+}
+
 async function saveOrderItems() {
     if (!viewingOrder.value) return
 
@@ -1145,6 +1213,8 @@ async function saveOrderItems() {
         viewingOrder.value = response.data
         const row = orders.value.find((o) => o.uuid === response.data.uuid)
         if (row) Object.assign(row, response.data)
+        editableItems.value = buildEditableItems(response.data)
+        originalEditableItems.value = buildEditableItems(response.data)
         editingProductUuid.value = null
         await refreshSummary()
         toast.add({ title: 'Order items updated', color: 'success' })

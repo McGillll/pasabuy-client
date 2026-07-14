@@ -25,9 +25,9 @@
                             </span>
                         </div>
                     </div>
-                    <UButton v-if="isLoggedIn" size="sm" color="neutral" variant="soft" icon="i-lucide-receipt" to="/customer" class="self-start">
+                    <BaseButton v-if="isLoggedIn" size="sm" color="neutral" variant="soft" icon="i-lucide-receipt" to="/customer" class="self-start">
                         My Orders
-                    </UButton>
+                    </BaseButton>
                 </div>
 
                 <UAlert
@@ -56,9 +56,9 @@
                         <div class="flex items-center justify-between gap-3">
                             <p class="font-semibold text-highlighted">Total: ₱{{ myOrder.total_amount }}</p>
                             <div class="flex items-center gap-2">
-                                <UButton v-if="myOrder.is_editable" variant="soft" icon="i-lucide-pencil" @click="startEditOrder">
+                                <BaseButton v-if="myOrder.is_editable" variant="soft" icon="i-lucide-pencil" @click="startEditOrder">
                                     Edit order
-                                </UButton>
+                                </BaseButton>
                                 <CancelOrderControl v-if="myOrder.is_cancellable" :loading="cancellingOrder" @confirm="cancelOrder" />
                                 <p v-if="!myOrder.is_editable && !myOrder.is_cancellable" class="text-sm text-muted">
                                     This order can no longer be edited.
@@ -91,9 +91,9 @@
                         <template #header>
                             <div class="flex items-center justify-between">
                                 <h2 class="font-medium">{{ editingOrder ? 'Edit your items' : 'Items' }}</h2>
-                                <UButton v-if="editingOrder" size="xs" color="neutral" variant="ghost" @click="cancelEditOrder">
+                                <BaseButton v-if="editingOrder" size="xs" color="neutral" variant="ghost" @click="cancelEditOrder">
                                     Cancel
-                                </UButton>
+                                </BaseButton>
                             </div>
                         </template>
 
@@ -136,7 +136,7 @@
                                         Out of stock
                                     </span>
                                     <template v-else>
-                                        <UButton
+                                        <BaseButton
                                             icon="i-lucide-minus"
                                             size="xs"
                                             color="neutral"
@@ -146,7 +146,7 @@
                                             @click="decrement(product)"
                                         />
                                         <span class="w-6 text-center font-medium">{{ quantities[product.uuid] || 0 }}</span>
-                                        <UButton
+                                        <BaseButton
                                             icon="i-lucide-plus"
                                             size="xs"
                                             color="neutral"
@@ -181,12 +181,12 @@
                 <template v-if="!isLoggedIn">
                     <p class="text-sm text-muted">Log in to place an order.</p>
                     <div class="mt-3 flex gap-2">
-                        <UButton color="neutral" variant="soft" :to="`/register?redirect=${encodeURIComponent(route.fullPath)}`">
+                        <BaseButton color="neutral" variant="soft" :to="`/register?redirect=${encodeURIComponent(route.fullPath)}`">
                             Sign up
-                        </UButton>
-                        <UButton :to="`/customer/login?redirect=${encodeURIComponent(route.fullPath)}`">
+                        </BaseButton>
+                        <BaseButton :to="`/customer/login?redirect=${encodeURIComponent(route.fullPath)}`">
                             Log in
-                        </UButton>
+                        </BaseButton>
                     </div>
                 </template>
 
@@ -198,7 +198,7 @@
                     <UAlert v-if="submitError" color="error" variant="subtle" :title="submitError" class="mb-3" />
                     <p class="text-xs text-muted">{{ itemCount }} item{{ itemCount === 1 ? '' : 's' }}</p>
                     <p class="text-2xl font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
-                    <UButton
+                    <BaseButton
                         block
                         class="mt-3"
                         size="lg"
@@ -207,7 +207,7 @@
                         @click="submitOrder"
                     >
                         {{ editingOrder ? 'Update order' : 'Place order' }}
-                    </UButton>
+                    </BaseButton>
                 </template>
             </UCard>
         </aside>
@@ -229,12 +229,12 @@
                     <div class="flex items-center justify-between gap-3">
                         <p class="text-sm text-muted">Log in to place an order.</p>
                         <div class="flex shrink-0 gap-2">
-                            <UButton size="sm" color="neutral" variant="soft" :to="`/register?redirect=${encodeURIComponent(route.fullPath)}`">
+                            <BaseButton size="sm" color="neutral" variant="soft" :to="`/register?redirect=${encodeURIComponent(route.fullPath)}`">
                                 Sign up
-                            </UButton>
-                            <UButton size="sm" :to="`/customer/login?redirect=${encodeURIComponent(route.fullPath)}`">
+                            </BaseButton>
+                            <BaseButton size="sm" :to="`/customer/login?redirect=${encodeURIComponent(route.fullPath)}`">
                                 Log in
-                            </UButton>
+                            </BaseButton>
                         </div>
                     </div>
                 </template>
@@ -249,29 +249,27 @@
                             <p class="text-xs text-muted">{{ itemCount }} item{{ itemCount === 1 ? '' : 's' }}</p>
                             <p class="text-lg font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
                         </div>
-                        <UButton
+                        <BaseButton
                             size="lg"
                             icon="i-lucide-shopping-cart"
                             :disabled="!schedule?.is_open || !hasItems"
                             @click="isCartOpen = true"
                         >
                             View cart
-                        </UButton>
+                        </BaseButton>
                     </div>
                 </template>
             </div>
         </div>
 
-        <UModal v-model:open="isPreviewOpen" :title="previewProduct?.name">
-            <template #body>
-                <img
-                    v-if="previewProduct?.image_url"
-                    :src="previewProduct.image_url"
-                    class="max-h-[70vh] w-full rounded-lg object-contain"
-                    alt=""
-                >
-            </template>
-        </UModal>
+        <BaseModal v-model:open="isPreviewOpen" :title="previewProduct?.name" view-only>
+            <img
+                v-if="previewProduct?.image_url"
+                :src="previewProduct.image_url"
+                class="max-h-[70vh] w-full rounded-lg object-contain"
+                alt=""
+            >
+        </BaseModal>
 
         <USlideover
             v-model:open="isCartOpen"
@@ -305,7 +303,7 @@
                         </div>
 
                         <div class="flex shrink-0 items-center gap-2">
-                            <UButton
+                            <BaseButton
                                 icon="i-lucide-minus"
                                 size="xs"
                                 color="neutral"
@@ -315,7 +313,7 @@
                                 @click="decrement(product)"
                             />
                             <span class="w-6 text-center font-medium">{{ quantities[product.uuid] || 0 }}</span>
-                            <UButton
+                            <BaseButton
                                 icon="i-lucide-plus"
                                 size="xs"
                                 color="neutral"
@@ -336,7 +334,7 @@
                         <p class="text-sm text-muted">Total</p>
                         <p class="text-lg font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
                     </div>
-                    <UButton
+                    <BaseButton
                         block
                         size="lg"
                         :loading="submitting"
@@ -344,7 +342,7 @@
                         @click="submitOrder"
                     >
                         {{ editingOrder ? 'Update order' : 'Place order' }}
-                    </UButton>
+                    </BaseButton>
                 </div>
             </template>
         </USlideover>

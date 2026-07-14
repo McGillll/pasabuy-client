@@ -17,7 +17,7 @@
                 <UFormField label="Email" name="email" required>
                     <UInput v-model="profileState.email" type="email" icon="i-lucide-mail" class="w-full" />
                 </UFormField>
-                <UButton type="submit" :loading="savingProfile">Save changes</UButton>
+                <BaseButton type="submit" :loading="savingProfile">Save changes</BaseButton>
             </UForm>
         </UCard>
 
@@ -36,7 +36,7 @@
                 <UFormField label="Confirm new password" name="password_confirmation" required>
                     <PasswordInput v-model="passwordState.password_confirmation" autocomplete="new-password" />
                 </UFormField>
-                <UButton type="submit" :loading="savingPassword">Update password</UButton>
+                <BaseButton type="submit" :loading="savingPassword">Update password</BaseButton>
             </UForm>
         </UCard>
     </div>
