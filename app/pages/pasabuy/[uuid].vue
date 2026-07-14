@@ -184,7 +184,7 @@
                         <BaseButton color="neutral" variant="soft" :to="`/register?redirect=${encodeURIComponent(route.fullPath)}`">
                             Sign up
                         </BaseButton>
-                        <BaseButton :to="`/customer/login?redirect=${encodeURIComponent(route.fullPath)}`">
+                        <BaseButton :to="`/login?redirect=${encodeURIComponent(route.fullPath)}`">
                             Log in
                         </BaseButton>
                     </div>
@@ -232,7 +232,7 @@
                             <BaseButton size="sm" color="neutral" variant="soft" :to="`/register?redirect=${encodeURIComponent(route.fullPath)}`">
                                 Sign up
                             </BaseButton>
-                            <BaseButton size="sm" :to="`/customer/login?redirect=${encodeURIComponent(route.fullPath)}`">
+                            <BaseButton size="sm" :to="`/login?redirect=${encodeURIComponent(route.fullPath)}`">
                                 Log in
                             </BaseButton>
                         </div>

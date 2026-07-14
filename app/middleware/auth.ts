@@ -14,4 +14,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
             return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
         }
     }
+
+    if (user.value?.role !== 'admin') {
+        return navigateTo('/customer')
+    }
 })

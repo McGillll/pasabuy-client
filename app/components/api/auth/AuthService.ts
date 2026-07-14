@@ -18,9 +18,28 @@ export interface UpdatePasswordPayload {
     password_confirmation: string
 }
 
+export interface ForgotPasswordPayload {
+    email: string
+}
+
+export interface ResetPasswordPayload {
+    token: string
+    email: string
+    password: string
+    password_confirmation: string
+}
+
 class AuthService extends BaseAPIService {
     async login(payload: LoginPayload): Promise<any> {
         return await this.request('/auth/login', 'POST', payload)
+    }
+
+    async forgotPassword(payload: ForgotPasswordPayload): Promise<any> {
+        return await this.request('/auth/forgot-password', 'POST', payload)
+    }
+
+    async resetPassword(payload: ResetPasswordPayload): Promise<any> {
+        return await this.request('/auth/reset-password', 'POST', payload)
     }
 
     async logout(): Promise<any> {

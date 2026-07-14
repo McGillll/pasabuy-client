@@ -3,7 +3,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     const token = localStorage.getItem('_token')
     if (!token) {
-        return navigateTo(`/customer/login?redirect=${encodeURIComponent(to.fullPath)}`)
+        return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
     }
 
     const { user, fetchCurrentUser, logout } = useAuth()
@@ -11,8 +11,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
         try {
             await fetchCurrentUser()
         } catch {
-            return navigateTo(`/customer/login?redirect=${encodeURIComponent(to.fullPath)}`)
+            return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
         }
+    }
+
+    if (user.value?.role !== 'customer') {
+        return navigateTo('/admin')
     }
 
     if (user.value?.is_approved === false) {
@@ -22,6 +26,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
             description: 'Your account is pending admin approval. Please try again once approved.',
             color: 'warning'
         })
-        return navigateTo(`/customer/login?redirect=${encodeURIComponent(to.fullPath)}`)
+        return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
     }
 })

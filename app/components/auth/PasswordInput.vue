@@ -1,22 +1,22 @@
 <template>
     <UInput
         v-model="model"
-        :type="visible ? 'text' : 'password'"
+        :type="isVisible ? 'text' : 'password'"
         :placeholder="placeholder"
         icon="i-lucide-lock"
         :autocomplete="autocomplete"
         size="xl"
         class="w-full"
     >
-        <template #trailing>
+        <template v-if="showToggle" #trailing>
             <BaseButton
                 color="neutral"
                 variant="ghost"
                 size="xs"
-                :icon="visible ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                :aria-label="visible ? 'Hide password' : 'Show password'"
+                :icon="internalVisible ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                :aria-label="internalVisible ? 'Hide password' : 'Show password'"
                 tabindex="-1"
-                @click="visible = !visible"
+                @click="internalVisible = !internalVisible"
             />
         </template>
     </UInput>
@@ -25,13 +25,18 @@
 <script setup lang="ts">
 const model = defineModel<string>({ default: '' })
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
     placeholder?: string
     autocomplete?: string
+    showToggle?: boolean
+    visible?: boolean
 }>(), {
     placeholder: '••••••••',
     autocomplete: 'current-password',
+    showToggle: true,
+    visible: false,
 })
 
-const visible = ref(false)
+const internalVisible = ref(false)
+const isVisible = computed(() => props.showToggle ? internalVisible.value : props.visible)
 </script>

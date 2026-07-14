@@ -34,3 +34,9 @@
     --color-secondary-900: #203c4d;
     --color-secondary-950: #13242f;
 }
+
+/* Edge/IE inject their own password-reveal icon, which doubles up with our custom toggle */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}

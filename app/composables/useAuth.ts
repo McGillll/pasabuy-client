@@ -1,4 +1,5 @@
 import { authService } from '@/components/api/auth/AuthService'
+import type { ResetPasswordPayload } from '@/components/api/auth/AuthService'
 import APIError from '@/components/api/user/APIError'
 import type { User } from '@/types/User'
 
@@ -30,5 +31,13 @@ export function useAuth() {
         return user.value
     }
 
-    return { user, login, logout, fetchCurrentUser }
+    async function forgotPassword(email: string) {
+        return await authService.forgotPassword({ email })
+    }
+
+    async function resetPassword(payload: ResetPasswordPayload) {
+        return await authService.resetPassword(payload)
+    }
+
+    return { user, login, logout, fetchCurrentUser, forgotPassword, resetPassword }
 }

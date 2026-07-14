@@ -50,12 +50,14 @@
                 </UFormField>
 
                 <UFormField label="Password" name="password" required>
-                    <PasswordInput v-model="state.password" autocomplete="new-password" />
+                    <PasswordInput v-model="state.password" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" />
                 </UFormField>
 
                 <UFormField label="Confirm password" name="password_confirmation" required>
-                    <PasswordInput v-model="state.password_confirmation" autocomplete="new-password" />
+                    <PasswordInput v-model="state.password_confirmation" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" />
                 </UFormField>
+
+                <UCheckbox v-model="passwordsVisible" label="Show passwords" size="sm" />
 
                 <BaseButton type="submit" block size="xl" :loading="isSubmitting">
                     Create account
@@ -85,7 +87,7 @@ const route = useRoute()
 
 const loginLink = computed(() => {
     const redirect = route.query.redirect as string | undefined
-    return redirect ? `/customer/login?redirect=${encodeURIComponent(redirect)}` : '/customer/login'
+    return redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : '/login'
 })
 
 const state = reactive({
@@ -101,6 +103,7 @@ const state = reactive({
 const isSubmitting = ref(false)
 const submitted = ref(false)
 const registerError = ref<string | null>(null)
+const passwordsVisible = ref(false)
 
 function validate(state: {
     first_name: string

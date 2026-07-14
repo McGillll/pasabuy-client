@@ -38,6 +38,6 @@ const { user, logout } = useAuth()
 
 const accountMenuItems = computed<DropdownMenuItem[]>(() => [
     { label: 'My Account', icon: 'i-lucide-user', to: '/customer/account' },
-    { label: 'Log out', icon: 'i-lucide-log-out', onSelect: () => logout('/customer/login') }
+    { label: 'Log out', icon: 'i-lucide-log-out', onSelect: () => logout('/login') }
 ])
 </script>

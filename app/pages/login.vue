@@ -1,5 +1,5 @@
 <template>
-    <AuthPageShell subtitle="Seller sign in">
+    <AuthPageShell subtitle="Sign in">
         <UAlert
             v-if="authError"
             color="error"
@@ -33,6 +33,7 @@
 
             <div class="flex items-center justify-between">
                 <UCheckbox v-model="state.rememberMe" label="Remember me" size="lg" />
+                <NuxtLink to="/forgot-password" class="text-sm text-primary hover:underline">Forgot password?</NuxtLink>
             </div>
 
             <BaseButton
@@ -46,7 +47,12 @@
         </UForm>
 
         <template #footer>
-            <p class="mt-6 text-center text-xs text-dimmed">
+            <p class="mt-6 text-center text-sm text-dimmed">
+                New customer?
+                <NuxtLink :to="registerLink" class="text-primary hover:underline">Create an account</NuxtLink>
+            </p>
+
+            <p class="mt-4 text-center text-xs text-dimmed">
                 &copy; {{ currentYear }} Pasabuy. All rights reserved.
             </p>
         </template>
@@ -58,7 +64,13 @@ definePageMeta({
     layout: false,
 })
 
+const route = useRoute()
 const currentYear = new Date().getFullYear()
 
-const { state, isSubmitting, authError, validate, onSubmit } = useLoginForm('/admin', 'admin')
+const registerLink = computed(() => {
+    const redirect = route.query.redirect as string | undefined
+    return redirect ? `/register?redirect=${encodeURIComponent(redirect)}` : '/register'
+})
+
+const { state, isSubmitting, authError, validate, onSubmit } = useLoginForm()
 </script>
