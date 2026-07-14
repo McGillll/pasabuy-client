@@ -121,6 +121,8 @@ import APIError from '@/components/api/user/APIError'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
+useHead({ title: 'Settings' })
+
 const toast = useToast()
 
 const activeTab = ref('business')

@@ -76,6 +76,8 @@ import type { ChecklistItem } from '@/types/Schedule'
 
 definePageMeta({ layout: false })
 
+useHead({ title: 'Checklist' })
+
 const route = useRoute()
 const token = route.params.token as string
 

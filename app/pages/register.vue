@@ -83,6 +83,8 @@ definePageMeta({
     layout: false,
 })
 
+useHead({ title: 'Create Account' })
+
 const route = useRoute()
 
 const loginLink = computed(() => {

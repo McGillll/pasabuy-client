@@ -611,6 +611,8 @@ const orders = ref<Order[]>([])
 const summary = ref<ScheduleSummaryItem[]>([])
 const loading = ref(true)
 
+useHead({ title: computed(() => schedule.value?.title ?? 'Schedule Details') })
+
 const pendingOrderCount = computed(() =>
     orders.value.filter((o) => o.status === 'pending').length
 )

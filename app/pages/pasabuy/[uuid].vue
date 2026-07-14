@@ -390,6 +390,8 @@ const schedule = ref<Schedule | null>(null)
 const catalog = ref<Product[]>([])
 const loading = ref(true)
 const notFound = ref(false)
+
+useHead({ title: computed(() => schedule.value?.title ?? 'Pasabuy Run') })
 const productSearch = ref('')
 
 const quantities = ref<Record<string, number>>({})

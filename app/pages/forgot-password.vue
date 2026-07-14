@@ -68,6 +68,8 @@ definePageMeta({
     layout: false,
 })
 
+useHead({ title: 'Forgot Password' })
+
 const currentYear = new Date().getFullYear()
 const { forgotPassword } = useAuth()
 

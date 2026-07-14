@@ -90,6 +90,8 @@ const loading = ref(true)
 const notFound = ref(false)
 const cancelling = ref(false)
 
+useHead({ title: computed(() => order.value?.pasabuy_schedule?.title ? `Order · ${order.value.pasabuy_schedule.title}` : 'Order Details') })
+
 const isFinished = computed(() => order.value?.pasabuy_schedule?.status === 'finished')
 
 async function loadOrder(silent = false) {

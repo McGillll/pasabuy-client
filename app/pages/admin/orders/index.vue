@@ -312,6 +312,8 @@ import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
+useHead({ title: 'Orders' })
+
 interface ScheduleOption {
     uuid: string
     title: string

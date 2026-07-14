@@ -111,6 +111,8 @@ import type { TableColumn } from '@nuxt/ui'
 
 definePageMeta({ layout: 'customer', middleware: 'customer-auth' })
 
+useHead({ title: 'Dashboard' })
+
 interface OrderItem {
     uuid: string
     product_uuid: string

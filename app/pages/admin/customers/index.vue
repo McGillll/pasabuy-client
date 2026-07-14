@@ -211,6 +211,8 @@ import type { DropdownMenuItem, TableColumn, TabsItem } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
+useHead({ title: 'Customers' })
+
 interface Customer {
     uuid: string
     first_name: string

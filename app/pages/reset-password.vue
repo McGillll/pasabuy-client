@@ -67,6 +67,8 @@ definePageMeta({
     layout: false,
 })
 
+useHead({ title: 'Reset Password' })
+
 const currentYear = new Date().getFullYear()
 const route = useRoute()
 const toast = useToast()

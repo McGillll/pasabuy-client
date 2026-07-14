@@ -372,6 +372,8 @@ import type { DropdownMenuItem, TableColumn, TabsItem } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
+useHead({ title: 'Products' })
+
 const toast = useToast()
 const perPage = 15
 

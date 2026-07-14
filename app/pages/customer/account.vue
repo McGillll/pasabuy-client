@@ -11,4 +11,6 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'customer', middleware: 'customer-auth' })
+
+useHead({ title: 'My Account' })
 </script>

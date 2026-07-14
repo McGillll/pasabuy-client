@@ -64,6 +64,8 @@ definePageMeta({
     layout: false,
 })
 
+useHead({ title: 'Sign In' })
+
 const route = useRoute()
 const currentYear = new Date().getFullYear()
 

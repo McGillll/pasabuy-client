@@ -5,7 +5,10 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: 'Pasabuy',
-      titleTemplate: (titleChunk) => titleChunk ? `Pasabuy · ${titleChunk}` : 'Pasabuy'
+      titleTemplate: 'Pasabuy · %s',
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }
+      ]
     }
   },
   modules: ['@nuxt/ui'],
