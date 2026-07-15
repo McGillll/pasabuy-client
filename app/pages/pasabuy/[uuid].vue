@@ -267,7 +267,7 @@
                 v-if="previewProduct?.image_url"
                 :src="previewProduct.image_url"
                 class="max-h-[70vh] w-full rounded-lg object-contain"
-                alt=""
+                :alt="previewProduct.name"
             >
         </BaseModal>
 

@@ -52,89 +52,86 @@
         </USlideover>
 
         <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <div class="hidden sm:block">
-                <UTable :data="orders" :columns="orderColumns" :loading="loading" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
-                    <template #customer-cell="{ row }">
-                        <p class="font-medium text-highlighted">{{ row.original.customer_name }}</p>
-                        <p class="text-sm text-muted">{{ row.original.customer_contact }}</p>
-                    </template>
-                    <template #schedule-cell="{ row }">
-                        <NuxtLink
-                            v-if="row.original.pasabuy_schedule"
-                            :to="`/admin/schedules/${row.original.pasabuy_schedule.uuid}`"
-                            class="text-primary hover:underline"
+            <ResponsiveTable :data="orders" :columns="orderColumns" :loading="loading" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
+                <template #customer-cell="{ row }">
+                    <p class="font-medium text-highlighted">{{ row.original.customer_name }}</p>
+                    <p class="text-sm text-muted">{{ row.original.customer_contact }}</p>
+                </template>
+                <template #schedule-cell="{ row }">
+                    <NuxtLink
+                        v-if="row.original.pasabuy_schedule"
+                        :to="`/admin/schedules/${row.original.pasabuy_schedule.uuid}`"
+                        class="text-primary hover:underline"
+                    >
+                        {{ row.original.pasabuy_schedule.title }}
+                    </NuxtLink>
+                    <span v-else class="text-muted">-</span>
+                </template>
+                <template #status-cell="{ row }">
+                    <OrderStatusBadge :status="row.original.status" />
+                </template>
+                <template #payment_status-cell="{ row }">
+                    <PaymentStatusBadge v-if="row.original.status === 'confirmed'" :status="row.original.payment_status" />
+                    <span v-else class="text-muted">-</span>
+                </template>
+                <template #delivery_status-cell="{ row }">
+                    <DeliveryStatusBadge v-if="row.original.status === 'confirmed'" :status="row.original.delivery_status" />
+                    <span v-else class="text-muted">-</span>
+                </template>
+                <template #total_amount-cell="{ row }">
+                    {{ orderDisplayAmount(row.original) }}
+                </template>
+                <template #actions-cell="{ row }">
+                    <div v-if="row.original.status === 'confirmed'" class="flex items-center justify-end gap-2">
+                        <BaseButton
+                            size="xs"
+                            color="neutral"
+                            variant="soft"
+                            @click="toggleDeliveryStatus(row.original)"
                         >
-                            {{ row.original.pasabuy_schedule.title }}
-                        </NuxtLink>
-                        <span v-else class="text-muted">-</span>
-                    </template>
-                    <template #status-cell="{ row }">
-                        <OrderStatusBadge :status="row.original.status" />
-                    </template>
-                    <template #payment_status-cell="{ row }">
-                        <PaymentStatusBadge v-if="row.original.status === 'confirmed'" :status="row.original.payment_status" />
-                        <span v-else class="text-muted">-</span>
-                    </template>
-                    <template #delivery_status-cell="{ row }">
-                        <DeliveryStatusBadge v-if="row.original.status === 'confirmed'" :status="row.original.delivery_status" />
-                        <span v-else class="text-muted">-</span>
-                    </template>
-                    <template #total_amount-cell="{ row }">
-                        {{ orderDisplayAmount(row.original) }}
-                    </template>
-                    <template #actions-cell="{ row }">
-                        <div v-if="row.original.status === 'confirmed'" class="flex items-center justify-end gap-2">
-                            <BaseButton
-                                size="xs"
-                                color="neutral"
-                                variant="soft"
-                                @click="toggleDeliveryStatus(row.original)"
-                            >
-                                {{ row.original.delivery_status === 'not_delivered' ? 'Mark delivered' : 'Mark not delivered' }}
-                            </BaseButton>
-                            <BaseButton
-                                icon="i-lucide-wallet"
-                                size="xs"
-                                color="neutral"
-                                variant="ghost"
-                                aria-label="Manage payments"
-                                @click="openPaymentsModal(row.original)"
-                            />
-                        </div>
-                    </template>
-                    <template #empty>
-                        <TableEmptyState icon="i-lucide-receipt" message="No orders found." />
-                    </template>
-                </UTable>
-            </div>
-            <div class="sm:hidden space-y-2 p-2">
-                <ListCard v-for="order in orders" :key="order.uuid" :actions="orderActions(order)">
-                    <template #title>
-                        <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
-                    </template>
-                    <template #subtitle>
-                        {{ order.customer_contact }}
-                    </template>
-                    <template #meta>
-                        <span class="font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
-                        <NuxtLink
-                            v-if="order.pasabuy_schedule"
-                            :to="`/admin/schedules/${order.pasabuy_schedule.uuid}`"
-                            class="text-primary hover:underline"
-                        >
-                            {{ order.pasabuy_schedule.title }}
-                        </NuxtLink>
-                    </template>
-                    <template #status>
-                        <OrderStatusBadge :status="order.status" />
-                        <template v-if="order.status === 'confirmed'">
-                            <PaymentStatusBadge :status="order.payment_status" />
-                            <DeliveryStatusBadge :status="order.delivery_status" />
+                            {{ row.original.delivery_status === 'not_delivered' ? 'Mark delivered' : 'Mark not delivered' }}
+                        </BaseButton>
+                        <BaseButton
+                            icon="i-lucide-wallet"
+                            size="xs"
+                            color="neutral"
+                            variant="ghost"
+                            aria-label="Manage payments"
+                            @click="openPaymentsModal(row.original)"
+                        />
+                    </div>
+                </template>
+                <template #list-item="{ item: order }">
+                    <ListCard :actions="orderActions(order)">
+                        <template #title>
+                            <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
                         </template>
-                    </template>
-                </ListCard>
-                <TableEmptyState v-if="orders.length === 0" icon="i-lucide-receipt" message="No orders found." />
-            </div>
+                        <template #subtitle>
+                            {{ order.customer_contact }}
+                        </template>
+                        <template #meta>
+                            <span class="font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
+                            <NuxtLink
+                                v-if="order.pasabuy_schedule"
+                                :to="`/admin/schedules/${order.pasabuy_schedule.uuid}`"
+                                class="text-primary hover:underline"
+                            >
+                                {{ order.pasabuy_schedule.title }}
+                            </NuxtLink>
+                        </template>
+                        <template #status>
+                            <OrderStatusBadge :status="order.status" />
+                            <template v-if="order.status === 'confirmed'">
+                                <PaymentStatusBadge :status="order.payment_status" />
+                                <DeliveryStatusBadge :status="order.delivery_status" />
+                            </template>
+                        </template>
+                    </ListCard>
+                </template>
+                <template #empty>
+                    <TableEmptyState icon="i-lucide-receipt" message="No orders found." />
+                </template>
+            </ResponsiveTable>
         </UCard>
 
         <div v-if="total > perPage" class="flex justify-center">
@@ -230,40 +227,37 @@
                     </div>
                 </div>
 
-                <div class="hidden sm:block">
-                    <UTable :data="payments" :columns="paymentColumns" :loading="paymentsLoading">
-                        <template #method-cell="{ row }">
-                            <span class="capitalize">{{ row.original.method.replace('_', ' ') }}</span>
-                        </template>
-                        <template #paid_at-cell="{ row }">
-                            {{ formatDate(row.original.paid_at) }}
-                        </template>
-                        <template #actions-cell="{ row }">
-                            <BaseButton
-                                icon="i-lucide-trash-2"
-                                size="xs"
-                                color="error"
-                                variant="ghost"
-                                aria-label="Delete payment"
-                                @click="deletePayment(row.original)"
-                            />
-                        </template>
-                        <template #empty>
-                            <TableEmptyState icon="i-lucide-wallet" message="No payments recorded yet." padding="py-6" />
-                        </template>
-                    </UTable>
-                </div>
-                <div class="sm:hidden space-y-2 p-2">
-                    <ListCard v-for="payment in payments" :key="payment.uuid" :actions="paymentActions(payment)">
-                        <template #title>
-                            <p class="font-medium text-highlighted">₱{{ payment.amount }}</p>
-                        </template>
-                        <template #subtitle>
-                            <span class="capitalize">{{ payment.method.replace('_', ' ') }}</span> · {{ formatDate(payment.paid_at) }}
-                        </template>
-                    </ListCard>
-                    <TableEmptyState v-if="payments.length === 0" icon="i-lucide-wallet" message="No payments recorded yet." padding="py-6" />
-                </div>
+                <ResponsiveTable :data="payments" :columns="paymentColumns" :loading="paymentsLoading">
+                    <template #method-cell="{ row }">
+                        <span class="capitalize">{{ row.original.method.replace('_', ' ') }}</span>
+                    </template>
+                    <template #paid_at-cell="{ row }">
+                        {{ formatDate(row.original.paid_at) }}
+                    </template>
+                    <template #actions-cell="{ row }">
+                        <BaseButton
+                            icon="i-lucide-trash-2"
+                            size="xs"
+                            color="error"
+                            variant="ghost"
+                            aria-label="Delete payment"
+                            @click="deletePayment(row.original)"
+                        />
+                    </template>
+                    <template #list-item="{ item: payment }">
+                        <ListCard :actions="paymentActions(payment)">
+                            <template #title>
+                                <p class="font-medium text-highlighted">₱{{ payment.amount }}</p>
+                            </template>
+                            <template #subtitle>
+                                <span class="capitalize">{{ payment.method.replace('_', ' ') }}</span> · {{ formatDate(payment.paid_at) }}
+                            </template>
+                        </ListCard>
+                    </template>
+                    <template #empty>
+                        <TableEmptyState icon="i-lucide-wallet" message="No payments recorded yet." padding="py-6" />
+                    </template>
+                </ResponsiveTable>
 
                 <form class="space-y-3 border-t border-default pt-4" @submit.prevent="submitPayment">
                     <div class="grid grid-cols-2 gap-3">
@@ -436,7 +430,7 @@ async function setDeliveryStatus(order: Order, deliveryStatus: 'not_delivered' |
     try {
         const response = await orderService.updateDeliveryStatus(order.uuid, deliveryStatus)
         order.delivery_status = response.data.delivery_status
-        toast.add({ title: `Order marked as ${deliveryStatusLabel[response.data.delivery_status]!.toLowerCase()}`, color: 'success' })
+        toast.add({ title: `Order marked as ${deliveryStatusLabel[deliveryStatus].toLowerCase()}`, color: 'success' })
     } catch (error) {
         toast.add({ title: 'Update failed', description: (error as APIError).message, color: 'error' })
     }

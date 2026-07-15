@@ -3,7 +3,9 @@
 </template>
 
 <script setup lang="ts">
+import type { DeliveryStatus } from '@/composables/useOrderStatus'
+
 defineProps<{
-    status: string
+    status: DeliveryStatus
 }>()
 </script>

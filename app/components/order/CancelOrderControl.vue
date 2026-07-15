@@ -1,18 +1,17 @@
 <template>
-    <template v-if="!confirming">
-        <BaseButton color="error" variant="ghost" size="sm" @click="() => { confirming = true }">
-            Cancel order
-        </BaseButton>
-    </template>
-    <template v-else>
-        <span class="text-sm text-muted">Are you sure?</span>
-        <BaseButton color="error" :loading="loading" @click="() => emit('confirm')">
-            Yes, cancel
-        </BaseButton>
-        <BaseButton color="neutral" variant="soft" @click="() => { confirming = false }">
-            No
-        </BaseButton>
-    </template>
+    <BaseButton color="error" variant="ghost" size="sm" @click="open = true">
+        Cancel order
+    </BaseButton>
+
+    <ConfirmDialogModal
+        v-model:open="open"
+        title="Cancel order?"
+        description="This cannot be undone."
+        confirm-label="Yes, cancel"
+        color="error"
+        :loading="loading"
+        @confirm="emit('confirm')"
+    />
 </template>
 
 <script setup lang="ts">
@@ -22,5 +21,5 @@ defineProps<{
 
 const emit = defineEmits<{ confirm: [] }>()
 
-const confirming = ref(false)
+const open = ref(false)
 </script>

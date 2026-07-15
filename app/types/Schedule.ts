@@ -45,5 +45,5 @@ export interface ProductBuyer {
     estimated_price: string
     actual_price: string | null
     subtotal: string
-    status: string
+    status: 'pending' | 'confirmed' | 'cancelled'
 }

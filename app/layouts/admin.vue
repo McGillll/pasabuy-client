@@ -68,7 +68,7 @@
         <nav class="md:hidden fixed inset-x-0 bottom-0 z-10 flex w-full border-t border-default bg-default pb-[env(safe-area-inset-bottom)]">
             <NuxtLink
                 v-for="link in mobileLinks"
-                :key="link.to"
+                :key="link.label"
                 :to="link.to"
                 class="flex flex-1 min-w-0 flex-col items-center justify-center gap-1 py-2 text-muted"
                 active-class="text-primary"

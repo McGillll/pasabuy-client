@@ -47,76 +47,70 @@
         />
 
         <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <div class="hidden sm:block">
-                <UTable
-                    :data="orders"
-                    :columns="columns"
-                    :loading="loading"
-                    :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
-                >
-                    <template #schedule-cell="{ row }">
-                        <NuxtLink
-                            v-if="row.original.pasabuy_schedule"
-                            :to="`/pasabuy/${row.original.pasabuy_schedule.uuid}`"
-                            class="font-medium text-highlighted hover:text-primary"
-                        >
-                            {{ row.original.pasabuy_schedule.title }}
-                        </NuxtLink>
-                    </template>
-                    <template #total_amount-cell="{ row }">
-                        {{ orderDisplayAmount(row.original) }}
-                    </template>
-                    <template #status-cell="{ row }">
-                        <OrderStatusBadge :status="row.original.status" />
-                    </template>
-                    <template #payment_status-cell="{ row }">
-                        <PaymentStatusBadge v-if="row.original.pasabuy_schedule?.status === 'finished'" :status="row.original.payment_status" />
-                        <span v-else class="text-muted">-</span>
-                    </template>
-                    <template #delivery_status-cell="{ row }">
-                        <DeliveryStatusBadge v-if="row.original.pasabuy_schedule?.status === 'finished'" :status="row.original.delivery_status" />
-                        <span v-else class="text-muted">-</span>
-                    </template>
-                    <template #created_at-cell="{ row }">
-                        <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
-                    </template>
-                    <template #actions-cell="{ row }">
-                        <BaseButton size="sm" color="neutral" variant="ghost" @click="viewOrder(row.original)">
-                            View
-                        </BaseButton>
-                    </template>
-                    <template #empty>
-                        <div class="flex flex-col items-center gap-3 py-10">
-                            <UIcon name="i-lucide-receipt" class="size-8 text-dimmed" />
-                            <p class="text-sm text-muted">{{ emptyStateMessage }}</p>
-                        </div>
-                    </template>
-                </UTable>
-            </div>
-            <div class="sm:hidden space-y-2 p-2">
-                <ListCard v-for="order in orders" :key="order.uuid" clickable @click="viewOrder(order)">
-                    <template #title>
-                        <span v-if="order.pasabuy_schedule" class="font-medium text-highlighted">
-                            {{ order.pasabuy_schedule.title }}
-                        </span>
-                    </template>
-                    <template #meta>
-                        <span class="font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
-                        <span class="text-muted">{{ formatDate(order.created_at) }}</span>
-                    </template>
-                    <template #status>
-                        <OrderStatusBadge :status="order.status" />
-                        <template v-if="order.pasabuy_schedule?.status === 'finished'">
-                            <PaymentStatusBadge :status="order.payment_status" />
-                            <DeliveryStatusBadge :status="order.delivery_status" />
+            <ResponsiveTable
+                :data="orders"
+                :columns="columns"
+                :loading="loading"
+                :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
+            >
+                <template #schedule-cell="{ row }">
+                    <NuxtLink
+                        v-if="row.original.pasabuy_schedule"
+                        :to="`/pasabuy/${row.original.pasabuy_schedule.uuid}`"
+                        class="font-medium text-highlighted hover:text-primary"
+                    >
+                        {{ row.original.pasabuy_schedule.title }}
+                    </NuxtLink>
+                </template>
+                <template #total_amount-cell="{ row }">
+                    {{ orderDisplayAmount(row.original) }}
+                </template>
+                <template #status-cell="{ row }">
+                    <OrderStatusBadge :status="row.original.status" />
+                </template>
+                <template #payment_status-cell="{ row }">
+                    <PaymentStatusBadge v-if="row.original.pasabuy_schedule?.status === 'finished'" :status="row.original.payment_status" />
+                    <span v-else class="text-muted">-</span>
+                </template>
+                <template #delivery_status-cell="{ row }">
+                    <DeliveryStatusBadge v-if="row.original.pasabuy_schedule?.status === 'finished'" :status="row.original.delivery_status" />
+                    <span v-else class="text-muted">-</span>
+                </template>
+                <template #created_at-cell="{ row }">
+                    <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
+                </template>
+                <template #actions-cell="{ row }">
+                    <BaseButton size="sm" color="neutral" variant="ghost" @click="viewOrder(row.original)">
+                        View
+                    </BaseButton>
+                </template>
+                <template #list-item="{ item: order }">
+                    <ListCard clickable @click="viewOrder(order)">
+                        <template #title>
+                            <span v-if="order.pasabuy_schedule" class="font-medium text-highlighted">
+                                {{ order.pasabuy_schedule.title }}
+                            </span>
                         </template>
-                    </template>
-                </ListCard>
-                <div v-if="orders.length === 0" class="flex flex-col items-center gap-3 py-10">
-                    <UIcon name="i-lucide-receipt" class="size-8 text-dimmed" />
-                    <p class="text-sm text-muted">{{ emptyStateMessage }}</p>
-                </div>
-            </div>
+                        <template #meta>
+                            <span class="font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
+                            <span class="text-muted">{{ formatDate(order.created_at) }}</span>
+                        </template>
+                        <template #status>
+                            <OrderStatusBadge :status="order.status" />
+                            <template v-if="order.pasabuy_schedule?.status === 'finished'">
+                                <PaymentStatusBadge :status="order.payment_status" />
+                                <DeliveryStatusBadge :status="order.delivery_status" />
+                            </template>
+                        </template>
+                    </ListCard>
+                </template>
+                <template #empty>
+                    <div class="flex flex-col items-center gap-3 py-10">
+                        <UIcon name="i-lucide-receipt" class="size-8 text-dimmed" />
+                        <p class="text-sm text-muted">{{ emptyStateMessage }}</p>
+                    </div>
+                </template>
+            </ResponsiveTable>
         </UCard>
 
         <div v-if="total > perPage" class="flex justify-center">

@@ -1,5 +1,5 @@
 <template>
-    <div class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[#f5f5f5]">
+    <div class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-default">
         <img
             src="/img/logo/chirihil_pasabuy_enhanced_transparent_bg.png"
             alt="Chirihil Pasabuy"

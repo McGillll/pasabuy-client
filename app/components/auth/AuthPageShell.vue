@@ -1,5 +1,5 @@
 <template>
-    <div class="dark relative min-h-screen flex items-center justify-center overflow-hidden bg-default px-4 py-12">
+    <div class="relative min-h-screen flex items-center justify-center overflow-hidden bg-default px-4 py-12">
         <div class="pointer-events-none absolute inset-0 bg-linear-to-br from-default via-muted to-default" />
         <div class="pointer-events-none absolute -top-32 -left-32 size-112 rounded-full bg-primary/30 blur-3xl" />
         <div class="pointer-events-none absolute -bottom-32 -right-32 size-112 rounded-full bg-primary/20 blur-3xl" />
