@@ -66,18 +66,18 @@
                         >
                             {{ row.original.pasabuy_schedule.title }}
                         </NuxtLink>
-                        <span v-else class="text-muted">—</span>
+                        <span v-else class="text-muted">-</span>
                     </template>
                     <template #status-cell="{ row }">
                         <OrderStatusBadge :status="row.original.status" />
                     </template>
                     <template #payment_status-cell="{ row }">
                         <PaymentStatusBadge v-if="row.original.status === 'confirmed'" :status="row.original.payment_status" />
-                        <span v-else class="text-muted">—</span>
+                        <span v-else class="text-muted">-</span>
                     </template>
                     <template #delivery_status-cell="{ row }">
                         <DeliveryStatusBadge v-if="row.original.status === 'confirmed'" :status="row.original.delivery_status" />
-                        <span v-else class="text-muted">—</span>
+                        <span v-else class="text-muted">-</span>
                     </template>
                     <template #actions-cell="{ row }">
                         <div v-if="row.original.status === 'confirmed'" class="flex items-center justify-end gap-2">

@@ -46,7 +46,7 @@
                                 </div>
                             </template>
                             <template #subtitle>
-                                {{ item.category_name ?? '—' }}
+                                {{ item.category_name ?? '-' }}
                             </template>
                             <template v-if="item.additional_quantity > 0 || item.return_quantity > 0" #status>
                                 <UBadge v-if="item.additional_quantity > 0" color="warning" variant="subtle" size="sm">

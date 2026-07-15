@@ -7,7 +7,7 @@ class BaseAPIService {
         let requestUrl = url
 
         if (method === 'GET') {
-            // GET — build the query string directly into the URL so it's guaranteed to be sent
+            // GET: build the query string directly into the URL so it's guaranteed to be sent
             const query = new URLSearchParams()
             Object.entries(params ?? {}).forEach(([key, value]) => {
                 if (value !== undefined && value !== null) {

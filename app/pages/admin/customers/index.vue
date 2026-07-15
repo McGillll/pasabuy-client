@@ -58,7 +58,7 @@
                                     {{ customer.email }}
                                 </template>
                                 <template #meta>
-                                    <span class="text-muted">{{ customer.contact_number ?? '—' }}</span>
+                                    <span class="text-muted">{{ customer.contact_number ?? '-' }}</span>
                                 </template>
                             </ListCard>
                             <TableEmptyState v-if="approvedCustomers.length === 0" icon="i-lucide-users" message="No approved customers found." />
@@ -117,7 +117,7 @@
                                     {{ customer.email }}
                                 </template>
                                 <template #meta>
-                                    <span class="text-muted">{{ customer.contact_number ?? '—' }}</span>
+                                    <span class="text-muted">{{ customer.contact_number ?? '-' }}</span>
                                     <span class="text-muted">{{ formatDate(customer.created_at) }}</span>
                                 </template>
                             </ListCard>
@@ -260,7 +260,7 @@ const pendingColumns: TableColumn<Customer>[] = [
 ]
 
 // Each tab keeps its own list/page/total, fetched with an explicit is_approved
-// filter — never shared state between tabs, so they can't show the same data.
+// filter: never shared state between tabs, so they can't show the same data.
 const approvedCustomers = ref<Customer[]>([])
 const approvedLoading = ref(false)
 const approvedPage = ref(1)

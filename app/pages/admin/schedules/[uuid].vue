@@ -45,7 +45,7 @@
                         variant="subtle"
                         icon="i-lucide-check-circle"
                         title="This schedule is finished"
-                        description="This batch is fully settled — details can no longer be edited."
+                        description="This batch is fully settled. Details can no longer be edited."
                         class="max-w-lg mb-4"
                     />
                     <form class="max-w-lg space-y-4" @submit.prevent="saveDetails">
@@ -55,7 +55,7 @@
                         <UFormField label="Description">
                             <UTextarea v-model="detailsForm.description" :disabled="isLocked" class="w-full" />
                         </UFormField>
-                        <UFormField label="Pasabuy date" hint="The date you'll go to the store — ordering closes once this date arrives" required>
+                        <UFormField label="Pasabuy date" hint="The date you'll go to the store; ordering closes once this date arrives" required>
                             <UInput v-model="detailsForm.pasabuyScheduleDate" type="date" required :disabled="isLocked" class="w-full" />
                         </UFormField>
                         <BaseButton type="submit" :loading="savingDetails" :disabled="isLocked">
@@ -102,7 +102,7 @@
                                                 Out of stock
                                             </UBadge>
                                         </div>
-                                        <p class="text-sm text-muted">{{ row.original.category_name ?? '—' }}</p>
+                                        <p class="text-sm text-muted">{{ row.original.category_name ?? '-' }}</p>
                                     </template>
                                     <template #default_price-cell="{ row }">
                                         ₱{{ row.original.default_price }}
@@ -117,7 +117,7 @@
                                         <span v-else>₱{{ row.original.subtotal }}</span>
                                     </template>
                                     <template #empty>
-                                        <TableEmptyState icon="i-lucide-clipboard-list" message="No orders yet — the checklist fills in once customers order." />
+                                        <TableEmptyState icon="i-lucide-clipboard-list" message="No orders yet. The checklist fills in once customers order." />
                                     </template>
                                 </UTable>
                             </div>
@@ -133,7 +133,7 @@
                                         <p class="font-medium text-highlighted">{{ item.product_name }}</p>
                                     </template>
                                     <template #subtitle>
-                                        {{ item.category_name ?? '—' }}
+                                        {{ item.category_name ?? '-' }}
                                     </template>
                                     <template #meta>
                                         <span class="text-muted">₱{{ item.default_price }} × {{ getDisplayQuantity(item) }}</span>
@@ -148,7 +148,7 @@
                                         </UBadge>
                                     </template>
                                 </ListCard>
-                                <TableEmptyState v-if="summary.length === 0" icon="i-lucide-clipboard-list" message="No orders yet — the checklist fills in once customers order." />
+                                <TableEmptyState v-if="summary.length === 0" icon="i-lucide-clipboard-list" message="No orders yet. The checklist fills in once customers order." />
                             </div>
                             <template v-if="summary.length > 0" #footer>
                                 <div class="flex items-center justify-between font-medium text-highlighted">
@@ -214,7 +214,7 @@
                                     </template>
                                     <template #product-cell="{ row }">
                                         <p class="font-medium text-highlighted" :class="{ 'line-through text-muted': row.original.is_checked }">{{ row.original.product_name }}</p>
-                                        <p class="text-sm text-muted">{{ row.original.category_name ?? '—' }}</p>
+                                        <p class="text-sm text-muted">{{ row.original.category_name ?? '-' }}</p>
                                     </template>
                                     <template #quantity-cell="{ row }">
                                         <span class="text-lg font-bold tabular-nums" :class="row.original.is_checked ? 'text-muted' : 'text-highlighted'">{{ row.original.quantity }}x</span>
@@ -251,7 +251,7 @@
                                         </div>
                                     </template>
                                     <template #subtitle>
-                                        {{ item.category_name ?? '—' }}
+                                        {{ item.category_name ?? '-' }}
                                     </template>
                                     <template v-if="item.additional_quantity > 0 || item.return_quantity > 0" #status>
                                         <UBadge v-if="item.additional_quantity > 0" color="warning" variant="subtle" size="sm">
@@ -808,7 +808,7 @@ async function copyChecklistShareLink() {
         const response = await pasabuyScheduleService.fetchChecklistShareLink(uuid)
         const url = `${window.location.origin}/pasabuy/checklist/${response.data.token}`
         await navigator.clipboard.writeText(url)
-        toast.add({ title: 'Helper link copied', description: 'Anyone with this link can view and check off items — no account needed.', color: 'success' })
+        toast.add({ title: 'Helper link copied', description: 'Anyone with this link can view and check off items, no account needed.', color: 'success' })
     } catch (error) {
         toast.add({ title: 'Failed to get share link', description: (error as APIError).message, color: 'error' })
     } finally {
@@ -817,7 +817,7 @@ async function copyChecklistShareLink() {
 }
 
 async function regenerateChecklistShareLinkAction() {
-    if (!confirm('This invalidates the current helper link — anyone still using it will lose access. Continue?')) return
+    if (!confirm('This invalidates the current helper link. Anyone still using it will lose access. Continue?')) return
 
     regeneratingChecklistShareLink.value = true
     try {
@@ -866,7 +866,7 @@ async function startChecklistLiveSync() {
         const response = await pasabuyScheduleService.fetchChecklistShareLink(uuid)
         subscribeChecklistChannel(response.data.token)
     } catch {
-        // Share link isn't ready yet (schedule not closed) — admin can still toggle items manually.
+        // Share link isn't ready yet (schedule not closed); admin can still toggle items manually.
     }
 }
 
@@ -1100,7 +1100,7 @@ const displayItems = computed(() => {
     return items.filter((item) => !item.product_uuid || editableUuids.has(item.product_uuid))
 })
 
-// Items added via "Add a product" that aren't part of the saved order yet — shown as pending rows until saved.
+// Items added via "Add a product" that aren't part of the saved order yet, shown as pending rows until saved.
 const pendingNewItems = computed(() => {
     if (!canEditOrderItems.value) return []
     const existingUuids = new Set((viewingOrder.value?.items ?? []).map((item) => item.product_uuid))
@@ -1130,7 +1130,7 @@ const draftOrderTotal = computed(() => {
     }, 0)
 })
 
-// Per-line quantity/subtotal preview while editing — displayItems still holds the server-saved values.
+// Per-line quantity/subtotal preview while editing; displayItems still holds the server-saved values.
 function getLineQuantity(item: OrderItem) {
     if (!canEditOrderItems.value || !item.product_uuid) return item.quantity
     return findEditableItem(item.product_uuid)?.quantity ?? item.quantity

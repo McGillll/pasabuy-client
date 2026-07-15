@@ -63,7 +63,7 @@
                         <StatusBadge :color="scheduleStatusColor[row.original.status]" :label="row.original.status" />
                     </template>
                     <template #pasabuy_schedule_date-cell="{ row }">
-                        <span class="text-muted">{{ row.original.pasabuy_schedule_date ? formatDate(row.original.pasabuy_schedule_date) : '—' }}</span>
+                        <span class="text-muted">{{ row.original.pasabuy_schedule_date ? formatDate(row.original.pasabuy_schedule_date) : '-' }}</span>
                     </template>
                     <template #actions-cell="{ row }">
                         <div class="flex justify-end gap-2">
@@ -112,7 +112,7 @@
                         <p class="font-medium text-highlighted">{{ scheduleRow.title }}</p>
                     </template>
                     <template #meta>
-                        <span class="text-muted">{{ scheduleRow.pasabuy_schedule_date ? formatDate(scheduleRow.pasabuy_schedule_date) : '—' }}</span>
+                        <span class="text-muted">{{ scheduleRow.pasabuy_schedule_date ? formatDate(scheduleRow.pasabuy_schedule_date) : '-' }}</span>
                     </template>
                     <template #status>
                         <StatusBadge :color="scheduleStatusColor[scheduleRow.status]" :label="scheduleRow.status" />

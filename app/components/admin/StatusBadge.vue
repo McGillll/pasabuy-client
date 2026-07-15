@@ -16,6 +16,6 @@ withDefaults(defineProps<{
     dot?: boolean
     size?: BadgeProps['size']
 }>(), {
-    dot: true
+    dot: false
 })
 </script>

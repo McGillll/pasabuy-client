@@ -474,12 +474,12 @@ async function restoreSession() {
     try {
         await fetchCurrentUser()
     } catch {
-        // invalid/expired token — treat as logged out
+        // invalid/expired token: treat as logged out
     }
 }
 
 /**
- * Customers can only have one active (pending/confirmed) order per schedule —
+ * Customers can only have one active (pending/confirmed) order per schedule:
  * find it, if any, so we show its summary instead of a fresh ordering form.
  */
 async function loadMyOrder() {
@@ -488,7 +488,7 @@ async function loadMyOrder() {
         const orders = response.data.data as MyOrder[]
         myOrder.value = orders.find((o) => o.pasabuy_schedule?.uuid === uuid && o.status !== 'cancelled') ?? null
     } catch {
-        // non-critical — fall back to showing a fresh ordering form
+        // non-critical, fall back to showing a fresh ordering form
     }
 }
 

@@ -15,15 +15,16 @@
                 <div class="mt-4 space-y-4" :style="panelStyle">
                     <SearchInput v-model="productSearch" placeholder="Search products…" />
 
-                    <UTabs
-                        v-if="categoryFilterTabs.length > 2"
-                        v-model="productCategoryFilter"
-                        :items="categoryFilterTabs"
-                        variant="pill"
-                        size="sm"
-                        class="w-full"
-                        :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0' }"
-                    />
+                    <div v-if="categoryFilterTabs.length > 2" data-swipe-ignore>
+                        <UTabs
+                            v-model="productCategoryFilter"
+                            :items="categoryFilterTabs"
+                            variant="pill"
+                            size="sm"
+                            class="w-full"
+                            :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0' }"
+                        />
+                    </div>
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
                         <div class="hidden sm:block">
@@ -51,7 +52,7 @@
                                     </p>
                                 </template>
                                 <template #category-cell="{ row }">
-                                    <span class="text-sm text-muted">{{ row.original.category?.name ?? '—' }}</span>
+                                    <span class="text-sm text-muted">{{ row.original.category?.name ?? '-' }}</span>
                                 </template>
                                 <template #default_price-cell="{ row }">
                                     <span class="font-medium text-highlighted">₱{{ row.original.default_price }}</span>
@@ -112,7 +113,7 @@
                                     <span v-if="product.description" class="truncate">{{ product.description }}</span>
                                 </template>
                                 <template #meta>
-                                    <span class="text-muted">{{ product.category?.name ?? '—' }}</span>
+                                    <span class="text-muted">{{ product.category?.name ?? '-' }}</span>
                                     <span class="font-medium text-highlighted">₱{{ product.default_price }}</span>
                                 </template>
                                 <template #status>

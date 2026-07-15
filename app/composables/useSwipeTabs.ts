@@ -15,6 +15,7 @@ export function useSwipeTabs<T extends string>(activeTab: Ref<T>, tabValues: Ref
 
     function onTouchStart(event: TouchEvent) {
         if (event.touches.length !== 1 || animating.value) return
+        if ((event.target as HTMLElement | null)?.closest('[data-swipe-ignore]')) return
         startX = event.touches[0]!.clientX
         startY = event.touches[0]!.clientY
         axisLocked = null
