@@ -802,12 +802,17 @@ async function regenerateChecklist(silent = false) {
     }
 }
 
+const { copyTextAsync } = useAsyncClipboard()
+
 async function copyChecklistShareLink() {
     loadingChecklistShareLink.value = true
     try {
-        const response = await pasabuyScheduleService.fetchChecklistShareLink(uuid)
-        const url = `${window.location.origin}/pasabuy/checklist/${response.data.token}`
-        await navigator.clipboard.writeText(url)
+        let token = ''
+        await copyTextAsync(async () => {
+            const response = await pasabuyScheduleService.fetchChecklistShareLink(uuid)
+            token = response.data.token
+            return `${window.location.origin}/pasabuy/checklist/${token}`
+        })
         toast.add({ title: 'Helper link copied', description: 'Anyone with this link can view and check off items, no account needed.', color: 'success' })
     } catch (error) {
         toast.add({ title: 'Failed to get share link', description: (error as APIError).message, color: 'error' })
@@ -821,11 +826,14 @@ async function regenerateChecklistShareLinkAction() {
 
     regeneratingChecklistShareLink.value = true
     try {
-        const response = await pasabuyScheduleService.regenerateChecklistShareLink(uuid)
-        const url = `${window.location.origin}/pasabuy/checklist/${response.data.token}`
-        await navigator.clipboard.writeText(url)
+        let token = ''
+        await copyTextAsync(async () => {
+            const response = await pasabuyScheduleService.regenerateChecklistShareLink(uuid)
+            token = response.data.token
+            return `${window.location.origin}/pasabuy/checklist/${token}`
+        })
         toast.add({ title: 'New helper link copied', description: 'The previous link no longer works.', color: 'success' })
-        if (checklistChannel) subscribeChecklistChannel(response.data.token)
+        if (checklistChannel) subscribeChecklistChannel(token)
     } catch (error) {
         toast.add({ title: 'Failed to revoke link', description: (error as APIError).message, color: 'error' })
     } finally {
