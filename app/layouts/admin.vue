@@ -1,11 +1,14 @@
 <template>
     <div class="h-screen h-dvh flex bg-default overflow-hidden">
         <aside class="hidden md:flex md:w-64 md:flex-col md:shrink-0 border-r border-default">
-            <div class="flex items-center gap-2 px-6 py-5">
-                <div class="flex items-center justify-center size-8 rounded-lg bg-primary text-inverted font-bold">
-                    P
+            <div class="flex items-center justify-between gap-2 px-6 py-5">
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center justify-center size-8 rounded-lg bg-primary text-inverted font-bold">
+                        P
+                    </div>
+                    <span class="font-semibold text-highlighted">Pasabuy</span>
                 </div>
-                <span class="font-semibold text-highlighted">Pasabuy</span>
+                <UColorModeButton color="neutral" variant="ghost" size="sm" square />
             </div>
 
             <UNavigationMenu
@@ -47,16 +50,19 @@
                         </div>
                         <span class="font-semibold text-highlighted">Pasabuy</span>
                     </div>
-                    <UDropdownMenu :items="accountMenuItems" :content="{ align: 'end' }">
-                        <BaseButton
-                            color="neutral"
-                            variant="ghost"
-                            icon="i-lucide-user-round"
-                            size="sm"
-                            square
-                            aria-label="Account menu"
-                        />
-                    </UDropdownMenu>
+                    <div class="flex items-center gap-1">
+                        <UColorModeButton color="neutral" variant="ghost" size="sm" square class="min-h-11 min-w-11 justify-center" />
+                        <UDropdownMenu :items="accountMenuItems" :content="{ align: 'end' }">
+                            <BaseButton
+                                color="neutral"
+                                variant="ghost"
+                                icon="i-lucide-user-round"
+                                size="sm"
+                                square
+                                aria-label="Account menu"
+                            />
+                        </UDropdownMenu>
+                    </div>
                 </div>
             </header>
 

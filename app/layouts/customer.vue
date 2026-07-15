@@ -8,7 +8,8 @@
                     </div>
                     <span class="font-semibold text-highlighted">Pasabuy</span>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1">
+                    <UColorModeButton color="neutral" variant="ghost" size="sm" square class="min-h-11 min-w-11 justify-center" />
                     <UDropdownMenu :items="accountMenuItems" :content="{ align: 'end' }">
                         <BaseButton
                             color="neutral"
