@@ -280,6 +280,9 @@
                             <template #status-cell="{ row }">
                                 <OrderStatusBadge :status="row.original.status" />
                             </template>
+                            <template #total_amount-cell="{ row }">
+                                {{ orderDisplayAmount(row.original) }}
+                            </template>
                             <template #actions-cell="{ row }">
                                 <div class="flex items-center justify-end gap-2">
                                     <template v-if="row.original.status === 'pending'">
@@ -333,7 +336,7 @@
                                 {{ order.customer_contact }}
                             </template>
                             <template #meta>
-                                <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
+                                <span class="font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
                             </template>
                             <template #status>
                                 <OrderStatusBadge :status="order.status" />
@@ -1218,6 +1221,10 @@ async function saveOrderItems() {
     } finally {
         savingOrderItems.value = false
     }
+}
+
+function orderDisplayAmount(order: Order) {
+    return isFinished.value ? order.amount_due : order.total_amount
 }
 
 const orderColumns: TableColumn<Order>[] = [

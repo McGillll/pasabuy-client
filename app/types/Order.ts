@@ -8,6 +8,8 @@ export interface Order {
     payment_status: 'unpaid' | 'partially_paid' | 'paid'
     delivery_status: 'not_delivered' | 'delivered'
     total_amount: string
+    amount_paid: number
+    amount_due: number
     is_editable: boolean
     is_cancellable: boolean
     pasabuy_schedule: {

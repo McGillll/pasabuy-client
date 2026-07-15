@@ -29,25 +29,56 @@
             </div>
         </div>
 
-        <div class="divide-y divide-dashed divide-default">
-            <div v-for="item in order.items" :key="item.uuid" class="p-4">
-                <OrderLineItem :item="item" />
+        <div class="p-4">
+            <div v-if="loading" class="space-y-2">
+                <USkeleton class="h-5 w-full" />
+                <USkeleton class="h-5 w-full" />
+                <USkeleton class="h-5 w-full" />
             </div>
-        </div>
 
-        <div class="border-t border-dashed border-default p-4">
-            <div class="flex items-center justify-between text-base font-semibold text-highlighted">
-                <span>Total</span>
-                <span>₱{{ order.total_amount }}</span>
-            </div>
+            <UAlert
+                v-else-if="error"
+                color="error"
+                variant="subtle"
+                title="Failed to load invoice"
+                :description="error"
+            >
+                <template #actions>
+                    <BaseButton size="xs" color="error" variant="soft" @click="loadInvoice">Retry</BaseButton>
+                </template>
+            </UAlert>
+
+            <InvoiceBreakdown v-else-if="invoice" :invoice="invoice" />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import { customerOrderService } from '@/components/api/customer/CustomerOrderService'
+import APIError from '@/components/api/user/APIError'
+import type { Invoice } from '@/types/Invoice'
 import type { Order } from '@/types/Order'
 
-defineProps<{
+const props = defineProps<{
     order: Order
 }>()
+
+const invoice = ref<Invoice | null>(null)
+const loading = ref(false)
+const error = ref('')
+
+async function loadInvoice() {
+    loading.value = true
+    error.value = ''
+    try {
+        const response = await customerOrderService.fetchInvoice(props.order.uuid)
+        invoice.value = response.data
+    } catch (err) {
+        error.value = (err as APIError).message
+    } finally {
+        loading.value = false
+    }
+}
+
+watch(() => props.order.uuid, loadInvoice, { immediate: true })
 </script>

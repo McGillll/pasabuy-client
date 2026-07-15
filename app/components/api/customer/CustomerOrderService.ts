@@ -25,6 +25,10 @@ class CustomerOrderService extends BaseAPIService {
     async cancelOrder(uuid: string): Promise<any> {
         return await this.request(`/customer/orders/${uuid}/cancel`, 'POST')
     }
+
+    async fetchInvoice(uuid: string): Promise<any> {
+        return await this.request(`/customer/orders/${uuid}/invoice`, 'GET')
+    }
 }
 
 export const customerOrderService = new CustomerOrderService()

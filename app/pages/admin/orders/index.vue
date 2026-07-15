@@ -79,6 +79,9 @@
                         <DeliveryStatusBadge v-if="row.original.status === 'confirmed'" :status="row.original.delivery_status" />
                         <span v-else class="text-muted">-</span>
                     </template>
+                    <template #total_amount-cell="{ row }">
+                        {{ orderDisplayAmount(row.original) }}
+                    </template>
                     <template #actions-cell="{ row }">
                         <div v-if="row.original.status === 'confirmed'" class="flex items-center justify-end gap-2">
                             <BaseButton
@@ -113,7 +116,7 @@
                         {{ order.customer_contact }}
                     </template>
                     <template #meta>
-                        <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
+                        <span class="font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
                         <NuxtLink
                             v-if="order.pasabuy_schedule"
                             :to="`/admin/schedules/${order.pasabuy_schedule.uuid}`"
@@ -370,6 +373,10 @@ const deliveryStatusFilterOptions = [
     { label: deliveryStatusLabel.not_delivered, value: 'not_delivered' },
     { label: deliveryStatusLabel.delivered, value: 'delivered' }
 ]
+
+function orderDisplayAmount(order: Order) {
+    return order.pasabuy_schedule?.status === 'finished' ? order.amount_due : order.total_amount
+}
 
 const orderColumns: TableColumn<Order>[] = [
     { id: 'customer', header: 'Customer' },

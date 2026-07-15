@@ -85,16 +85,40 @@
                     <span class="text-sm text-muted">{{ formatDate(selectedOrder.created_at) }}</span>
                 </div>
 
-                <div class="divide-y divide-default rounded-lg border border-default">
-                    <div v-for="item in selectedOrder.items" :key="item.uuid" class="p-3">
-                        <OrderLineItem :item="item" />
+                <template v-if="selectedOrder.pasabuy_schedule?.status === 'finished'">
+                    <div v-if="invoiceLoading" class="space-y-2">
+                        <USkeleton class="h-5 w-full" />
+                        <USkeleton class="h-5 w-full" />
+                        <USkeleton class="h-5 w-full" />
                     </div>
-                </div>
+                    <UAlert
+                        v-else-if="invoiceError"
+                        color="error"
+                        variant="subtle"
+                        title="Failed to load invoice"
+                        :description="invoiceError"
+                    >
+                        <template #actions>
+                            <BaseButton size="xs" color="error" variant="soft" @click="loadInvoice(selectedOrder.uuid)">
+                                Retry
+                            </BaseButton>
+                        </template>
+                    </UAlert>
+                    <InvoiceBreakdown v-else-if="invoice" :invoice="invoice" />
+                </template>
 
-                <div class="flex items-center justify-between border-t border-default pt-3 font-medium text-highlighted">
-                    <span>Total</span>
-                    <span>₱{{ selectedOrder.total_amount }}</span>
-                </div>
+                <template v-else>
+                    <div class="divide-y divide-default rounded-lg border border-default">
+                        <div v-for="item in selectedOrder.items" :key="item.uuid" class="p-3">
+                            <OrderLineItem :item="item" />
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between border-t border-default pt-3 font-medium text-highlighted">
+                        <span>Total</span>
+                        <span>₱{{ selectedOrder.total_amount }}</span>
+                    </div>
+                </template>
 
                 <div v-if="selectedOrder.is_cancellable" class="flex items-center justify-end gap-2">
                     <CancelOrderControl :loading="cancellingOrder" @confirm="cancelSelectedOrder" />
@@ -107,6 +131,7 @@
 <script setup lang="ts">
 import { customerOrderService } from '@/components/api/customer/CustomerOrderService'
 import APIError from '@/components/api/user/APIError'
+import type { Invoice } from '@/types/Invoice'
 import type { TableColumn } from '@nuxt/ui'
 
 definePageMeta({ layout: 'customer', middleware: 'customer-auth' })
@@ -131,7 +156,7 @@ interface Order {
     total_amount: string
     is_editable: boolean
     is_cancellable: boolean
-    pasabuy_schedule: { uuid: string; title: string } | null
+    pasabuy_schedule: { uuid: string; title: string; status: 'open' | 'closed' | 'finished' } | null
     items: OrderItem[]
     created_at: string
 }
@@ -176,10 +201,31 @@ watch(page, loadOrders)
 const isDetailOpen = ref(false)
 const selectedOrder = ref<Order | null>(null)
 const cancellingOrder = ref(false)
+const invoice = ref<Invoice | null>(null)
+const invoiceLoading = ref(false)
+const invoiceError = ref('')
+
+async function loadInvoice(orderUuid: string) {
+    invoiceLoading.value = true
+    invoiceError.value = ''
+    try {
+        const response = await customerOrderService.fetchInvoice(orderUuid)
+        invoice.value = response.data
+    } catch (error) {
+        invoiceError.value = (error as APIError).message
+    } finally {
+        invoiceLoading.value = false
+    }
+}
 
 function viewOrder(order: Order) {
     selectedOrder.value = order
     isDetailOpen.value = true
+    invoice.value = null
+    invoiceError.value = ''
+    if (order.pasabuy_schedule?.status === 'finished') {
+        loadInvoice(order.uuid)
+    }
 }
 
 async function cancelSelectedOrder() {
