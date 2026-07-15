@@ -224,7 +224,7 @@
                 :ui="{ root: 'px-4 py-2', list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0' }"
             />
 
-            <div class="mx-auto max-w-2xl space-y-3 px-4 py-3">
+            <div class="mx-auto max-w-2xl space-y-3 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <template v-if="!isLoggedIn">
                     <div class="flex items-center justify-between gap-3">
                         <p class="text-sm text-muted">Log in to place an order.</p>

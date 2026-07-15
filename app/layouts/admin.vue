@@ -1,5 +1,5 @@
 <template>
-    <div class="h-screen flex bg-default overflow-hidden">
+    <div class="h-screen h-dvh flex bg-default overflow-hidden">
         <aside class="hidden md:flex md:w-64 md:flex-col md:shrink-0 border-r border-default">
             <div class="flex items-center gap-2 px-6 py-5">
                 <div class="flex items-center justify-center size-8 rounded-lg bg-primary text-inverted font-bold">
@@ -65,7 +65,7 @@
             </main>
         </div>
 
-        <nav class="md:hidden fixed inset-x-0 bottom-0 z-10 flex w-full border-t border-default bg-default">
+        <nav class="md:hidden fixed inset-x-0 bottom-0 z-10 flex w-full border-t border-default bg-default pb-[env(safe-area-inset-bottom)]">
             <NuxtLink
                 v-for="link in mobileLinks"
                 :key="link.to"

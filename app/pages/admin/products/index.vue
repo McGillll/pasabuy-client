@@ -465,10 +465,21 @@ const productForm = reactive({
 })
 const savingProduct = ref(false)
 
-const productImagePreviewUrl = computed(() => {
-    if (productForm.image) return URL.createObjectURL(productForm.image)
-    return editingProduct.value?.image_url ?? null
-})
+const productImagePreviewUrl = ref<string | null>(null)
+
+watch(
+    [() => productForm.image, () => editingProduct.value],
+    ([image, product], _old, onCleanup) => {
+        if (image) {
+            const url = URL.createObjectURL(image)
+            productImagePreviewUrl.value = url
+            onCleanup(() => URL.revokeObjectURL(url))
+            return
+        }
+        productImagePreviewUrl.value = product?.image_url ?? null
+    },
+    { immediate: true }
+)
 
 function openProductCreateModal() {
     editingProduct.value = null

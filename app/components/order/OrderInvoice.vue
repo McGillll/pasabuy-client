@@ -50,12 +50,4 @@ import type { Order } from '@/types/Order'
 defineProps<{
     order: Order
 }>()
-
-function formatDate(value: string) {
-    return new Date(value).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    })
-}
 </script>

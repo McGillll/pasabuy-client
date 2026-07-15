@@ -1032,7 +1032,7 @@ async function refreshOrders() {
 }
 
 async function copyLink() {
-    await navigator.clipboard.writeText(publicLink.value)
+    await copyTextAsync(async () => publicLink.value)
     toast.add({ title: 'Link copied', color: 'success' })
 }
 
