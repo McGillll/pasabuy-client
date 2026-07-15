@@ -123,16 +123,16 @@
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate font-medium text-highlighted">{{ product.name }}</p>
                                     <div class="flex items-center gap-2">
-                                        <p class="text-sm text-muted">₱{{ product.default_price }}</p>
-                                        <span class="text-xs text-dimmed">estimated</span>
+                                        <p class="text-sm text-muted">₱{{ resolvedPrice(product) }}</p>
+                                        <span class="text-xs text-dimmed">{{ isPriceConfirmed(product) ? 'confirmed' : 'estimated' }}</span>
                                     </div>
                                     <p v-if="quantities[product.uuid]" class="text-sm font-medium text-primary">
-                                        Subtotal: ₱{{ (Number(product.default_price) * quantities[product.uuid]!).toFixed(2) }}
+                                        Subtotal: ₱{{ (Number(resolvedPrice(product)) * quantities[product.uuid]!).toFixed(2) }}
                                     </p>
                                 </div>
 
                                 <div class="flex shrink-0 items-center gap-2">
-                                    <span v-if="product.default_product_status === 'out_of_stock'" class="text-sm font-medium text-error">
+                                    <span v-if="resolvedStatus(product) === 'out_of_stock'" class="text-sm font-medium text-error">
                                         Out of stock
                                     </span>
                                     <template v-else>
@@ -298,7 +298,7 @@
                         <div class="min-w-0 flex-1">
                             <p class="truncate font-medium text-highlighted">{{ product.name }}</p>
                             <p class="text-sm font-medium text-primary">
-                                ₱{{ (Number(product.default_price) * quantities[product.uuid]!).toFixed(2) }}
+                                ₱{{ (Number(resolvedPrice(product)) * quantities[product.uuid]!).toFixed(2) }}
                             </p>
                         </div>
 
@@ -355,7 +355,7 @@ import { publicProductService } from '@/components/api/public/PublicProductServi
 import { customerOrderService } from '@/components/api/customer/CustomerOrderService'
 import APIError from '@/components/api/user/APIError'
 import type { Product } from '@/types/Product'
-import type { Schedule } from '@/types/Schedule'
+import type { Schedule, ScheduleProduct } from '@/types/Schedule'
 
 definePageMeta({ layout: false })
 
@@ -408,6 +408,29 @@ const isApproved = computed(() => user.value?.is_approved === true)
 
 const showBottomBar = computed(() => !!schedule.value && (!myOrder.value || editingOrder.value))
 
+const scheduleProductByUuid = computed(() => {
+    const map = new Map<string, ScheduleProduct>()
+    for (const scheduleProduct of schedule.value?.products ?? []) {
+        map.set(scheduleProduct.product.uuid, scheduleProduct)
+    }
+    return map
+})
+
+function resolvedStatus(product: Product) {
+    return scheduleProductByUuid.value.get(product.uuid)?.product_status ?? product.default_product_status
+}
+
+function resolvedPrice(product: Product): string {
+    const scheduleProduct = scheduleProductByUuid.value.get(product.uuid)
+    if (scheduleProduct?.actual_price !== null && scheduleProduct?.actual_price !== undefined) return scheduleProduct.actual_price
+    return product.default_price
+}
+
+function isPriceConfirmed(product: Product): boolean {
+    const scheduleProduct = scheduleProductByUuid.value.get(product.uuid)
+    return scheduleProduct?.actual_price !== null && scheduleProduct?.actual_price !== undefined
+}
+
 const categoryTabs = computed(() => {
     const seen = new Map<string, string>()
     for (const product of catalog.value) {
@@ -430,7 +453,7 @@ const cartItems = computed(() => catalog.value.filter((product) => (quantities.v
 const total = computed(() => {
     return catalog.value.reduce((sum, product) => {
         const qty = quantities.value[product.uuid] || 0
-        return sum + qty * Number(product.default_price)
+        return sum + qty * Number(resolvedPrice(product))
     }, 0)
 })
 
