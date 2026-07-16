@@ -61,6 +61,7 @@
                     >
                         {{ row.original.pasabuy_schedule.title }}
                     </NuxtLink>
+                    <p class="font-mono text-xs text-dimmed">{{ row.original.order_no }}</p>
                 </template>
                 <template #total_amount-cell="{ row }">
                     {{ orderDisplayAmount(row.original) }}
@@ -90,6 +91,9 @@
                             <span v-if="order.pasabuy_schedule" class="font-medium text-highlighted">
                                 {{ order.pasabuy_schedule.title }}
                             </span>
+                        </template>
+                        <template #subtitle>
+                            <span class="font-mono text-xs">{{ order.order_no }}</span>
                         </template>
                         <template #meta>
                             <span class="font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
@@ -124,7 +128,10 @@
         >
             <div v-if="selectedOrder" class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <OrderStatusBadge :status="selectedOrder.status" />
+                    <div class="flex items-center gap-2">
+                        <OrderStatusBadge :status="selectedOrder.status" />
+                        <span class="font-mono text-xs text-dimmed">{{ selectedOrder.order_no }}</span>
+                    </div>
                     <span class="text-sm text-muted">{{ formatDate(selectedOrder.created_at) }}</span>
                 </div>
 
@@ -195,6 +202,7 @@ interface OrderItem {
 
 interface Order {
     uuid: string
+    order_no: string
     status: 'pending' | 'confirmed' | 'cancelled'
     payment_status: 'unpaid' | 'partially_paid' | 'paid'
     delivery_status: 'not_delivered' | 'delivered'

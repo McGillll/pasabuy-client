@@ -13,7 +13,7 @@
         <div class="flex flex-col gap-1 border-b border-dashed border-default p-4 text-sm">
             <div class="flex items-center justify-between">
                 <span class="text-muted">Order ref</span>
-                <span class="font-mono text-highlighted">{{ order.uuid.slice(0, 8).toUpperCase() }}</span>
+                <span class="font-mono text-highlighted">{{ order.order_no }}</span>
             </div>
             <div class="flex items-center justify-between">
                 <span class="text-muted">Placed on</span>

@@ -5,7 +5,7 @@
         </div>
 
         <div class="space-y-3">
-            <SearchInput v-model="search" placeholder="Search by customer name or contact…" class="w-full" />
+            <SearchInput v-model="search" placeholder="Search by customer name, contact, or order no…" class="w-full" />
 
             <div class="hidden sm:grid grid-cols-4 gap-2">
                 <USelect v-model="scheduleFilter" :items="scheduleFilterOptions" value-key="value" class="w-full" />
@@ -56,6 +56,7 @@
                 <template #customer-cell="{ row }">
                     <p class="font-medium text-highlighted">{{ row.original.customer_name }}</p>
                     <p class="text-sm text-muted">{{ row.original.customer_contact }}</p>
+                    <p class="font-mono text-xs text-dimmed">{{ row.original.order_no }}</p>
                 </template>
                 <template #schedule-cell="{ row }">
                     <NuxtLink
@@ -107,7 +108,7 @@
                             <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
                         </template>
                         <template #subtitle>
-                            {{ order.customer_contact }}
+                            {{ order.customer_contact }} · <span class="font-mono text-xs">{{ order.order_no }}</span>
                         </template>
                         <template #meta>
                             <span class="font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
@@ -144,6 +145,7 @@
             view-only
         >
             <div v-if="selectedOrder" class="space-y-4">
+                <p class="font-mono text-xs text-dimmed">{{ selectedOrder.order_no }}</p>
                 <div v-if="invoiceLoading" class="space-y-2">
                     <USkeleton class="h-5 w-full" />
                     <USkeleton class="h-5 w-full" />

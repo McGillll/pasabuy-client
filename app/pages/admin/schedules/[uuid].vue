@@ -314,7 +314,7 @@
                                     <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
                                 </template>
                                 <template #subtitle>
-                                    {{ order.customer_contact }}
+                                    {{ order.customer_contact }} · <span class="font-mono text-xs">{{ order.order_no }}</span>
                                 </template>
                                 <template #meta>
                                     <span class="font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
@@ -414,6 +414,7 @@
                     <div>
                         <p class="font-medium text-highlighted">{{ viewingOrder.customer_name }}</p>
                         <p class="text-sm text-muted">{{ viewingOrder.customer_contact }}</p>
+                        <p class="font-mono text-xs text-dimmed">{{ viewingOrder.order_no }}</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <OrderStatusBadge :status="viewingOrder.status" />
@@ -1233,6 +1234,7 @@ function orderDisplayAmount(order: Order) {
 const orderColumns: TableColumn<Order>[] = [
     { accessorKey: 'customer_name', header: 'Customer' },
     { accessorKey: 'customer_contact', header: 'Contact' },
+    { accessorKey: 'order_no', header: 'Order no' },
     { accessorKey: 'total_amount', header: 'Total' },
     { accessorKey: 'status', header: 'Status' },
     { id: 'actions', header: '' }

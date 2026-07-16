@@ -2,6 +2,7 @@ import type { OrderItem } from '@/types/OrderItem'
 
 export interface Order {
     uuid: string
+    order_no: string
     customer_name: string
     customer_contact: string
     status: 'pending' | 'confirmed' | 'cancelled'
