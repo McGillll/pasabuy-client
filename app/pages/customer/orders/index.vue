@@ -124,14 +124,12 @@
         <BaseModal
             v-model:open="isDetailOpen"
             :title="selectedOrder?.pasabuy_schedule?.title ?? 'Order details'"
+            :description="selectedOrder?.order_no"
             view-only
         >
             <div v-if="selectedOrder" class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <OrderStatusBadge :status="selectedOrder.status" />
-                        <span class="font-mono text-xs text-dimmed">{{ selectedOrder.order_no }}</span>
-                    </div>
+                    <OrderStatusBadge :status="selectedOrder.status" />
                     <span class="text-sm text-muted">{{ formatDate(selectedOrder.created_at) }}</span>
                 </div>
 

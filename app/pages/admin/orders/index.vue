@@ -142,10 +142,10 @@
         <BaseModal
             v-model:open="isPaymentsModalOpen"
             :title="selectedOrder ? `${selectedOrder.customer_name}'s payments` : 'Payments'"
+            :description="selectedOrder?.order_no"
             view-only
         >
             <div v-if="selectedOrder" class="space-y-4">
-                <p class="font-mono text-xs text-dimmed">{{ selectedOrder.order_no }}</p>
                 <div v-if="invoiceLoading" class="space-y-2">
                     <USkeleton class="h-5 w-full" />
                     <USkeleton class="h-5 w-full" />

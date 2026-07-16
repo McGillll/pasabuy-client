@@ -408,13 +408,12 @@
             </div>
         </BaseModal>
 
-        <BaseModal v-model:open="isOrderModalOpen" title="Order details" view-only>
+        <BaseModal v-model:open="isOrderModalOpen" title="Order details" :description="viewingOrder?.order_no" view-only>
             <div v-if="viewingOrder" class="space-y-4">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="font-medium text-highlighted">{{ viewingOrder.customer_name }}</p>
                         <p class="text-sm text-muted">{{ viewingOrder.customer_contact }}</p>
-                        <p class="font-mono text-xs text-dimmed">{{ viewingOrder.order_no }}</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <OrderStatusBadge :status="viewingOrder.status" />
