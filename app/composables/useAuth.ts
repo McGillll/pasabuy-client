@@ -1,5 +1,5 @@
 import { authService } from '@/components/api/auth/AuthService'
-import type { ResetPasswordPayload } from '@/components/api/auth/AuthService'
+import type { ResetPasswordPayload, VerifyEmailPayload } from '@/components/api/auth/AuthService'
 import APIError from '@/components/api/user/APIError'
 import type { User } from '@/types/User'
 
@@ -39,5 +39,15 @@ export function useAuth() {
         return await authService.resetPassword(payload)
     }
 
-    return { user, login, logout, fetchCurrentUser, forgotPassword, resetPassword }
+    async function verifyEmail(payload: VerifyEmailPayload) {
+        const response = await authService.verifyEmail(payload)
+        if (user.value) user.value = { ...user.value, is_verified: true }
+        return response
+    }
+
+    async function resendVerificationEmail() {
+        return await authService.resendVerificationEmail()
+    }
+
+    return { user, login, logout, fetchCurrentUser, forgotPassword, resetPassword, verifyEmail, resendVerificationEmail }
 }

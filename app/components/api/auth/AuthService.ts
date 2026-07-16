@@ -29,6 +29,13 @@ export interface ResetPasswordPayload {
     password_confirmation: string
 }
 
+export interface VerifyEmailPayload {
+    id: string
+    hash: string
+    expires: string
+    signature: string
+}
+
 class AuthService extends BaseAPIService {
     async login(payload: LoginPayload): Promise<any> {
         return await this.request('/auth/login', 'POST', payload)
@@ -56,6 +63,14 @@ class AuthService extends BaseAPIService {
 
     async updatePassword(payload: UpdatePasswordPayload): Promise<any> {
         return await this.request('/auth/me/password', 'PATCH', payload)
+    }
+
+    async verifyEmail(payload: VerifyEmailPayload): Promise<any> {
+        return await this.request('/auth/email/verify', 'POST', payload)
+    }
+
+    async resendVerificationEmail(): Promise<any> {
+        return await this.request('/auth/email/verification-notification', 'POST')
     }
 }
 

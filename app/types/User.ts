@@ -5,4 +5,5 @@ export interface User {
     email: string
     role: string
     is_approved: boolean
+    is_verified: boolean
 }
