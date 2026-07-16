@@ -321,4 +321,5 @@ function scheduleActions(scheduleRow: Schedule): DropdownMenuItem[] {
 }
 
 onMounted(loadSchedules)
+onPullToRefresh(loadSchedules)
 </script>

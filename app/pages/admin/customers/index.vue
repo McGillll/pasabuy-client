@@ -389,4 +389,6 @@ onMounted(() => {
     loadApproved()
     loadPending()
 })
+
+onPullToRefresh(() => Promise.all([loadApproved(), loadPending()]))
 </script>

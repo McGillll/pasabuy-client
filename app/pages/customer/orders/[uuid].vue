@@ -117,6 +117,8 @@ onMounted(async () => {
     pollHandle = setInterval(() => loadOrder(true), 30000)
 })
 
+onPullToRefresh(() => loadOrder())
+
 onUnmounted(() => {
     if (pollHandle) clearInterval(pollHandle)
 })

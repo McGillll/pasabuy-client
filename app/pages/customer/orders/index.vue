@@ -330,4 +330,5 @@ async function cancelSelectedOrder() {
 }
 
 onMounted(loadOrders)
+onPullToRefresh(loadOrders)
 </script>

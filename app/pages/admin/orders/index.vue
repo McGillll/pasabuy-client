@@ -586,4 +586,6 @@ onMounted(() => {
     loadOrders()
     loadSchedules()
 })
+
+onPullToRefresh(() => Promise.all([loadOrders(), loadSchedules()]))
 </script>

@@ -256,4 +256,5 @@ function pendingOrderActions(order: PendingOrder): DropdownMenuItem[] {
 }
 
 onMounted(loadDashboard)
+onPullToRefresh(loadDashboard)
 </script>

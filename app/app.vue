@@ -1,5 +1,6 @@
 <template>
     <UApp>
+        <PullToRefresh />
         <NuxtLayout>
             <NuxtPage />
         </NuxtLayout>

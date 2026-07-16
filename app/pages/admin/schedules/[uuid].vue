@@ -930,6 +930,22 @@ async function refreshSummary() {
     summary.value = response.data
 }
 
+async function pullRefresh() {
+    try {
+        const [scheduleResponse, ordersResponse, summaryResponse] = await Promise.all([
+            pasabuyScheduleService.fetchSchedule(uuid),
+            pasabuyScheduleService.fetchOrders(uuid),
+            pasabuyScheduleService.fetchScheduleSummary(uuid)
+        ])
+        schedule.value = scheduleResponse.data
+        orders.value = ordersResponse.data
+        summary.value = summaryResponse.data
+        await loadChecklist()
+    } catch (error) {
+        toast.add({ title: 'Failed to refresh', description: (error as APIError).message, color: 'error' })
+    }
+}
+
 async function saveDetails() {
     if (!detailsForm.pasabuyScheduleDate) {
         toast.add({ title: 'Pasabuy date is required', color: 'error' })
@@ -1223,4 +1239,5 @@ const orderColumns: TableColumn<Order>[] = [
 ]
 
 onMounted(loadAll)
+onPullToRefresh(pullRefresh)
 </script>

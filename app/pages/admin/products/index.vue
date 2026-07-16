@@ -649,4 +649,6 @@ onMounted(() => {
     loadProducts()
     loadCategories()
 })
+
+onPullToRefresh(() => Promise.all([loadCategoryOptions(), loadProducts(), loadCategories()]))
 </script>

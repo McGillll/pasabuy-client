@@ -79,4 +79,5 @@ async function loadSchedules() {
 watch(page, loadSchedules)
 
 onMounted(loadSchedules)
+onPullToRefresh(loadSchedules)
 </script>

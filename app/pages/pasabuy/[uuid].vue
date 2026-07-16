@@ -478,7 +478,9 @@ async function load() {
         schedule.value = scheduleResponse.data
         catalog.value = catalogResponse.data.data
         for (const product of catalog.value) {
-            quantities.value[product.uuid] = 0
+            if (quantities.value[product.uuid] === undefined) {
+                quantities.value[product.uuid] = 0
+            }
         }
     } catch (error) {
         if (error instanceof APIError) {
@@ -593,6 +595,13 @@ onMounted(async () => {
         pollHandle = setInterval(() => {
             if (!editingOrder.value) loadMyOrder()
         }, 30000)
+    }
+})
+
+onPullToRefresh(async () => {
+    await load()
+    if (isLoggedIn.value && isApproved.value) {
+        await loadMyOrder()
     }
 })
 

@@ -136,6 +136,8 @@ onMounted(async () => {
     channel.listen('.checklist.regenerated', applyBroadcastRegenerated)
 })
 
+onPullToRefresh(load)
+
 onUnmounted(() => {
     if (channel) $echo.leaveChannel(`checklist.${token}`)
 })
