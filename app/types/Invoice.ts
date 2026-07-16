@@ -1,14 +1,15 @@
 export interface InvoiceItem {
     product_name: string
     quantity: number
+    bonus_quantity: number
     unit_price: number
     line_total: number
 }
 
 export interface InvoiceInterestLine {
-    period: number
+    type: 'interest' | 'payment'
     label: string
-    interest_amount: number
+    amount: number
     running_total: number
 }
 

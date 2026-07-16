@@ -147,7 +147,7 @@
                             </BaseButton>
                         </template>
                     </UAlert>
-                    <InvoiceBreakdown v-else-if="invoice" :invoice="invoice" />
+                    <InvoiceBreakdown v-else-if="invoice" :invoice="invoice" :order-items="selectedOrder.items" />
                 </template>
 
                 <template v-else>

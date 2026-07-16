@@ -1,11 +1,26 @@
 <template>
     <div class="space-y-3 rounded-lg border border-default p-3 text-sm">
+        <div v-if="orderItems && orderItems.length > 0" class="space-y-2 border-b border-default pb-3">
+            <p class="text-xs font-medium uppercase tracking-wide text-muted">All order items</p>
+            <div class="divide-y divide-default rounded-lg border border-default">
+                <div v-for="item in orderItems" :key="item.uuid" class="p-3">
+                    <OrderLineItem :item="item" />
+                </div>
+            </div>
+        </div>
+
         <div class="space-y-2">
-            <p class="text-xs font-medium uppercase tracking-wide text-muted">Items</p>
+            <p class="text-xs font-medium uppercase tracking-wide text-muted">Billed items</p>
             <div v-for="(item, index) in invoice.items" :key="index" class="flex items-start justify-between gap-2">
                 <div class="min-w-0">
-                    <p class="text-highlighted">{{ item.product_name }}</p>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <p class="text-highlighted">{{ item.product_name }}</p>
+                        <UBadge v-if="item.bonus_quantity > 0" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
+                    </div>
                     <p class="text-xs text-muted">₱{{ item.unit_price.toFixed(2) }} × {{ item.quantity }}</p>
+                    <UBadge v-if="item.bonus_quantity > 0" color="warning" variant="subtle" size="sm" icon="i-lucide-sparkles" class="mt-1">
+                        +{{ item.bonus_quantity }} free
+                    </UBadge>
                 </div>
                 <span class="shrink-0 font-medium text-highlighted">₱{{ item.line_total.toFixed(2) }}</span>
             </div>
@@ -43,13 +58,15 @@
             </div>
             <ol class="space-y-1">
                 <li
-                    v-for="line in invoice.interest_lines"
-                    :key="line.period"
+                    v-for="(line, index) in invoice.interest_lines"
+                    :key="index"
                     class="flex items-center justify-between gap-2 rounded-md bg-elevated/50 px-2 py-1.5"
                 >
                     <span class="text-muted">{{ line.label }}</span>
                     <span class="flex shrink-0 items-center gap-2">
-                        <span class="text-error">+₱{{ line.interest_amount.toFixed(2) }}</span>
+                        <span :class="line.type === 'payment' ? 'text-success' : 'text-error'">
+                            {{ line.amount >= 0 ? '+' : '' }}₱{{ line.amount.toFixed(2) }}
+                        </span>
                         <span class="font-medium text-highlighted">₱{{ line.running_total.toFixed(2) }}</span>
                     </span>
                 </li>
@@ -80,8 +97,10 @@
 
 <script setup lang="ts">
 import type { Invoice } from '@/types/Invoice'
+import type { OrderItem } from '@/types/OrderItem'
 
 defineProps<{
     invoice: Invoice
+    orderItems?: OrderItem[]
 }>()
 </script>

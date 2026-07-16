@@ -48,7 +48,7 @@
                 </template>
             </UAlert>
 
-            <InvoiceBreakdown v-else-if="invoice" :invoice="invoice" />
+            <InvoiceBreakdown v-else-if="invoice" :invoice="invoice" :order-items="order.items" />
         </div>
     </div>
 </template>
