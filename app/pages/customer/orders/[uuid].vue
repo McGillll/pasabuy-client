@@ -53,7 +53,7 @@
             </UCard>
 
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <BaseButton color="neutral" variant="soft" icon="i-lucide-receipt" to="/customer">
+                <BaseButton color="neutral" variant="soft" icon="i-lucide-receipt" to="/customer/orders">
                     All orders
                 </BaseButton>
 

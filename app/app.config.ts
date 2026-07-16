@@ -4,6 +4,11 @@ export default defineAppConfig({
             primary: 'primary',
             secondary: 'secondary',
             neutral: 'slate'
+        },
+        dropdownMenu: {
+            slots: {
+                item: 'py-5'
+            }
         }
     }
 })

@@ -25,7 +25,7 @@
                             </span>
                         </div>
                     </div>
-                    <BaseButton v-if="isLoggedIn" size="sm" color="neutral" variant="soft" icon="i-lucide-receipt" to="/customer" class="self-start">
+                    <BaseButton v-if="isLoggedIn" size="sm" color="neutral" variant="soft" icon="i-lucide-receipt" to="/customer/orders" class="self-start">
                         My Orders
                     </BaseButton>
                 </div>

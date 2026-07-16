@@ -19,6 +19,18 @@ export interface Schedule {
     created_at: string
 }
 
+export interface ScheduleBrowseItem {
+    uuid: string
+    title: string
+    description: string | null
+    pasabuy_schedule_date: string | null
+    status: 'open' | 'closed' | 'finished'
+    is_open: boolean
+    seller_name: string | null
+    product_count: number | null
+    created_at: string
+}
+
 export interface ScheduleSummaryItem {
     product_uuid: string
     product_name: string
