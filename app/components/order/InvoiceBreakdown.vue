@@ -1,12 +1,9 @@
 <template>
     <div class="space-y-3 rounded-lg border border-default p-3 text-sm">
-        <div v-if="orderItems && orderItems.length > 0" class="space-y-2 border-b border-default pb-3">
-            <p class="text-xs font-medium uppercase tracking-wide text-muted">All order items</p>
-            <div class="divide-y divide-default rounded-lg border border-default">
-                <div v-for="item in orderItems" :key="item.uuid" class="p-3">
-                    <OrderLineItem :item="item" />
-                </div>
-            </div>
+        <div v-if="orderItems && orderItems.length > 0" class="flex justify-end">
+            <BaseButton size="xs" color="neutral" variant="outline" icon="i-lucide-list" @click="isSummaryOpen = true">
+                Order summary
+            </BaseButton>
         </div>
 
         <div class="space-y-2">
@@ -92,6 +89,16 @@
                 <span>₱{{ invoice.balance_due.toFixed(2) }}</span>
             </div>
         </div>
+
+        <USlideover v-model:open="isSummaryOpen" :side="isDesktop ? 'right' : 'bottom'" title="Order summary">
+            <template #body>
+                <div class="divide-y divide-default rounded-lg border border-default">
+                    <div v-for="item in orderItems" :key="item.uuid" class="p-3">
+                        <OrderLineItem :item="item" />
+                    </div>
+                </div>
+            </template>
+        </USlideover>
     </div>
 </template>
 
@@ -103,4 +110,7 @@ defineProps<{
     invoice: Invoice
     orderItems?: OrderItem[]
 }>()
+
+const isSummaryOpen = ref(false)
+const isDesktop = useIsDesktop()
 </script>
