@@ -141,7 +141,8 @@
                             :data="categories"
                             :columns="categoryColumns"
                             :loading="categoriesLoading"
-                            :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
+                            :ui="{ tr: 'hover:bg-elevated/50 transition-colors cursor-pointer' }"
+                            @select="(_event: Event, row: { original: Category }) => viewCategoryProducts(row.original)"
                         >
                             <template #category-cell="{ row }">
                                 <p class="font-medium text-highlighted">{{ row.original.name }}</p>
@@ -163,7 +164,7 @@
                                         color="neutral"
                                         variant="ghost"
                                         aria-label="Edit category"
-                                        @click="openCategoryEditModal(row.original)"
+                                        @click.stop="openCategoryEditModal(row.original)"
                                     />
                                     <BaseButton
                                         icon="i-lucide-trash-2"
@@ -171,12 +172,12 @@
                                         color="error"
                                         variant="ghost"
                                         aria-label="Delete category"
-                                        @click="onDeleteCategory(row.original)"
+                                        @click.stop="onDeleteCategory(row.original)"
                                     />
                                 </div>
                             </template>
                             <template #list-item="{ item: category }">
-                                <ListCard :dimmed="!category.is_active" :actions="categoryActions(category)">
+                                <ListCard clickable :dimmed="!category.is_active" :actions="categoryActions(category)" @click="viewCategoryProducts(category)">
                                     <template #title>
                                         <p class="font-medium text-highlighted">{{ category.name }}</p>
                                     </template>
@@ -635,6 +636,11 @@ function onDeleteCategory(category: Category) {
             await loadCategoryOptions()
         }
     })
+}
+
+function viewCategoryProducts(category: Category) {
+    productCategoryFilter.value = category.uuid
+    activeTab.value = 'products'
 }
 
 function categoryActions(category: Category): DropdownMenuItem[] {
