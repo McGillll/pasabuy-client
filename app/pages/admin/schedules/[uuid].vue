@@ -50,10 +50,10 @@
                     />
                     <form class="max-w-lg space-y-4" @submit.prevent="saveDetails">
                         <UFormField label="Title" required>
-                            <UInput v-model="detailsForm.title" :disabled="isLocked" class="w-full" />
+                            <UInput v-model="detailsForm.title" placeholder="July grocery run" :disabled="isLocked" class="w-full" />
                         </UFormField>
                         <UFormField label="Description">
-                            <UTextarea v-model="detailsForm.description" :disabled="isLocked" class="w-full" />
+                            <UTextarea v-model="detailsForm.description" placeholder="Optional notes for this pasabuy" :disabled="isLocked" class="w-full" />
                         </UFormField>
                         <UFormField label="Pasabuy date" hint="The date you'll go to the store; ordering closes once this date arrives" required>
                             <UInput v-model="detailsForm.pasabuyScheduleDate" type="date" required :disabled="isLocked" class="w-full" />

@@ -8,14 +8,14 @@
             <UForm :state="profileState" :validate="validateProfile" class="space-y-4" @submit="onSubmitProfile">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <UFormField label="First name" name="first_name" required>
-                        <UInput v-model="profileState.first_name" class="w-full" />
+                        <UInput v-model="profileState.first_name" placeholder="Jane" class="w-full" />
                     </UFormField>
                     <UFormField label="Last name" name="last_name" required>
-                        <UInput v-model="profileState.last_name" class="w-full" />
+                        <UInput v-model="profileState.last_name" placeholder="Dela Cruz" class="w-full" />
                     </UFormField>
                 </div>
                 <UFormField label="Email" name="email" required>
-                    <UInput v-model="profileState.email" type="email" icon="i-lucide-mail" class="w-full" />
+                    <UInput v-model="profileState.email" type="email" placeholder="you@example.com" icon="i-lucide-mail" class="w-full" />
                 </UFormField>
                 <BaseButton type="submit" :loading="savingProfile">Save changes</BaseButton>
             </UForm>

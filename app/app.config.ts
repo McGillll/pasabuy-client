@@ -7,7 +7,14 @@ export default defineAppConfig({
         },
         dropdownMenu: {
             slots: {
-                item: 'py-5'
+                content: 'min-w-40'
+            },
+            variants: {
+                size: {
+                    md: {
+                        item: 'py-2.5 sm:py-1.5 text-sm gap-1.5'
+                    }
+                }
             }
         }
     }

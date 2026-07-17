@@ -13,16 +13,16 @@
                     <UCard class="mt-4">
                         <UForm :state="businessState" :validate="validateBusiness" class="space-y-4" @submit="onSubmitBusiness">
                             <UFormField label="Business name" name="business_name" required>
-                                <UInput v-model="businessState.business_name" :disabled="businessLoading" class="w-full" />
+                                <UInput v-model="businessState.business_name" placeholder="My Pasabuy Shop" :disabled="businessLoading" class="w-full" />
                             </UFormField>
                             <UFormField label="Contact email" name="contact_email">
-                                <UInput v-model="businessState.contact_email" type="email" icon="i-lucide-mail" :disabled="businessLoading" class="w-full" />
+                                <UInput v-model="businessState.contact_email" type="email" placeholder="you@example.com" icon="i-lucide-mail" :disabled="businessLoading" class="w-full" />
                             </UFormField>
                             <UFormField label="Contact phone" name="contact_phone">
-                                <UInput v-model="businessState.contact_phone" icon="i-lucide-phone" :disabled="businessLoading" class="w-full" />
+                                <UInput v-model="businessState.contact_phone" placeholder="09171234567" icon="i-lucide-phone" :disabled="businessLoading" class="w-full" />
                             </UFormField>
                             <UFormField label="Address" name="address">
-                                <UTextarea v-model="businessState.address" :disabled="businessLoading" class="w-full" :rows="3" />
+                                <UTextarea v-model="businessState.address" placeholder="Store address for pickup or delivery" :disabled="businessLoading" class="w-full" :rows="3" />
                             </UFormField>
                             <BaseButton type="submit" :loading="savingBusiness" :disabled="businessLoading">Save changes</BaseButton>
                         </UForm>
@@ -43,21 +43,21 @@
                                 </p>
                                 <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
                                     <UFormField label="Threshold amount" name="markup_threshold_amount" description="Splits fixed vs percentage markup" required>
-                                        <UInput v-model.number="invoiceState.markup_threshold_amount" type="number" inputmode="decimal" min="0" step="0.01" :disabled="invoiceLoading" class="w-full">
+                                        <UInput v-model.number="invoiceState.markup_threshold_amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading" class="w-full">
                                             <template #leading>
                                                 <span class="text-sm text-dimmed">₱</span>
                                             </template>
                                         </UInput>
                                     </UFormField>
                                     <UFormField label="Markup percentage" name="markup_percentage" description="Applied above the threshold" required>
-                                        <UInput v-model.number="invoiceState.markup_percentage" type="number" inputmode="decimal" min="0" max="100" step="0.01" :disabled="invoiceLoading" class="w-full">
+                                        <UInput v-model.number="invoiceState.markup_percentage" type="number" inputmode="decimal" min="0" max="100" step="0.01" placeholder="0.00" :disabled="invoiceLoading" class="w-full">
                                             <template #trailing>
                                                 <span class="text-sm text-dimmed">%</span>
                                             </template>
                                         </UInput>
                                     </UFormField>
                                     <UFormField label="Fixed markup" name="markup_fixed_amount" description="Applied at or below threshold" required>
-                                        <UInput v-model.number="invoiceState.markup_fixed_amount" type="number" inputmode="decimal" min="0" step="0.01" :disabled="invoiceLoading" class="w-full">
+                                        <UInput v-model.number="invoiceState.markup_fixed_amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading" class="w-full">
                                             <template #leading>
                                                 <span class="text-sm text-dimmed">₱</span>
                                             </template>
@@ -82,13 +82,13 @@
                                         <USelect v-model="invoiceState.due_date_reference" :items="dueDateReferenceOptions" value-key="value" :disabled="invoiceLoading" class="w-full" />
                                     </UFormField>
                                     <UFormField label="Due days" name="due_days" description="Days until payment is due" required>
-                                        <UInput v-model.number="invoiceState.due_days" type="number" inputmode="numeric" min="1" :disabled="invoiceLoading" class="w-full" />
+                                        <UInput v-model.number="invoiceState.due_days" type="number" inputmode="numeric" min="1" placeholder="7" :disabled="invoiceLoading" class="w-full" />
                                     </UFormField>
                                 </div>
 
                                 <div v-if="invoiceState.is_active" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                                     <UFormField label="Interest rate" name="interest_rate" description="Percent compounded per period" required>
-                                        <UInput v-model.number="invoiceState.interest_rate" type="number" inputmode="decimal" min="0" step="0.01" :disabled="invoiceLoading" class="w-full">
+                                        <UInput v-model.number="invoiceState.interest_rate" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading" class="w-full">
                                             <template #trailing>
                                                 <span class="text-sm text-dimmed">%</span>
                                             </template>

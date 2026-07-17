@@ -188,7 +188,7 @@
                 <form class="space-y-3 border-t border-default pt-4" @submit.prevent="submitPayment">
                     <div class="grid grid-cols-2 gap-3">
                         <UFormField label="Amount" required>
-                            <UInput v-model.number="paymentForm.amount" type="number" inputmode="decimal" min="0.01" step="0.01" class="w-full">
+                            <UInput v-model.number="paymentForm.amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" class="w-full">
                                 <template #leading>
                                     <span class="text-sm text-dimmed">₱</span>
                                 </template>
@@ -202,10 +202,10 @@
                         <UInput v-model="paymentForm.paid_at" type="date" required class="w-full" />
                     </UFormField>
                     <UFormField label="Reference number">
-                        <UInput v-model="paymentForm.reference_number" class="w-full" />
+                        <UInput v-model="paymentForm.reference_number" placeholder="e.g. GCash reference no." class="w-full" />
                     </UFormField>
                     <UFormField label="Notes">
-                        <UTextarea v-model="paymentForm.notes" class="w-full" />
+                        <UTextarea v-model="paymentForm.notes" placeholder="Optional notes about this payment" class="w-full" />
                     </UFormField>
                     <BaseButton type="submit" block :loading="recordingPayment">Record payment</BaseButton>
                 </form>

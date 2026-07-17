@@ -268,10 +268,10 @@
                     </div>
                     <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <UFormField label="Name" required>
-                            <UInput v-model="productForm.name" class="w-full" />
+                            <UInput v-model="productForm.name" placeholder="Turbo 9inch fan" class="w-full" />
                         </UFormField>
                         <UFormField label="Default price" required>
-                            <UInput v-model.number="productForm.default_price" type="number" min="0" step="0.01" class="w-full">
+                            <UInput v-model.number="productForm.default_price" type="number" min="0" step="0.01" placeholder="0.00" class="w-full">
                                 <template #leading>
                                     <span class="text-sm text-dimmed">₱</span>
                                 </template>
@@ -294,7 +294,7 @@
                             />
                         </UFormField>
                         <UFormField label="Description" class="sm:col-span-2">
-                            <UTextarea v-model="productForm.description" class="w-full" :rows="3" />
+                            <UTextarea v-model="productForm.description" placeholder="Short product description" class="w-full" :rows="3" />
                         </UFormField>
                     </div>
                 </div>
@@ -311,10 +311,10 @@
         >
             <form id="category-form" class="space-y-4" @submit.prevent="onSaveCategory">
                 <UFormField label="Name" required>
-                    <UInput v-model="categoryForm.name" class="w-full" />
+                    <UInput v-model="categoryForm.name" placeholder="Appliances" class="w-full" />
                 </UFormField>
                 <UFormField label="Description">
-                    <UTextarea v-model="categoryForm.description" class="w-full" />
+                    <UTextarea v-model="categoryForm.description" placeholder="Short category description" class="w-full" />
                 </UFormField>
                 <UFormField label="Active">
                     <UCheckbox v-model="categoryForm.is_active" label="Category is active" />

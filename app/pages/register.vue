@@ -42,11 +42,11 @@
                 </UFormField>
 
                 <UFormField label="Contact number" name="contact_number">
-                    <UInput v-model="state.contact_number" icon="i-lucide-phone" size="xl" class="w-full" />
+                    <UInput v-model="state.contact_number" placeholder="09171234567" icon="i-lucide-phone" size="xl" class="w-full" />
                 </UFormField>
 
                 <UFormField label="Messenger name" name="messenger_name">
-                    <UInput v-model="state.messenger_name" icon="i-lucide-message-circle" size="xl" class="w-full" />
+                    <UInput v-model="state.messenger_name" placeholder="Jane Dela Cruz" icon="i-lucide-message-circle" size="xl" class="w-full" />
                 </UFormField>
 
                 <UFormField label="Password" name="password" required>

@@ -131,10 +131,10 @@
         >
             <form id="schedule-create-form" class="space-y-4" @submit.prevent="onCreate">
                 <UFormField label="Title" required>
-                    <UInput v-model="form.title" class="w-full" />
+                    <UInput v-model="form.title" placeholder="July grocery run" class="w-full" />
                 </UFormField>
                 <UFormField label="Description">
-                    <UTextarea v-model="form.description" class="w-full" />
+                    <UTextarea v-model="form.description" placeholder="Optional notes for this pasabuy" class="w-full" />
                 </UFormField>
                 <UFormField label="Pasabuy date" hint="The date you'll go to the store" required>
                     <UInput v-model="form.pasabuy_schedule_date" type="date" required class="w-full" />
