@@ -76,7 +76,7 @@
                         variant="pill"
                         size="sm"
                         class="hidden w-full lg:flex"
-                        :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0' }"
+                        :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center' }"
                     />
 
                     <UInput
@@ -124,7 +124,10 @@
                                 </div>
 
                                 <div class="min-w-0 flex-1">
-                                    <p class="truncate font-medium text-highlighted">{{ product.name }}</p>
+                                    <div class="flex items-center gap-2">
+                                        <p class="min-w-0 flex-1 truncate font-medium text-highlighted">{{ product.name }}</p>
+                                        <StatusBadge v-if="resolvedStatus(product) === 'b1t1'" color="success" label="Buy 1 Take 1" size="sm" class="shrink-0" />
+                                    </div>
                                     <div class="flex items-center gap-2">
                                         <p class="text-sm text-muted">₱{{ resolvedPrice(product) }}</p>
                                         <span class="text-xs text-dimmed">{{ isPriceConfirmed(product) ? 'confirmed' : 'estimated' }}</span>
@@ -224,7 +227,7 @@
                 variant="pill"
                 size="sm"
                 class="w-full border-b border-default"
-                :ui="{ root: 'px-4 py-2', list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0' }"
+                :ui="{ root: 'px-4 py-2', list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center' }"
             />
 
             <div class="mx-auto max-w-2xl space-y-3 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
@@ -448,7 +451,9 @@ const categoryTabs = computed(() => {
     for (const product of catalogItems.value) {
         if (product.category) seen.set(product.category.uuid, product.category.name)
     }
-    return [{ label: 'All', value: 'all' }, ...Array.from(seen, ([value, label]) => ({ label, value }))]
+    const sorted = Array.from(seen, ([value, label]) => ({ label, value }))
+        .sort((a, b) => a.label.localeCompare(b.label))
+    return [{ label: 'All', value: 'all' }, ...sorted]
 })
 
 const filteredProducts = computed(() => {
