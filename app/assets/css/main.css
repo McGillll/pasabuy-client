@@ -40,3 +40,11 @@ input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear {
     display: none;
 }
+
+/* Without this, overscroll/rubber-band scrolling reveals the browser's default
+   canvas color instead of the app background, since html/body have no bg of their own. */
+html,
+body {
+    background-color: var(--ui-bg);
+    overscroll-behavior-y: none;
+}

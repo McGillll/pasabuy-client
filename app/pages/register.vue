@@ -10,6 +10,21 @@
         />
 
         <template v-else>
+            <div class="mb-6">
+                <div class="mb-2 flex items-center justify-between">
+                    <span class="text-xs font-medium text-dimmed">Step {{ currentStep }} of {{ steps.length }}</span>
+                    <span class="text-xs font-medium text-primary">{{ currentStepTitle }}</span>
+                </div>
+                <div class="flex gap-1.5">
+                    <div
+                        v-for="step in steps"
+                        :key="step.id"
+                        class="h-1.5 flex-1 rounded-full transition-colors duration-300"
+                        :class="step.id <= currentStep ? 'bg-primary' : 'bg-muted'"
+                    />
+                </div>
+            </div>
+
             <UAlert
                 v-if="registerError"
                 color="error"
@@ -19,66 +34,131 @@
                 class="mb-4"
             />
 
+            <UAlert
+                v-if="stepError"
+                color="error"
+                variant="subtle"
+                icon="i-lucide-alert-circle"
+                :title="stepError"
+                class="mb-4"
+            />
+
             <UForm :state="state" :validate="validate" class="flex flex-col gap-5" @submit="onSubmit">
-                <div class="grid grid-cols-2 gap-3">
-                    <UFormField label="First name" name="first_name" required>
-                        <UInput v-model="state.first_name" placeholder="Jane" icon="i-lucide-user" size="xl" class="w-full" />
+                <div v-if="currentStep === 1" class="flex flex-col gap-5">
+                    <div class="grid grid-cols-2 gap-3">
+                        <UFormField label="First name" name="first_name" required>
+                            <UInput v-model="state.first_name" placeholder="Jane" icon="i-lucide-user" size="xl" class="w-full" />
+                        </UFormField>
+                        <UFormField label="Last name" name="last_name" required>
+                            <UInput v-model="state.last_name" placeholder="Dela Cruz" icon="i-lucide-user" size="xl" class="w-full" />
+                        </UFormField>
+                    </div>
+
+                    <UFormField label="Email" name="email" required>
+                        <UInput
+                            v-model="state.email"
+                            type="email"
+                            placeholder="you@example.com"
+                            icon="i-lucide-mail"
+                            autocomplete="email"
+                            size="xl"
+                            class="w-full"
+                        />
                     </UFormField>
-                    <UFormField label="Last name" name="last_name" required>
-                        <UInput v-model="state.last_name" placeholder="Dela Cruz" icon="i-lucide-user" size="xl" class="w-full" />
+
+                    <UFormField label="Contact number" name="contact_number">
+                        <UInput v-model="state.contact_number" placeholder="09171234567" icon="i-lucide-phone" size="xl" class="w-full" />
                     </UFormField>
+
+                    <UFormField label="Messenger name" name="messenger_name">
+                        <UInput v-model="state.messenger_name" placeholder="Jane Dela Cruz" icon="i-lucide-message-circle" size="xl" class="w-full" />
+                    </UFormField>
+
+                    <BaseButton type="button" block size="xl" trailing-icon="i-lucide-arrow-right" @click="goNext">
+                        Next
+                    </BaseButton>
                 </div>
 
-                <UFormField label="Email" name="email" required>
-                    <UInput
-                        v-model="state.email"
-                        type="email"
-                        placeholder="you@example.com"
-                        icon="i-lucide-mail"
-                        autocomplete="email"
-                        size="xl"
-                        class="w-full"
-                    />
-                </UFormField>
+                <div v-else-if="currentStep === 2" class="flex flex-col gap-5">
+                    <UFormField label="Password" name="password" required>
+                        <PasswordInput v-model="state.password" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" />
+                    </UFormField>
 
-                <UFormField label="Contact number" name="contact_number">
-                    <UInput v-model="state.contact_number" placeholder="09171234567" icon="i-lucide-phone" size="xl" class="w-full" />
-                </UFormField>
+                    <UFormField label="Confirm password" name="password_confirmation" required>
+                        <PasswordInput v-model="state.password_confirmation" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" />
+                    </UFormField>
 
-                <UFormField label="Messenger name" name="messenger_name">
-                    <UInput v-model="state.messenger_name" placeholder="Jane Dela Cruz" icon="i-lucide-message-circle" size="xl" class="w-full" />
-                </UFormField>
+                    <UCheckbox v-model="passwordsVisible" label="Show passwords" size="sm" />
 
-                <UFormField label="Password" name="password" required>
-                    <PasswordInput v-model="state.password" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" />
-                </UFormField>
+                    <div class="flex gap-3">
+                        <BaseButton type="button" color="neutral" variant="subtle" size="xl" leading-icon="i-lucide-arrow-left" class="flex-1" @click="goBackStep">
+                            Back
+                        </BaseButton>
+                        <BaseButton type="button" size="xl" trailing-icon="i-lucide-arrow-right" class="flex-1" @click="goNext">
+                            Next
+                        </BaseButton>
+                    </div>
+                </div>
 
-                <UFormField label="Confirm password" name="password_confirmation" required>
-                    <PasswordInput v-model="state.password_confirmation" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" />
-                </UFormField>
+                <div v-else class="flex flex-col gap-5">
+                    <div class="rounded-xl border border-default bg-muted/40 p-4">
+                        <p class="mb-3 text-xs font-medium uppercase tracking-wide text-dimmed">Review your details</p>
+                        <dl class="flex flex-col gap-2 text-sm">
+                            <div class="flex justify-between gap-3">
+                                <dt class="text-dimmed">Name</dt>
+                                <dd class="text-right font-medium text-highlighted">{{ state.first_name }} {{ state.last_name }}</dd>
+                            </div>
+                            <div class="flex justify-between gap-3">
+                                <dt class="text-dimmed">Email</dt>
+                                <dd class="text-right font-medium text-highlighted break-all">{{ state.email }}</dd>
+                            </div>
+                            <div v-if="state.contact_number" class="flex justify-between gap-3">
+                                <dt class="text-dimmed">Contact number</dt>
+                                <dd class="text-right font-medium text-highlighted">{{ state.contact_number }}</dd>
+                            </div>
+                            <div v-if="state.messenger_name" class="flex justify-between gap-3">
+                                <dt class="text-dimmed">Messenger name</dt>
+                                <dd class="text-right font-medium text-highlighted">{{ state.messenger_name }}</dd>
+                            </div>
+                        </dl>
+                        <BaseButton
+                            type="button"
+                            color="neutral"
+                            variant="link"
+                            size="xs"
+                            class="mt-2 px-0"
+                            @click="editStep(1)"
+                        >
+                            Edit details
+                        </BaseButton>
+                    </div>
 
-                <UCheckbox v-model="passwordsVisible" label="Show passwords" size="sm" />
+                    <UFormField name="terms_accepted">
+                        <UCheckbox
+                            :model-value="state.terms_accepted"
+                            size="sm"
+                            @update:model-value="onTermsCheckboxChange"
+                        >
+                            <template #label>
+                                <span class="text-sm text-default">
+                                    I agree to the
+                                    <NuxtLink :to="{ path: '/terms', query: { from: 'register' } }" class="text-primary hover:underline" @click.stop>Terms of Service</NuxtLink>
+                                    and
+                                    <NuxtLink :to="{ path: '/privacy', query: { from: 'register' } }" class="text-primary hover:underline" @click.stop>Privacy Policy</NuxtLink>
+                                </span>
+                            </template>
+                        </UCheckbox>
+                    </UFormField>
 
-                <UFormField name="terms_accepted">
-                    <UCheckbox
-                        :model-value="state.terms_accepted"
-                        size="sm"
-                        @update:model-value="onTermsCheckboxChange"
-                    >
-                        <template #label>
-                            <span class="text-sm text-default">
-                                I agree to the
-                                <NuxtLink :to="{ path: '/terms', query: { from: 'register' } }" class="text-primary hover:underline" @click.stop>Terms of Service</NuxtLink>
-                                and
-                                <NuxtLink :to="{ path: '/privacy', query: { from: 'register' } }" class="text-primary hover:underline" @click.stop>Privacy Policy</NuxtLink>
-                            </span>
-                        </template>
-                    </UCheckbox>
-                </UFormField>
-
-                <BaseButton type="submit" block size="xl" :loading="isSubmitting">
-                    Create account
-                </BaseButton>
+                    <div class="flex gap-3">
+                        <BaseButton type="button" color="neutral" variant="subtle" size="xl" leading-icon="i-lucide-arrow-left" class="flex-1" @click="goBackStep">
+                            Back
+                        </BaseButton>
+                        <BaseButton type="submit" size="xl" class="flex-2" :loading="isSubmitting">
+                            Create account
+                        </BaseButton>
+                    </div>
+                </div>
             </UForm>
         </template>
 
@@ -113,6 +193,16 @@ const loginLink = computed(() => {
 const { state, reset: resetDraft } = useRegisterFormDraft()
 const { hasViewedLegalDocs } = useLegalAcknowledgement()
 
+const steps = [
+    { id: 1, title: 'Personal info', fields: ['first_name', 'last_name', 'email'] },
+    { id: 2, title: 'Account security', fields: ['password', 'password_confirmation'] },
+    { id: 3, title: 'Review & agree', fields: ['terms_accepted'] },
+] as const
+
+const currentStep = useState<number>('register_current_step', () => 1)
+const stepError = ref<string | null>(null)
+const currentStepTitle = computed(() => steps.find(step => step.id === currentStep.value)?.title ?? '')
+
 const isSubmitting = ref(false)
 const submitted = ref(false)
 const registerError = ref<string | null>(null)
@@ -125,6 +215,27 @@ function onTermsCheckboxChange(value: boolean | 'indeterminate') {
         return
     }
     state.value.terms_accepted = isChecked
+}
+
+function goNext() {
+    const fields = steps.find(step => step.id === currentStep.value)?.fields ?? []
+    const errors = validate(state.value).filter(error => (fields as readonly string[]).includes(error.name as string))
+    if (errors.length > 0) {
+        stepError.value = errors[0]?.message ?? 'Please fix the highlighted fields before continuing.'
+        return
+    }
+    stepError.value = null
+    currentStep.value = Math.min(currentStep.value + 1, steps.length)
+}
+
+function goBackStep() {
+    stepError.value = null
+    currentStep.value = Math.max(currentStep.value - 1, 1)
+}
+
+function editStep(stepId: number) {
+    stepError.value = null
+    currentStep.value = stepId
 }
 
 function validate(state: {
@@ -151,6 +262,8 @@ function validate(state: {
 }
 
 async function onSubmit(event: FormSubmitEvent<RegisterFormState>) {
+    if (currentStep.value !== steps.length) return
+
     isSubmitting.value = true
     registerError.value = null
     try {
@@ -165,6 +278,7 @@ async function onSubmit(event: FormSubmitEvent<RegisterFormState>) {
             terms_accepted: event.data.terms_accepted,
         })
         submitted.value = true
+        currentStep.value = 1
         resetDraft()
     } catch (error) {
         registerError.value = error instanceof APIError ? error.message : 'Something went wrong. Please try again.'
