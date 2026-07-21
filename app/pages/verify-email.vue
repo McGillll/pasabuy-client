@@ -52,18 +52,15 @@ const status = ref<'pending' | 'success' | 'error'>('pending')
 const errorMessage = ref<string | null>(null)
 
 onMounted(async () => {
-    const id = route.query.id as string | undefined
-    const hash = route.query.hash as string | undefined
-    const expires = route.query.expires as string | undefined
-    const signature = route.query.signature as string | undefined
+    const token = route.query.token as string | undefined
 
-    if (!id || !hash || !expires || !signature) {
+    if (!token) {
         status.value = 'error'
         return
     }
 
     try {
-        await verifyEmail({ id, hash, expires, signature })
+        await verifyEmail({ token })
         status.value = 'success'
     } catch (error) {
         status.value = 'error'

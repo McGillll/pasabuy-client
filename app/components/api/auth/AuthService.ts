@@ -30,10 +30,7 @@ export interface ResetPasswordPayload {
 }
 
 export interface VerifyEmailPayload {
-    id: string
-    hash: string
-    expires: string
-    signature: string
+    token: string
 }
 
 class AuthService extends BaseAPIService {
