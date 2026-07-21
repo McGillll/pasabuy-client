@@ -9,7 +9,7 @@
             <UTabs v-model="activeTab" :items="tabs" class="w-full">
                 <template #business>
                 <div class="overflow-hidden">
-                <div :style="panelStyle">
+                <div ref="panelEl">
                     <UCard class="mt-4">
                         <UForm :state="businessState" :validate="validateBusiness" class="space-y-4" @submit="onSubmitBusiness">
                             <UFormField label="Business name" name="business_name" required>
@@ -33,7 +33,7 @@
 
                 <template #invoice>
                 <div class="overflow-hidden">
-                <div :style="panelStyle">
+                <div ref="panelEl">
                     <UCard class="mt-4">
                         <UForm :state="invoiceState" :validate="validateInvoice" class="space-y-6" @submit="onSubmitInvoice">
                             <div>
@@ -139,7 +139,7 @@ const tabs: TabsItem[] = [
     { label: 'Invoice', icon: 'i-lucide-receipt-text', value: 'invoice', slot: 'invoice' }
 ]
 
-const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd: onTabsTouchEnd, panelStyle } = useSwipeTabs(
+const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd: onTabsTouchEnd, panelEl } = useSwipeTabs(
     activeTab,
     computed(() => tabs.map((tab) => tab.value as 'business' | 'invoice'))
 )

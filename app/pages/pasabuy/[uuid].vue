@@ -80,7 +80,7 @@
                     />
 
                     <UInput
-                        v-if="catalog.length > 5"
+                        v-if="catalogItems.length > 5"
                         v-model="productSearch"
                         icon="i-lucide-search"
                         placeholder="Search items…"
@@ -112,6 +112,9 @@
                                 >
                                     <img
                                         :src="product.image_url"
+                                        loading="lazy"
+                                        width="56"
+                                        height="56"
                                         class="size-14 rounded-lg object-cover transition hover:opacity-80"
                                         alt=""
                                     >
@@ -162,7 +165,7 @@
                             <div v-if="filteredProducts.length === 0" class="flex flex-col items-center gap-3 py-10">
                                 <UIcon name="i-lucide-package-search" class="size-8 text-dimmed" />
                                 <p class="text-sm text-muted">
-                                    {{ catalog.length === 0 ? 'No items available yet.' : 'No items match your search.' }}
+                                    {{ catalogItems.length === 0 ? 'No items available yet.' : 'No items match your search.' }}
                                 </p>
                             </div>
                         </div>
@@ -387,12 +390,19 @@ const toast = useToast()
 const { user, fetchCurrentUser } = useAuth()
 
 const schedule = ref<Schedule | null>(null)
-const catalog = ref<Product[]>([])
+const { data: catalog, ensure: ensureCatalogLoaded } = useCachedFetch<Product[]>(
+    'public-product-catalog',
+    async () => (await publicProductService.fetchCatalog({ per_page: 200 })).data.data
+)
 const loading = ref(true)
 const notFound = ref(false)
 
 useHead({ title: computed(() => schedule.value?.title ?? 'Pasabuy Run') })
 const productSearch = ref('')
+const debouncedProductSearch = ref('')
+useSearchDebounce(productSearch, () => {
+    debouncedProductSearch.value = productSearch.value
+})
 
 const quantities = ref<Record<string, number>>({})
 const selectedCategory = ref('all')
@@ -431,27 +441,29 @@ function isPriceConfirmed(product: Product): boolean {
     return scheduleProduct?.actual_price !== null && scheduleProduct?.actual_price !== undefined
 }
 
+const catalogItems = computed(() => catalog.value ?? [])
+
 const categoryTabs = computed(() => {
     const seen = new Map<string, string>()
-    for (const product of catalog.value) {
+    for (const product of catalogItems.value) {
         if (product.category) seen.set(product.category.uuid, product.category.name)
     }
     return [{ label: 'All', value: 'all' }, ...Array.from(seen, ([value, label]) => ({ label, value }))]
 })
 
 const filteredProducts = computed(() => {
-    const query = productSearch.value.trim().toLowerCase()
-    return catalog.value.filter((product) => {
+    const query = debouncedProductSearch.value.trim().toLowerCase()
+    return catalogItems.value.filter((product) => {
         if (query && !product.name.toLowerCase().includes(query)) return false
         if (selectedCategory.value !== 'all' && product.category?.uuid !== selectedCategory.value) return false
         return true
     })
 })
 
-const cartItems = computed(() => catalog.value.filter((product) => (quantities.value[product.uuid] || 0) > 0))
+const cartItems = computed(() => catalogItems.value.filter((product) => (quantities.value[product.uuid] || 0) > 0))
 
 const total = computed(() => {
-    return catalog.value.reduce((sum, product) => {
+    return catalogItems.value.reduce((sum, product) => {
         const qty = quantities.value[product.uuid] || 0
         return sum + qty * Number(resolvedPrice(product))
     }, 0)
@@ -468,16 +480,15 @@ function openPreview(product: Product) {
     isPreviewOpen.value = true
 }
 
-async function load() {
+async function load(force = false) {
     loading.value = true
     try {
-        const [scheduleResponse, catalogResponse] = await Promise.all([
+        const [scheduleResponse] = await Promise.all([
             publicPasabuyService.fetchSchedule(uuid),
-            publicProductService.fetchCatalog({ per_page: 200 })
+            ensureCatalogLoaded(force)
         ])
         schedule.value = scheduleResponse.data
-        catalog.value = catalogResponse.data.data
-        for (const product of catalog.value) {
+        for (const product of catalogItems.value) {
             if (quantities.value[product.uuid] === undefined) {
                 quantities.value[product.uuid] = 0
             }
@@ -535,7 +546,7 @@ async function cancelOrder() {
 
 function startEditOrder() {
     if (!myOrder.value) return
-    for (const product of catalog.value) {
+    for (const product of catalogItems.value) {
         quantities.value[product.uuid] = 0
     }
     for (const item of myOrder.value.items) {
@@ -599,7 +610,7 @@ onMounted(async () => {
 })
 
 onPullToRefresh(async () => {
-    await load()
+    await load(true)
     if (isLoggedIn.value && isApproved.value) {
         await loadMyOrder()
     }

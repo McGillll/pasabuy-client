@@ -12,7 +12,7 @@
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #products>
                 <div class="overflow-hidden">
-                <div class="mt-4 space-y-4" :style="panelStyle">
+                <div class="mt-4 space-y-4" ref="panelEl">
                     <SearchInput v-model="productSearch" placeholder="Search products…" />
 
                     <div v-if="categoryFilterTabs.length > 2" data-swipe-ignore>
@@ -133,7 +133,7 @@
 
             <template #categories>
                 <div class="overflow-hidden">
-                <div class="mt-4 space-y-4" :style="panelStyle">
+                <div class="mt-4 space-y-4" ref="panelEl">
                     <SearchInput v-model="categorySearch" placeholder="Search categories…" />
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
@@ -356,7 +356,7 @@ const tabs = computed<TabsItem[]>(() => [
     { label: 'Categories', icon: 'i-lucide-tags', value: 'categories', slot: 'categories' }
 ])
 
-const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd: onTabsTouchEnd, panelStyle } = useSwipeTabs(
+const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd: onTabsTouchEnd, panelEl } = useSwipeTabs(
     activeTab,
     computed(() => tabs.value.map((tab) => tab.value as 'products' | 'categories'))
 )
@@ -364,7 +364,10 @@ const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd
 // ---- Products ----
 
 const products = ref<Product[]>([])
-const allCategories = ref<Category[]>([])
+const { data: allCategories, ensure: ensureCategoriesLoaded } = useCachedFetch<Category[]>(
+    'admin-product-categories',
+    async () => (await productCategoryService.fetchCategories({ per_page: 200 })).data.data
+)
 const productsLoading = ref(false)
 const productsPage = ref(1)
 const productsTotal = ref(0)
@@ -373,12 +376,12 @@ const productCategoryFilter = ref('all')
 
 const categoryOptions = computed(() => [
     { label: 'Uncategorized', value: null },
-    ...allCategories.value.map((category) => ({ label: category.name, value: category.uuid }))
+    ...(allCategories.value ?? []).map((category) => ({ label: category.name, value: category.uuid }))
 ])
 
 const categoryFilterTabs = computed(() => [
     { label: 'All', value: 'all' },
-    ...allCategories.value.map((category) => ({ label: category.name, value: category.uuid }))
+    ...(allCategories.value ?? []).map((category) => ({ label: category.name, value: category.uuid }))
 ])
 
 const productStatusOptions = [
@@ -396,15 +399,6 @@ const productColumns: TableColumn<Product>[] = [
     { id: 'actions', header: '' }
 ]
 
-async function loadCategoryOptions() {
-    try {
-        const response = await productCategoryService.fetchCategories({ per_page: 200 })
-        allCategories.value = response.data.data
-    } catch (error) {
-        toast.add({ title: 'Failed to load categories', description: (error as APIError).message, color: 'error' })
-    }
-}
-
 async function loadProducts() {
     productsLoading.value = true
     try {
@@ -416,6 +410,7 @@ async function loadProducts() {
         })
         products.value = response.data.data
         productsTotal.value = response.data.total
+        productActionsCache.clear()
     } catch (error) {
         toast.add({ title: 'Failed to load products', description: (error as APIError).message, color: 'error' })
     } finally {
@@ -532,11 +527,18 @@ function onDeleteProduct(product: Product) {
     })
 }
 
+const productActionsCache = new Map<string, DropdownMenuItem[]>()
+
 function productActions(product: Product): DropdownMenuItem[] {
-    return [
+    const cached = productActionsCache.get(product.uuid)
+    if (cached) return cached
+
+    const actions: DropdownMenuItem[] = [
         { label: 'Edit', icon: 'i-lucide-pencil', onSelect: () => openProductEditModal(product) },
         { label: 'Delete', icon: 'i-lucide-trash-2', color: 'error', onSelect: () => onDeleteProduct(product) }
     ]
+    productActionsCache.set(product.uuid, actions)
+    return actions
 }
 
 // ---- Categories ----
@@ -559,6 +561,7 @@ async function loadCategories() {
         const response = await productCategoryService.fetchCategories({ page: categoriesPage.value, per_page: perPage, search: categorySearch.value || undefined })
         categories.value = response.data.data
         categoriesTotal.value = response.data.total
+        categoryActionsCache.clear()
     } catch (error) {
         toast.add({ title: 'Failed to load categories', description: (error as APIError).message, color: 'error' })
     } finally {
@@ -607,15 +610,19 @@ async function onSaveCategory() {
             is_active: categoryForm.is_active
         }
         if (editingCategory.value) {
-            await productCategoryService.updateCategory(editingCategory.value.uuid, payload)
+            const response = await productCategoryService.updateCategory(editingCategory.value.uuid, payload)
+            const categories = allCategories.value ?? []
+            const index = categories.findIndex((category) => category.uuid === response.data.uuid)
+            if (index !== -1) categories[index] = response.data
+            allCategories.value = categories
             toast.add({ title: 'Category updated', color: 'success' })
         } else {
-            await productCategoryService.createCategory(payload)
+            const response = await productCategoryService.createCategory(payload)
+            allCategories.value = [...(allCategories.value ?? []), response.data]
             toast.add({ title: 'Category created', color: 'success' })
         }
         isCategoryModalOpen.value = false
         await loadCategories()
-        await loadCategoryOptions()
     } catch (error) {
         toast.add({ title: 'Save failed', description: (error as APIError).message, color: 'error' })
     } finally {
@@ -631,9 +638,9 @@ function onDeleteCategory(category: Category) {
         color: 'error',
         action: async () => {
             await productCategoryService.deleteCategory(category.uuid)
+            allCategories.value = (allCategories.value ?? []).filter((item) => item.uuid !== category.uuid)
             toast.add({ title: 'Category deleted', color: 'success' })
             await loadCategories()
-            await loadCategoryOptions()
         }
     })
 }
@@ -643,18 +650,27 @@ function viewCategoryProducts(category: Category) {
     activeTab.value = 'products'
 }
 
+const categoryActionsCache = new Map<string, DropdownMenuItem[]>()
+
 function categoryActions(category: Category): DropdownMenuItem[] {
-    return [
+    const cached = categoryActionsCache.get(category.uuid)
+    if (cached) return cached
+
+    const actions: DropdownMenuItem[] = [
         { label: 'Edit', icon: 'i-lucide-pencil', onSelect: () => openCategoryEditModal(category) },
         { label: 'Delete', icon: 'i-lucide-trash-2', color: 'error', onSelect: () => onDeleteCategory(category) }
     ]
+    categoryActionsCache.set(category.uuid, actions)
+    return actions
 }
 
 onMounted(() => {
-    loadCategoryOptions()
+    ensureCategoriesLoaded().catch((error) => {
+        toast.add({ title: 'Failed to load categories', description: (error as APIError).message, color: 'error' })
+    })
     loadProducts()
     loadCategories()
 })
 
-onPullToRefresh(() => Promise.all([loadCategoryOptions(), loadProducts(), loadCategories()]))
+onPullToRefresh(() => Promise.all([ensureCategoriesLoaded(true), loadProducts(), loadCategories()]))
 </script>

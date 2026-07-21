@@ -23,7 +23,7 @@
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #details>
                 <div class="overflow-hidden">
-                <div :style="panelStyle">
+                <div ref="panelEl">
                 <UCard class="mt-4">
                     <div class="mb-4 flex items-center gap-2">
                         <UInput :model-value="publicLink" readonly class="w-full sm:w-96" />
@@ -81,7 +81,7 @@
 
             <template #summary>
                 <div class="overflow-hidden">
-                <div :style="panelStyle">
+                <div ref="panelEl">
                 <UTabs v-model="activeSummaryTab" :items="summaryTabs" class="w-full mt-4">
                     <template #pricing>
                         <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
@@ -262,7 +262,7 @@
 
             <template #orders>
                 <div class="overflow-hidden">
-                <div :style="panelStyle">
+                <div ref="panelEl">
                 <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
                     <ResponsiveTable :data="orders" :columns="orderColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
                         <template #status-cell="{ row }">
@@ -604,7 +604,7 @@ const tabs = computed<TabsItem[]>(() => [
     }
 ])
 
-const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd: onTabsTouchEnd, panelStyle } = useSwipeTabs(
+const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd: onTabsTouchEnd, panelEl } = useSwipeTabs(
     activeTab,
     computed(() => tabs.value.map((tab) => tab.value as string))
 )

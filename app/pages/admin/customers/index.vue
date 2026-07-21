@@ -7,7 +7,7 @@
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #approved>
                 <div class="overflow-hidden">
-                <div class="mt-4 space-y-4" :style="panelStyle">
+                <div class="mt-4 space-y-4" ref="panelEl">
                     <SearchInput v-model="search" placeholder="Search customers…" />
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
@@ -71,7 +71,7 @@
 
             <template #pending>
                 <div class="overflow-hidden">
-                <div class="mt-4 space-y-4" :style="panelStyle">
+                <div class="mt-4 space-y-4" ref="panelEl">
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
                         <ResponsiveTable
                             :data="pendingCustomers"
@@ -232,7 +232,7 @@ const tabs = computed<TabsItem[]>(() => [
     }
 ])
 
-const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd: onTabsTouchEnd, panelStyle } = useSwipeTabs(
+const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd: onTabsTouchEnd, panelEl } = useSwipeTabs(
     activeTab,
     computed(() => tabs.value.map((tab) => tab.value as 'approved' | 'pending'))
 )

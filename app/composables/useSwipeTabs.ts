@@ -1,16 +1,30 @@
+/**
+ * Applies the drag transform directly to the panel DOM node instead of through
+ * a reactive style binding, so a touchmove tick only mutates one element's
+ * inline style (compositor-only) instead of triggering a Vue re-render/vdom
+ * diff of the whole panel (which can hold a long product/order list) on every event.
+ */
 export function useSwipeTabs<T extends string>(activeTab: Ref<T>, tabValues: Ref<T[]> | ComputedRef<T[]>) {
     const threshold = 50
-    const offset = ref(0)
     const dragging = ref(false)
-    const suppressTransition = ref(false)
     const animating = ref(false)
+    const panelEl = ref<HTMLElement | null>(null)
 
     let startX = 0
     let startY = 0
     let axisLocked: 'x' | 'y' | null = null
+    let offset = 0
 
     function currentIndex() {
         return tabValues.value.indexOf(activeTab.value)
+    }
+
+    function applyTransform(value: number, withTransition: boolean) {
+        offset = value
+        const el = panelEl.value
+        if (!el) return
+        el.style.transition = withTransition ? 'transform 220ms ease' : 'none'
+        el.style.transform = `translateX(${value}px)`
     }
 
     function onTouchStart(event: TouchEvent) {
@@ -39,14 +53,14 @@ export function useSwipeTabs<T extends string>(activeTab: Ref<T>, tabValues: Ref
         const index = currentIndex()
         const atStart = index <= 0 && deltaX > 0
         const atEnd = index >= tabValues.value.length - 1 && deltaX < 0
-        offset.value = atStart || atEnd ? deltaX / 3 : deltaX
+        applyTransform(atStart || atEnd ? deltaX / 3 : deltaX, false)
     }
 
     function onTouchEnd() {
         if (!dragging.value) return
         dragging.value = false
 
-        const delta = offset.value
+        const delta = offset
         const index = currentIndex()
 
         if (axisLocked === 'x' && Math.abs(delta) > threshold) {
@@ -54,18 +68,19 @@ export function useSwipeTabs<T extends string>(activeTab: Ref<T>, tabValues: Ref
             if (next >= 0 && next < tabValues.value.length) {
                 const exitDistance = Math.max(window.innerWidth, 320)
                 animating.value = true
-                offset.value = delta < 0 ? -exitDistance : exitDistance
+                applyTransform(delta < 0 ? -exitDistance : exitDistance, true)
 
                 window.setTimeout(() => {
-                    suppressTransition.value = true
                     activeTab.value = tabValues.value[next]!
-                    offset.value = delta < 0 ? exitDistance : -exitDistance
 
-                    requestAnimationFrame(() => {
+                    nextTick(() => {
+                        applyTransform(delta < 0 ? exitDistance : -exitDistance, false)
+
                         requestAnimationFrame(() => {
-                            suppressTransition.value = false
-                            offset.value = 0
-                            window.setTimeout(() => { animating.value = false }, 240)
+                            requestAnimationFrame(() => {
+                                applyTransform(0, true)
+                                window.setTimeout(() => { animating.value = false }, 240)
+                            })
                         })
                     })
                 }, 220)
@@ -73,13 +88,8 @@ export function useSwipeTabs<T extends string>(activeTab: Ref<T>, tabValues: Ref
             }
         }
 
-        offset.value = 0
+        applyTransform(0, true)
     }
 
-    const panelStyle = computed(() => ({
-        transform: `translateX(${offset.value}px)`,
-        transition: dragging.value || suppressTransition.value ? 'none' : 'transform 220ms ease'
-    }))
-
-    return { onTouchStart, onTouchMove, onTouchEnd, panelStyle }
+    return { onTouchStart, onTouchMove, onTouchEnd, panelEl }
 }

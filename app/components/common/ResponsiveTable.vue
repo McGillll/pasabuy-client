@@ -1,12 +1,12 @@
 <template>
-    <div class="hidden sm:block">
+    <div v-if="isDesktop">
         <UTable :data="data" :columns="columns" :loading="loading" :ui="ui" v-bind="$attrs">
             <template v-for="(_, name) in cellSlots" #[name]="slotProps">
                 <slot :name="name" v-bind="slotProps ?? {}" />
             </template>
         </UTable>
     </div>
-    <div class="sm:hidden space-y-2 p-2">
+    <div v-else class="space-y-2 p-2">
         <template v-if="data.length">
             <slot
                 v-for="(item, index) in data"
@@ -31,6 +31,7 @@ defineProps<{
     ui?: Record<string, any>
 }>()
 
+const isDesktop = useIsDesktop()
 const slots = useSlots()
 const cellSlots = computed(() => Object.fromEntries(Object.entries(slots).filter(([name]) => name !== 'list-item')))
 

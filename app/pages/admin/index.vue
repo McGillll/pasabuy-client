@@ -124,6 +124,7 @@
 <script setup lang="ts">
 import { productService } from '@/components/api/admin/ProductService'
 import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
+import { orderService } from '@/components/api/admin/OrderService'
 import APIError from '@/components/api/user/APIError'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 
@@ -146,6 +147,11 @@ interface Order {
     status: 'pending' | 'confirmed' | 'cancelled'
     total_amount: string
     created_at: string
+    pasabuy_schedule: {
+        uuid: string
+        title: string
+        status: Schedule['status']
+    }
 }
 
 interface PendingOrder extends Order {
@@ -182,37 +188,25 @@ const orderColumns: TableColumn<PendingOrder>[] = [
     { id: 'actions', header: '' }
 ]
 
-/**
- * There is no endpoint to list orders across all schedules, so pending orders
- * are aggregated client-side: fetch every schedule, then fetch each schedule's
- * orders in parallel and keep only the pending ones.
- */
 async function loadDashboard() {
     loading.value = true
     try {
-        const [productsResponse, schedulesResponse] = await Promise.all([
+        const [productsResponse, schedulesResponse, ordersResponse] = await Promise.all([
             productService.fetchProducts({ per_page: 1 }),
-            pasabuyScheduleService.fetchSchedules({ per_page: 100 })
+            pasabuyScheduleService.fetchSchedules({ per_page: 100 }),
+            orderService.fetchOrders({ status: 'pending', per_page: 100 })
         ])
 
         totalProducts.value = productsResponse.data.total
         schedules.value = schedulesResponse.data.data
 
-        const ordersPerSchedule = await Promise.all(
-            schedules.value.map((schedule) => pasabuyScheduleService.fetchOrders(schedule.uuid))
-        )
-
-        pendingOrders.value = ordersPerSchedule
-            .flatMap((response, index) =>
-                (response.data as Order[])
-                    .filter((order) => order.status === 'pending')
-                    .map((order) => ({
-                        ...order,
-                        scheduleUuid: schedules.value[index]!.uuid,
-                        scheduleTitle: schedules.value[index]!.title,
-                        scheduleStatus: schedules.value[index]!.status
-                    }))
-            )
+        pendingOrders.value = (ordersResponse.data.data as Order[])
+            .map((order) => ({
+                ...order,
+                scheduleUuid: order.pasabuy_schedule.uuid,
+                scheduleTitle: order.pasabuy_schedule.title,
+                scheduleStatus: order.pasabuy_schedule.status
+            }))
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     } catch (error) {
         toast.add({ title: 'Failed to load dashboard', description: (error as APIError).message, color: 'error' })
