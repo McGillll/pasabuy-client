@@ -104,7 +104,7 @@
                                 class="flex items-center gap-4 p-4"
                             >
                                 <button
-                                    v-if="product.image_url"
+                                    v-if="product.image_url && !imageLoadFailed[product.uuid]"
                                     type="button"
                                     class="shrink-0 cursor-pointer"
                                     aria-label="Preview image"
@@ -117,6 +117,7 @@
                                         height="56"
                                         class="size-14 rounded-lg object-cover transition hover:opacity-80"
                                         alt=""
+                                        @error="onImageError(product.uuid)"
                                     >
                                 </button>
                                 <div v-else class="flex size-14 shrink-0 items-center justify-center rounded-lg bg-elevated text-dimmed">
@@ -270,11 +271,15 @@
 
         <BaseModal v-model:open="isPreviewOpen" :title="previewProduct?.name" view-only>
             <img
-                v-if="previewProduct?.image_url"
+                v-if="previewProduct?.image_url && !imageLoadFailed[previewProduct.uuid]"
                 :src="previewProduct.image_url"
                 class="max-h-[70vh] w-full rounded-lg object-contain"
                 :alt="previewProduct.name"
+                @error="onImageError(previewProduct!.uuid)"
             >
+            <div v-else class="flex h-40 items-center justify-center rounded-lg bg-elevated text-dimmed">
+                <UIcon name="i-lucide-image-off" class="size-8" />
+            </div>
         </BaseModal>
 
         <USlideover
@@ -292,10 +297,12 @@
                 <div v-else class="divide-y divide-default">
                     <div v-for="product in cartItems" :key="product.uuid" class="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
                         <img
-                            v-if="product.image_url"
+                            v-if="product.image_url && !imageLoadFailed[product.uuid]"
                             :src="product.image_url"
+                            loading="lazy"
                             class="size-12 shrink-0 rounded-lg object-cover"
                             alt=""
+                            @error="onImageError(product.uuid)"
                         >
                         <div v-else class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-elevated text-dimmed">
                             <UIcon name="i-lucide-image" class="size-5" />
@@ -410,6 +417,12 @@ useSearchDebounce(productSearch, () => {
 const quantities = ref<Record<string, number>>({})
 const selectedCategory = ref('all')
 const isCartOpen = ref(false)
+
+const imageLoadFailed = ref<Record<string, boolean>>({})
+
+function onImageError(productUuid: string) {
+    imageLoadFailed.value[productUuid] = true
+}
 
 const submitting = ref(false)
 const submitError = ref<string | null>(null)
@@ -615,6 +628,7 @@ onMounted(async () => {
 })
 
 onPullToRefresh(async () => {
+    imageLoadFailed.value = {}
     await load(true)
     if (isLoggedIn.value && isApproved.value) {
         await loadMyOrder()

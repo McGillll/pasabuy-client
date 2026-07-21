@@ -35,10 +35,12 @@
                         >
                             <template #image-cell="{ row }">
                                 <img
-                                    v-if="row.original.image_url"
+                                    v-if="row.original.image_url && !imageLoadFailed[row.original.uuid]"
                                     :src="row.original.image_url"
+                                    loading="lazy"
                                     class="size-12 rounded-lg object-cover ring-1 ring-default"
                                     alt=""
+                                    @error="onImageError(row.original.uuid)"
                                 >
                                 <div v-else class="flex items-center justify-center size-12 rounded-lg bg-elevated text-dimmed">
                                     <UIcon name="i-lucide-image" class="size-5" />
@@ -86,10 +88,12 @@
                                 <ListCard :dimmed="!product.is_active" :actions="productActions(product)">
                                     <template #leading>
                                         <img
-                                            v-if="product.image_url"
+                                            v-if="product.image_url && !imageLoadFailed[product.uuid]"
                                             :src="product.image_url"
+                                            loading="lazy"
                                             class="size-12 rounded-lg object-cover ring-1 ring-default"
                                             alt=""
+                                            @error="onImageError(product.uuid)"
                                         >
                                         <div v-else class="flex items-center justify-center size-12 rounded-lg bg-elevated text-dimmed">
                                             <UIcon name="i-lucide-image" class="size-5" />
@@ -374,6 +378,12 @@ const productsTotal = ref(0)
 const productSearch = ref('')
 const productCategoryFilter = ref('all')
 
+const imageLoadFailed = ref<Record<string, boolean>>({})
+
+function onImageError(productUuid: string) {
+    imageLoadFailed.value[productUuid] = true
+}
+
 const categoryOptions = computed(() => [
     { label: 'Uncategorized', value: null },
     ...(allCategories.value ?? []).map((category) => ({ label: category.name, value: category.uuid }))
@@ -411,6 +421,7 @@ async function loadProducts() {
         products.value = response.data.data
         productsTotal.value = response.data.total
         productActionsCache.clear()
+        imageLoadFailed.value = {}
     } catch (error) {
         toast.add({ title: 'Failed to load products', description: (error as APIError).message, color: 'error' })
     } finally {
