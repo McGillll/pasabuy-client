@@ -8,6 +8,7 @@ export interface CustomerRegisterPayload {
     password_confirmation: string
     contact_number?: string
     messenger_name?: string
+    terms_accepted: boolean
 }
 
 class PublicCustomerService extends BaseAPIService {

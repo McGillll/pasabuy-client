@@ -59,6 +59,23 @@
 
                 <UCheckbox v-model="passwordsVisible" label="Show passwords" size="sm" />
 
+                <UFormField name="terms_accepted">
+                    <UCheckbox
+                        :model-value="state.terms_accepted"
+                        size="sm"
+                        @update:model-value="onTermsCheckboxChange"
+                    >
+                        <template #label>
+                            <span class="text-sm text-default">
+                                I agree to the
+                                <NuxtLink :to="{ path: '/terms', query: { from: 'register' } }" class="text-primary hover:underline" @click.stop>Terms of Service</NuxtLink>
+                                and
+                                <NuxtLink :to="{ path: '/privacy', query: { from: 'register' } }" class="text-primary hover:underline" @click.stop>Privacy Policy</NuxtLink>
+                            </span>
+                        </template>
+                    </UCheckbox>
+                </UFormField>
+
                 <BaseButton type="submit" block size="xl" :loading="isSubmitting">
                     Create account
                 </BaseButton>
@@ -78,6 +95,7 @@
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import { publicCustomerService } from '@/components/api/public/PublicCustomerService'
 import APIError from '@/components/api/user/APIError'
+import type { RegisterFormState } from '@/composables/useRegisterFormDraft'
 
 definePageMeta({
     layout: false,
@@ -92,20 +110,22 @@ const loginLink = computed(() => {
     return redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : '/login'
 })
 
-const state = reactive({
-    first_name: '',
-    last_name: '',
-    email: '',
-    contact_number: '',
-    messenger_name: '',
-    password: '',
-    password_confirmation: '',
-})
+const { state, reset: resetDraft } = useRegisterFormDraft()
+const { hasViewedLegalDocs } = useLegalAcknowledgement()
 
 const isSubmitting = ref(false)
 const submitted = ref(false)
 const registerError = ref<string | null>(null)
 const passwordsVisible = ref(false)
+
+function onTermsCheckboxChange(value: boolean | 'indeterminate') {
+    const isChecked = value === true
+    if (isChecked && !hasViewedLegalDocs.value) {
+        navigateTo({ path: '/terms', query: { from: 'register' } })
+        return
+    }
+    state.value.terms_accepted = isChecked
+}
 
 function validate(state: {
     first_name: string
@@ -113,6 +133,7 @@ function validate(state: {
     email: string
     password: string
     password_confirmation: string
+    terms_accepted: boolean
 }): FormError[] {
     const errors: FormError[] = []
     if (!state.first_name) errors.push({ name: 'first_name', message: 'First name is required' })
@@ -123,10 +144,13 @@ function validate(state: {
     if (state.password_confirmation !== state.password) {
         errors.push({ name: 'password_confirmation', message: 'Passwords do not match' })
     }
+    if (!state.terms_accepted) {
+        errors.push({ name: 'terms_accepted', message: 'You must agree to the Terms of Service and Privacy Policy' })
+    }
     return errors
 }
 
-async function onSubmit(event: FormSubmitEvent<typeof state>) {
+async function onSubmit(event: FormSubmitEvent<RegisterFormState>) {
     isSubmitting.value = true
     registerError.value = null
     try {
@@ -138,8 +162,10 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
             password_confirmation: event.data.password_confirmation,
             contact_number: event.data.contact_number || undefined,
             messenger_name: event.data.messenger_name || undefined,
+            terms_accepted: event.data.terms_accepted,
         })
         submitted.value = true
+        resetDraft()
     } catch (error) {
         registerError.value = error instanceof APIError ? error.message : 'Something went wrong. Please try again.'
     } finally {
