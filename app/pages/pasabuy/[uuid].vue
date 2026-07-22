@@ -1,5 +1,12 @@
 <template>
-    <div class="min-h-screen bg-default px-4 py-8" :class="{ 'pb-32 lg:pb-8': showBottomBar }">
+    <div
+        class="min-h-screen bg-default px-4 py-8"
+        :class="[
+            showBottomBar && isLoggedIn ? 'pb-44 lg:pb-8' : '',
+            showBottomBar && !isLoggedIn ? 'pb-32 lg:pb-8' : '',
+            !showBottomBar && isLoggedIn ? 'pb-20 lg:pb-8' : ''
+        ]"
+    >
         <div class="mx-auto max-w-2xl space-y-6 lg:max-w-5xl lg:grid lg:grid-cols-[1fr_320px] lg:items-start lg:gap-8 lg:space-y-0">
         <div class="space-y-6">
             <Transition
@@ -74,9 +81,9 @@
                         v-model="selectedCategory"
                         :items="categoryTabs"
                         variant="pill"
-                        size="sm"
+                        size="md"
                         class="hidden w-full lg:flex"
-                        :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center' }"
+                        :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center py-2.5' }"
                     />
 
                     <UInput
@@ -220,53 +227,75 @@
         </aside>
         </div>
 
-        <div v-if="showBottomBar" class="fixed inset-x-0 bottom-0 border-t border-default bg-default/95 backdrop-blur-sm lg:hidden">
-            <UTabs
-                v-if="categoryTabs.length > 2"
-                v-model="selectedCategory"
-                :items="categoryTabs"
-                variant="pill"
-                size="sm"
-                class="w-full border-b border-default"
-                :ui="{ root: 'px-4 py-2', list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center' }"
-            />
+        <div v-if="showBottomBar || isLoggedIn" class="fixed inset-x-0 bottom-0 z-10 border-t border-default bg-default/95 backdrop-blur-sm lg:hidden">
+            <template v-if="showBottomBar">
+                <UTabs
+                    v-if="categoryTabs.length > 2"
+                    v-model="selectedCategory"
+                    :items="categoryTabs"
+                    variant="pill"
+                    size="md"
+                    class="w-full border-b border-default"
+                    :ui="{ root: 'px-4 py-3', list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center py-2.5' }"
+                />
 
-            <div class="mx-auto max-w-2xl space-y-3 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                <template v-if="!isLoggedIn">
-                    <div class="flex items-center justify-between gap-3">
-                        <p class="text-sm text-muted">Log in to place an order.</p>
-                        <div class="flex shrink-0 gap-2">
-                            <BaseButton size="sm" color="neutral" variant="soft" :to="`/register?redirect=${encodeURIComponent(route.fullPath)}`">
-                                Sign up
-                            </BaseButton>
-                            <BaseButton size="sm" :to="`/login?redirect=${encodeURIComponent(route.fullPath)}`">
-                                Log in
+                <div
+                    class="mx-auto max-w-2xl space-y-3 px-4 pt-3"
+                    :class="isLoggedIn ? 'pb-3' : 'pb-[max(0.75rem,env(safe-area-inset-bottom))]'"
+                >
+                    <template v-if="!isLoggedIn">
+                        <div class="flex items-center justify-between gap-3">
+                            <p class="text-sm text-muted">Log in to place an order.</p>
+                            <div class="flex shrink-0 gap-2">
+                                <BaseButton size="sm" color="neutral" variant="soft" :to="`/register?redirect=${encodeURIComponent(route.fullPath)}`">
+                                    Sign up
+                                </BaseButton>
+                                <BaseButton size="sm" :to="`/login?redirect=${encodeURIComponent(route.fullPath)}`">
+                                    Log in
+                                </BaseButton>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template v-else-if="!isApproved">
+                        <p class="text-sm text-warning">Your account is pending admin approval before you can order.</p>
+                    </template>
+
+                    <template v-else>
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-xs text-muted">{{ itemCount }} item{{ itemCount === 1 ? '' : 's' }}</p>
+                                <p class="text-lg font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
+                            </div>
+                            <BaseButton
+                                size="lg"
+                                icon="i-lucide-shopping-cart"
+                                :disabled="!schedule?.is_open || !hasItems"
+                                @click="isCartOpen = true"
+                            >
+                                View cart
                             </BaseButton>
                         </div>
-                    </div>
-                </template>
+                    </template>
+                </div>
+            </template>
 
-                <template v-else-if="!isApproved">
-                    <p class="text-sm text-warning">Your account is pending admin approval before you can order.</p>
-                </template>
-
-                <template v-else>
-                    <div class="flex items-center justify-between gap-3">
-                        <div>
-                            <p class="text-xs text-muted">{{ itemCount }} item{{ itemCount === 1 ? '' : 's' }}</p>
-                            <p class="text-lg font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
-                        </div>
-                        <BaseButton
-                            size="lg"
-                            icon="i-lucide-shopping-cart"
-                            :disabled="!schedule?.is_open || !hasItems"
-                            @click="isCartOpen = true"
-                        >
-                            View cart
-                        </BaseButton>
-                    </div>
-                </template>
-            </div>
+            <nav
+                v-if="isLoggedIn"
+                class="flex w-full pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+                :class="{ 'border-t border-default': showBottomBar }"
+            >
+                <NuxtLink
+                    v-for="link in mobileNavLinks"
+                    :key="link.label"
+                    :to="link.to"
+                    class="flex flex-1 min-w-0 flex-col items-center justify-center gap-1 py-2 text-muted"
+                    active-class="text-primary"
+                >
+                    <UIcon :name="link.icon" class="size-6" />
+                    <span class="text-xs leading-tight">{{ link.label }}</span>
+                </NuxtLink>
+            </nav>
         </div>
 
         <BaseModal v-model:open="isPreviewOpen" :title="previewProduct?.name" view-only>
@@ -398,6 +427,11 @@ const route = useRoute()
 const uuid = route.params.uuid as string
 const toast = useToast()
 const { user, fetchCurrentUser } = useAuth()
+
+const mobileNavLinks = [
+    { label: 'Browse Pasabuys', icon: 'i-lucide-package-search', to: '/customer' },
+    { label: 'My Orders', icon: 'i-lucide-receipt', to: '/customer/orders' }
+]
 
 const schedule = ref<Schedule | null>(null)
 const { data: catalog, ensure: ensureCatalogLoaded } = useCachedFetch<Product[]>(
