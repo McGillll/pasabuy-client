@@ -22,22 +22,20 @@
             </template>
         </UAlert>
 
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <UCard
-                v-for="stat in stats"
-                :key="stat.label"
-                role="button"
-                tabindex="0"
-                class="cursor-pointer text-left transition-colors hover:bg-elevated/50"
-                :class="stat.value === statusFilter ? 'ring-2 ring-primary' : ''"
-                @click="setStatusFilter(stat.value)"
-                @keydown.enter="setStatusFilter(stat.value)"
-                @keydown.space.prevent="setStatusFilter(stat.value)"
-            >
-                <p class="text-xs text-muted">{{ stat.label }}</p>
-                <p class="text-2xl font-semibold text-highlighted">{{ stat.count }}</p>
-            </UCard>
-        </div>
+        <UCard>
+            <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                <div>
+                    <p class="text-xs text-muted">Total orders</p>
+                    <p class="text-2xl font-semibold text-highlighted">{{ total }}</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                    <span v-for="stat in statusBreakdown" :key="stat.label" class="flex items-center gap-1.5 text-muted">
+                        <span class="size-2 rounded-full" :class="stat.dotClass" />
+                        {{ stat.label }} <span class="font-medium text-highlighted">{{ stat.count }}</span>
+                    </span>
+                </div>
+            </div>
+        </UCard>
 
         <div class="space-y-3">
             <UInput
@@ -47,7 +45,8 @@
                 class="w-full sm:w-72"
             />
 
-            <div class="hidden sm:grid grid-cols-4 gap-2">
+            <div class="hidden sm:grid grid-cols-2 gap-2 lg:grid-cols-5">
+                <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full" />
                 <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full" />
                 <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full" />
                 <UInput v-model="dateFrom" type="date" placeholder="From" class="w-full" />
@@ -69,6 +68,9 @@
         <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
             <template #body>
                 <div class="space-y-4">
+                    <UFormField label="Status">
+                        <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full" />
+                    </UFormField>
                     <UFormField label="Payment status">
                         <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full" />
                     </UFormField>
@@ -274,6 +276,13 @@ const dateFrom = ref('')
 const dateTo = ref('')
 const isFiltersOpen = ref(false)
 
+const statusFilterOptions = [
+    { label: 'All statuses', value: 'all' },
+    { label: customerOrderStatusLabel.pending, value: 'pending' },
+    { label: customerOrderStatusLabel.confirmed, value: 'confirmed' },
+    { label: customerOrderStatusLabel.cancelled, value: 'cancelled' }
+]
+
 const paymentStatusFilterOptions = [
     { label: 'All payment statuses', value: 'all' },
     { label: paymentStatusLabel.unpaid, value: 'unpaid' },
@@ -288,11 +297,12 @@ const deliveryStatusFilterOptions = [
 ]
 
 const activeFilterCount = computed(() =>
-    [paymentStatusFilter.value !== 'all', deliveryStatusFilter.value !== 'all', !!dateFrom.value, !!dateTo.value]
+    [statusFilter.value !== 'all', paymentStatusFilter.value !== 'all', deliveryStatusFilter.value !== 'all', !!dateFrom.value, !!dateTo.value]
         .filter(Boolean).length
 )
 
 function clearFilters() {
+    statusFilter.value = 'all'
     paymentStatusFilter.value = 'all'
     deliveryStatusFilter.value = 'all'
     dateFrom.value = ''
@@ -313,11 +323,10 @@ function orderDisplayAmount(order: Order) {
     return order.pasabuy_schedule?.status === 'finished' ? order.amount_due : order.total_amount
 }
 
-const stats = computed(() => [
-    { label: 'Total orders', value: 'all' as const, count: total.value },
-    { label: 'Pending', value: 'pending' as const, count: orders.value.filter((o) => o.status === 'pending').length },
-    { label: 'Confirmed', value: 'confirmed' as const, count: orders.value.filter((o) => o.status === 'confirmed').length },
-    { label: 'Cancelled', value: 'cancelled' as const, count: orders.value.filter((o) => o.status === 'cancelled').length }
+const statusBreakdown = computed(() => [
+    { label: 'Pending', count: orders.value.filter((o) => o.status === 'pending').length, dotClass: 'bg-warning' },
+    { label: 'Confirmed', count: orders.value.filter((o) => o.status === 'confirmed').length, dotClass: 'bg-success' },
+    { label: 'Cancelled', count: orders.value.filter((o) => o.status === 'cancelled').length, dotClass: 'bg-error' }
 ])
 
 const attentionOrder = computed(() => {
@@ -330,10 +339,6 @@ const emptyStateMessage = computed(() => {
     if (statusFilter.value !== 'all' || search.value || activeFilterCount.value) return 'No orders match this filter.'
     return "You haven't placed any orders yet."
 })
-
-function setStatusFilter(value: 'all' | 'pending' | 'confirmed' | 'cancelled') {
-    statusFilter.value = value
-}
 
 async function loadOrders() {
     loading.value = true
