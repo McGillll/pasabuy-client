@@ -39,12 +39,57 @@
             </UCard>
         </div>
 
-        <UInput
-            v-model="search"
-            icon="i-lucide-search"
-            placeholder="Search by pasabuy title…"
-            class="w-full sm:w-72"
-        />
+        <div class="space-y-3">
+            <UInput
+                v-model="search"
+                icon="i-lucide-search"
+                placeholder="Search by pasabuy title…"
+                class="w-full sm:w-72"
+            />
+
+            <div class="hidden sm:grid grid-cols-4 gap-2">
+                <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full" />
+                <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full" />
+                <UInput v-model="dateFrom" type="date" placeholder="From" class="w-full" />
+                <UInput v-model="dateTo" type="date" placeholder="To" class="w-full" />
+            </div>
+
+            <BaseButton
+                class="sm:hidden"
+                color="neutral"
+                variant="outline"
+                icon="i-lucide-list-filter"
+                @click="isFiltersOpen = true"
+            >
+                Filters
+                <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
+            </BaseButton>
+        </div>
+
+        <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
+            <template #body>
+                <div class="space-y-4">
+                    <UFormField label="Payment status">
+                        <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full" />
+                    </UFormField>
+                    <UFormField label="Delivery status">
+                        <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full" />
+                    </UFormField>
+                    <UFormField label="From date">
+                        <UInput v-model="dateFrom" type="date" class="w-full" />
+                    </UFormField>
+                    <UFormField label="To date">
+                        <UInput v-model="dateTo" type="date" class="w-full" />
+                    </UFormField>
+                </div>
+            </template>
+            <template #footer>
+                <div class="w-full flex items-center gap-2">
+                    <BaseButton class="flex-1" color="neutral" variant="outline" @click="clearFilters">Clear filters</BaseButton>
+                    <BaseButton class="flex-1" @click="isFiltersOpen = false">Done</BaseButton>
+                </div>
+            </template>
+        </USlideover>
 
         <UCard :ui="{ body: 'p-0 sm:p-0' }">
             <ResponsiveTable
@@ -223,6 +268,36 @@ const perPage = 15
 const total = ref(0)
 const search = ref('')
 const statusFilter = ref<'all' | 'pending' | 'confirmed' | 'cancelled'>('all')
+const paymentStatusFilter = ref('all')
+const deliveryStatusFilter = ref('all')
+const dateFrom = ref('')
+const dateTo = ref('')
+const isFiltersOpen = ref(false)
+
+const paymentStatusFilterOptions = [
+    { label: 'All payment statuses', value: 'all' },
+    { label: paymentStatusLabel.unpaid, value: 'unpaid' },
+    { label: paymentStatusLabel.partially_paid, value: 'partially_paid' },
+    { label: paymentStatusLabel.paid, value: 'paid' }
+]
+
+const deliveryStatusFilterOptions = [
+    { label: 'All delivery statuses', value: 'all' },
+    { label: deliveryStatusLabel.not_delivered, value: 'not_delivered' },
+    { label: deliveryStatusLabel.delivered, value: 'delivered' }
+]
+
+const activeFilterCount = computed(() =>
+    [paymentStatusFilter.value !== 'all', deliveryStatusFilter.value !== 'all', !!dateFrom.value, !!dateTo.value]
+        .filter(Boolean).length
+)
+
+function clearFilters() {
+    paymentStatusFilter.value = 'all'
+    deliveryStatusFilter.value = 'all'
+    dateFrom.value = ''
+    dateTo.value = ''
+}
 
 const columns: TableColumn<Order>[] = [
     { id: 'schedule', header: 'Pasabuy' },
@@ -252,7 +327,7 @@ const attentionOrder = computed(() => {
 })
 
 const emptyStateMessage = computed(() => {
-    if (statusFilter.value !== 'all' || search.value) return 'No orders match this filter.'
+    if (statusFilter.value !== 'all' || search.value || activeFilterCount.value) return 'No orders match this filter.'
     return "You haven't placed any orders yet."
 })
 
@@ -267,6 +342,10 @@ async function loadOrders() {
             page: page.value,
             per_page: perPage,
             status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
+            payment_status: paymentStatusFilter.value !== 'all' ? paymentStatusFilter.value : undefined,
+            delivery_status: deliveryStatusFilter.value !== 'all' ? deliveryStatusFilter.value : undefined,
+            date_from: dateFrom.value || undefined,
+            date_to: dateTo.value || undefined,
             schedule_title: search.value || undefined
         })
         orders.value = response.data.data
@@ -280,7 +359,7 @@ async function loadOrders() {
 
 watch(page, loadOrders)
 
-watch(statusFilter, () => {
+watch([statusFilter, paymentStatusFilter, deliveryStatusFilter, dateFrom, dateTo], () => {
     page.value = 1
     loadOrders()
 })
