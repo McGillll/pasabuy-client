@@ -86,6 +86,7 @@ const uuid = route.params.uuid as string
 const justPlaced = computed(() => route.query.placed === '1')
 
 const order = ref<Order | null>(null)
+const orderEtag = ref<string | null>(null)
 const loading = ref(true)
 const notFound = ref(false)
 const cancelling = ref(false)
@@ -97,8 +98,10 @@ const isFinished = computed(() => order.value?.pasabuy_schedule?.status === 'fin
 async function loadOrder(silent = false) {
     if (!silent) loading.value = true
     try {
-        const response = await customerOrderService.fetchMyOrder(uuid)
-        order.value = response.data
+        const result = await customerOrderService.fetchMyOrderCacheable(uuid, orderEtag.value)
+        if (result === 'not-modified') return
+        order.value = result.data
+        orderEtag.value = result.etag
     } catch (error) {
         if (error instanceof APIError) {
             notFound.value = true

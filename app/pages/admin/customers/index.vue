@@ -263,17 +263,22 @@ const pendingLoading = ref(false)
 const pendingPage = ref(1)
 const pendingTotal = ref(0)
 
+const approvedEtag = ref<string | null>(null)
+const pendingEtag = ref<string | null>(null)
+
 async function loadApproved() {
     approvedLoading.value = true
     try {
-        const response = await customerService.fetchCustomers({
+        const result = await customerService.fetchCustomersCacheable({
             page: approvedPage.value,
             per_page: perPage,
             search: search.value || undefined,
             is_approved: '1'
-        })
-        approvedCustomers.value = response.data.data
-        approvedTotal.value = response.data.total
+        }, approvedEtag.value)
+        if (result === 'not-modified') return
+        approvedCustomers.value = result.data.data
+        approvedTotal.value = result.data.total
+        approvedEtag.value = result.etag
     } catch (error) {
         toast.add({ title: 'Failed to load customers', description: (error as APIError).message, color: 'error' })
     } finally {
@@ -284,13 +289,15 @@ async function loadApproved() {
 async function loadPending() {
     pendingLoading.value = true
     try {
-        const response = await customerService.fetchCustomers({
+        const result = await customerService.fetchCustomersCacheable({
             page: pendingPage.value,
             per_page: perPage,
             is_approved: '0'
-        })
-        pendingCustomers.value = response.data.data
-        pendingTotal.value = response.data.total
+        }, pendingEtag.value)
+        if (result === 'not-modified') return
+        pendingCustomers.value = result.data.data
+        pendingTotal.value = result.data.total
+        pendingEtag.value = result.etag
     } catch (error) {
         toast.add({ title: 'Failed to load customers', description: (error as APIError).message, color: 'error' })
     } finally {

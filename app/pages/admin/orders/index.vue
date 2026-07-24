@@ -256,7 +256,7 @@ const paymentStatusFilter = ref('all')
 const deliveryStatusFilter = ref('all')
 const { data: schedules, ensure: ensureSchedulesLoaded } = useCachedFetch<ScheduleOption[]>(
     'admin-pasabuy-schedules',
-    async () => (await pasabuyScheduleService.fetchSchedules({ per_page: 100 })).data.data
+    (etag) => pasabuyScheduleService.fetchSchedulesCacheable({ per_page: 100 }, etag)
 )
 const isFiltersOpen = ref(false)
 
@@ -311,10 +311,12 @@ const orderColumns: TableColumn<Order>[] = [
     { id: 'actions', header: '' }
 ]
 
+const ordersEtag = ref<string | null>(null)
+
 async function loadOrders() {
     loading.value = true
     try {
-        const response = await orderService.fetchOrders({
+        const result = await orderService.fetchOrdersCacheable({
             page: page.value,
             per_page: perPage,
             search: search.value || undefined,
@@ -322,9 +324,11 @@ async function loadOrders() {
             schedule_uuid: scheduleFilter.value !== 'all' ? scheduleFilter.value : undefined,
             payment_status: paymentStatusFilter.value !== 'all' ? paymentStatusFilter.value : undefined,
             delivery_status: deliveryStatusFilter.value !== 'all' ? deliveryStatusFilter.value : undefined
-        })
-        orders.value = response.data.data
-        total.value = response.data.total
+        }, ordersEtag.value)
+        if (result === 'not-modified') return
+        orders.value = result.data.data
+        total.value = result.data.total
+        ordersEtag.value = result.etag
     } catch (error) {
         toast.add({ title: 'Failed to load orders', description: (error as APIError).message, color: 'error' })
     } finally {
@@ -419,11 +423,15 @@ function resetPaymentForm() {
     paymentForm.paid_at = new Date().toISOString().slice(0, 10)
 }
 
+const paymentsEtags = ref<Record<string, string | null>>({})
+
 async function loadPayments(orderUuid: string) {
     paymentsLoading.value = true
     try {
-        const response = await orderService.fetchPayments(orderUuid)
-        payments.value = response.data
+        const result = await orderService.fetchPaymentsCacheable(orderUuid, paymentsEtags.value[orderUuid] ?? null)
+        if (result === 'not-modified') return
+        payments.value = result.data
+        paymentsEtags.value[orderUuid] = result.etag
     } catch (error) {
         toast.add({ title: 'Failed to load payments', description: (error as APIError).message, color: 'error' })
     } finally {

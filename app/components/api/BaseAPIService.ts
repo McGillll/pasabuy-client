@@ -57,6 +57,46 @@ class BaseAPIService {
 
 
 
+    async requestCacheable<T>(url: string, params: object, etag: string | null, signal?: AbortSignal): Promise<{ data: T; etag: string | null } | 'not-modified'> {
+        const runtimeConfig = useRuntimeConfig()
+
+        const query = new URLSearchParams()
+        Object.entries(params ?? {}).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                query.append(key, String(value))
+            }
+        })
+        const queryString = query.toString()
+        const requestUrl = queryString ? `${url}?${queryString}` : url
+
+        const headers: Record<string, string> = {
+            Authorization: 'Bearer ' + localStorage.getItem('_token'),
+            Accept: 'application/json',
+        }
+        if (etag) headers['If-None-Match'] = etag
+
+        try {
+            const response = await $fetch.raw<any>(requestUrl, {
+                baseURL: runtimeConfig.public.apiBaseURL,
+                method: 'GET',
+                headers,
+                signal,
+            })
+            return { data: response._data as T, etag: response.headers.get('etag') }
+        } catch (error: any) {
+            if (error?.name === 'AbortError') throw error
+            if (error.response?.status === 304) return 'not-modified'
+            if (error.response?.status === 401 && localStorage.getItem('_token')) {
+                this.revokeAccess()
+            }
+            const responseMessage = error.response?._data?.message
+            throw new APIError({
+                message: responseMessage ?? "Something went wrong. Please try again. If the problem persists, contact your system administrator",
+                errors: error.response?._data?.errors,
+            })
+        }
+    }
+
     revokeAccess() {
         localStorage.removeItem("_token")
         localStorage.removeItem("rememberMe")

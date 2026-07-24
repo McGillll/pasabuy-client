@@ -148,6 +148,7 @@ const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd
 
 const businessLoading = ref(true)
 const savingBusiness = ref(false)
+const settingsEtag = ref<string | null>(null)
 
 const businessState = reactive({
     business_name: '',
@@ -165,12 +166,14 @@ function validateBusiness(state: { business_name: string }): FormError[] {
 async function loadBusinessSettings() {
     businessLoading.value = true
     try {
-        const response = await settingsService.fetchPublicSettings()
+        const response = await settingsService.fetchPublicSettingsCacheable(settingsEtag.value)
+        if (response === 'not-modified') return
         const data = response.data
         businessState.business_name = data.business_name ?? ''
         businessState.contact_email = data.contact_email ?? ''
         businessState.contact_phone = data.contact_phone ?? ''
         businessState.address = data.address ?? ''
+        settingsEtag.value = response.etag
     } catch (error) {
         toast.add({ title: 'Failed to load settings', description: (error as APIError).message, color: 'error' })
     } finally {

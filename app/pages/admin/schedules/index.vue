@@ -30,12 +30,14 @@
         <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
             <template #body>
                 <div class="space-y-4">
-                    <UFormField label="Month">
-                        <USelect v-model="monthFilter" :items="monthFilterOptions" value-key="value" placeholder="All months" class="w-full" />
-                    </UFormField>
-                    <UFormField label="Year">
-                        <USelect v-model="yearFilter" :items="yearFilterOptions" value-key="value" placeholder="All years" class="w-full" />
-                    </UFormField>
+                    <div class="grid grid-cols-2 gap-4">
+                        <UFormField label="Month">
+                            <USelect v-model="monthFilter" :items="monthFilterOptions" value-key="value" placeholder="All months" class="w-full" />
+                        </UFormField>
+                        <UFormField label="Year">
+                            <USelect v-model="yearFilter" :items="yearFilterOptions" value-key="value" placeholder="All years" class="w-full" />
+                        </UFormField>
+                    </div>
                 </div>
             </template>
             <template #footer>

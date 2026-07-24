@@ -167,7 +167,7 @@ const actingOn = ref<string | null>(null)
 const totalProducts = ref(0)
 const { data: schedules, ensure: ensureSchedulesLoaded } = useCachedFetch<Schedule[]>(
     'admin-pasabuy-schedules',
-    async () => (await pasabuyScheduleService.fetchSchedules({ per_page: 100 })).data.data
+    (etag) => pasabuyScheduleService.fetchSchedulesCacheable({ per_page: 100 }, etag)
 )
 const pendingOrders = ref<PendingOrder[]>([])
 

@@ -77,12 +77,14 @@
                     <UFormField label="Delivery status">
                         <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full" />
                     </UFormField>
-                    <UFormField label="From date">
-                        <UInput v-model="dateFrom" type="date" class="w-full" />
-                    </UFormField>
-                    <UFormField label="To date">
-                        <UInput v-model="dateTo" type="date" class="w-full" />
-                    </UFormField>
+                    <div class="grid grid-cols-2 gap-4">
+                        <UFormField label="From date">
+                            <UInput v-model="dateFrom" type="date" class="w-full" />
+                        </UFormField>
+                        <UFormField label="To date">
+                            <UInput v-model="dateTo" type="date" class="w-full" />
+                        </UFormField>
+                    </div>
                 </div>
             </template>
             <template #footer>

@@ -5,6 +5,12 @@ class CustomerService extends BaseAPIService {
         return await this.request('/admin/customers', 'GET', params)
     }
 
+    async fetchCustomersCacheable(params: object, etag: string | null): Promise<{ data: any; etag: string | null } | 'not-modified'> {
+        const result = await this.requestCacheable<any>('/admin/customers', params, etag)
+        if (result === 'not-modified') return result
+        return { data: result.data.data, etag: result.etag }
+    }
+
     async fetchCustomerOrders(uuid: string): Promise<any> {
         return await this.request(`/admin/customers/${uuid}/orders`, 'GET')
     }

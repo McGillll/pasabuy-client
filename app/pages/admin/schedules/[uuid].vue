@@ -579,6 +579,7 @@ const schedule = ref<Schedule | null>(null)
 const orders = ref<Order[]>([])
 const summary = ref<ScheduleSummaryItem[]>([])
 const loading = ref(true)
+const scheduleEtag = ref<string | null>(null)
 
 useHead({ title: computed(() => schedule.value?.title ?? 'Schedule Details') })
 
@@ -904,12 +905,15 @@ async function loadAll() {
     loading.value = true
     try {
         const [scheduleResponse, ordersResponse, summaryResponse] = await Promise.all([
-            pasabuyScheduleService.fetchSchedule(uuid),
+            pasabuyScheduleService.fetchScheduleCacheable(uuid, scheduleEtag.value),
             pasabuyScheduleService.fetchOrders(uuid),
             pasabuyScheduleService.fetchScheduleSummary(uuid)
         ])
 
-        schedule.value = scheduleResponse.data
+        if (scheduleResponse !== 'not-modified') {
+            schedule.value = scheduleResponse.data
+            scheduleEtag.value = scheduleResponse.etag
+        }
         orders.value = ordersResponse.data
         summary.value = summaryResponse.data
 
@@ -933,11 +937,14 @@ async function refreshSummary() {
 async function pullRefresh() {
     try {
         const [scheduleResponse, ordersResponse, summaryResponse] = await Promise.all([
-            pasabuyScheduleService.fetchSchedule(uuid),
+            pasabuyScheduleService.fetchScheduleCacheable(uuid, scheduleEtag.value),
             pasabuyScheduleService.fetchOrders(uuid),
             pasabuyScheduleService.fetchScheduleSummary(uuid)
         ])
-        schedule.value = scheduleResponse.data
+        if (scheduleResponse !== 'not-modified') {
+            schedule.value = scheduleResponse.data
+            scheduleEtag.value = scheduleResponse.etag
+        }
         orders.value = ordersResponse.data
         summary.value = summaryResponse.data
         await loadChecklist()

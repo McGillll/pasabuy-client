@@ -15,6 +15,12 @@ class ProductService extends BaseAPIService {
         return await this.request('/admin/products', 'GET', params)
     }
 
+    async fetchProductsCacheable(params: object, etag: string | null): Promise<{ data: any; etag: string | null } | 'not-modified'> {
+        const result = await this.requestCacheable<any>('/admin/products', params, etag)
+        if (result === 'not-modified') return result
+        return { data: result.data.data, etag: result.etag }
+    }
+
     async fetchProduct(uuid: string): Promise<any> {
         return await this.request(`/admin/products/${uuid}`, 'GET')
     }

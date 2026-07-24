@@ -1,5 +1,8 @@
-export function useCachedFetch<T>(key: string, fetcher: () => Promise<T>, ttlMs = 60_000) {
+type CachedFetchResult<T> = { data: T; etag: string | null } | 'not-modified'
+
+export function useCachedFetch<T>(key: string, fetcher: (etag: string | null) => Promise<CachedFetchResult<T>>, ttlMs = 60_000) {
     const data = useState<T | null>(`${key}-data`, () => null)
+    const etag = useState<string | null>(`${key}-etag`, () => null)
     const fetchedAt = useState<number>(`${key}-fetched-at`, () => 0)
     const pending = useState<Promise<T> | null>(`${key}-pending`, () => null)
 
@@ -9,12 +12,15 @@ export function useCachedFetch<T>(key: string, fetcher: () => Promise<T>, ttlMs 
 
         if (pending.value) return pending.value
 
-        const promise = fetcher()
+        const promise = fetcher(etag.value)
             .then((result) => {
-                data.value = result
+                if (result !== 'not-modified') {
+                    data.value = result.data
+                    etag.value = result.etag
+                }
                 fetchedAt.value = Date.now()
                 pending.value = null
-                return result
+                return data.value as T
             })
             .catch((error) => {
                 pending.value = null

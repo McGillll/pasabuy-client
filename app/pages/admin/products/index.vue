@@ -510,10 +510,12 @@ const productColumns: TableColumn<Product>[] = [
     { id: 'actions', header: '' }
 ]
 
+const productsEtag = ref<string | null>(null)
+
 async function loadProducts() {
     productsLoading.value = true
     try {
-        const response = await productService.fetchProducts({
+        const result = await productService.fetchProductsCacheable({
             page: productsPage.value,
             per_page: perPage,
             search: productSearch.value || undefined,
@@ -522,9 +524,11 @@ async function loadProducts() {
             sort_by_price: productSortByPrice.value !== 'none' ? productSortByPrice.value : undefined,
             price_min: productPriceMin.value ?? undefined,
             price_max: productPriceMax.value ?? undefined
-        })
-        products.value = response.data.data
-        productsTotal.value = response.data.total
+        }, productsEtag.value)
+        if (result === 'not-modified') return
+        products.value = result.data.data
+        productsTotal.value = result.data.total
+        productsEtag.value = result.etag
         productActionsCache.clear()
         imageLoadFailed.value = {}
     } catch (error) {

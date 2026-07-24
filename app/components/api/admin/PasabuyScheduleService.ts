@@ -22,8 +22,20 @@ class PasabuyScheduleService extends BaseAPIService {
         return await this.request('/admin/pasabuy-schedules', 'GET', params)
     }
 
+    async fetchSchedulesCacheable(params: object, etag: string | null): Promise<{ data: any[]; etag: string | null } | 'not-modified'> {
+        const result = await this.requestCacheable<any>('/admin/pasabuy-schedules', params, etag)
+        if (result === 'not-modified') return result
+        return { data: result.data.data, etag: result.etag }
+    }
+
     async fetchSchedule(uuid: string): Promise<any> {
         return await this.request(`/admin/pasabuy-schedules/${uuid}`, 'GET')
+    }
+
+    async fetchScheduleCacheable(uuid: string, etag: string | null): Promise<{ data: any; etag: string | null } | 'not-modified'> {
+        const result = await this.requestCacheable<any>(`/admin/pasabuy-schedules/${uuid}`, {}, etag)
+        if (result === 'not-modified') return result
+        return { data: result.data, etag: result.etag }
     }
 
     async createSchedule(payload: SchedulePayload): Promise<any> {

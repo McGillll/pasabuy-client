@@ -540,6 +540,7 @@ function onImageError(productUuid: string) {
 const submitting = ref(false)
 const submitError = ref<string | null>(null)
 const myOrder = ref<MyOrder | null>(null)
+const myOrderEtag = ref<string | null>(null)
 const editingOrder = ref(false)
 
 const isLoggedIn = computed(() => !!user.value)
@@ -662,9 +663,11 @@ async function restoreSession() {
  */
 async function loadMyOrder() {
     try {
-        const response = await customerOrderService.fetchMyOrders({ per_page: 100 })
-        const orders = response.data.data as MyOrder[]
+        const result = await customerOrderService.fetchMyOrdersCacheable({ per_page: 100 }, myOrderEtag.value)
+        if (result === 'not-modified') return
+        const orders = result.data.data as MyOrder[]
         myOrder.value = orders.find((o) => o.pasabuy_schedule?.uuid === uuid && o.status !== 'cancelled') ?? null
+        myOrderEtag.value = result.etag
     } catch {
         // non-critical, fall back to showing a fresh ordering form
     }

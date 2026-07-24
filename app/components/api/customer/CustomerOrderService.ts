@@ -14,8 +14,20 @@ class CustomerOrderService extends BaseAPIService {
         return await this.request('/customer/orders', 'GET', params)
     }
 
+    async fetchMyOrdersCacheable(params: object, etag: string | null): Promise<{ data: any; etag: string | null } | 'not-modified'> {
+        const result = await this.requestCacheable<any>('/customer/orders', params, etag)
+        if (result === 'not-modified') return result
+        return { data: result.data, etag: result.etag }
+    }
+
     async fetchMyOrder(uuid: string): Promise<any> {
         return await this.request(`/customer/orders/${uuid}`, 'GET')
+    }
+
+    async fetchMyOrderCacheable(uuid: string, etag: string | null): Promise<{ data: any; etag: string | null } | 'not-modified'> {
+        const result = await this.requestCacheable<any>(`/customer/orders/${uuid}`, {}, etag)
+        if (result === 'not-modified') return result
+        return { data: result.data, etag: result.etag }
     }
 
     async updateMyOrder(uuid: string, items: CustomerOrderItemInput[]): Promise<any> {
