@@ -91,13 +91,45 @@
                         :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center py-2.5' }"
                     />
 
-                    <div v-if="catalogItems.length > 5" class="sticky top-0 z-10 -mx-4 bg-default/95 px-4 py-2 backdrop-blur-sm">
+                    <div v-if="catalogItems.length > 5" class="sticky top-0 z-10 -mx-4 space-y-2 bg-default/95 px-4 py-2 backdrop-blur-sm">
                         <UInput
                             v-model="productSearch"
                             icon="i-lucide-search"
                             placeholder="Search items…"
                             class="w-full"
                         />
+                        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            <USelect
+                                v-model="statusFilter"
+                                :items="statusFilterOptions"
+                                value-key="value"
+                                placeholder="Status"
+                                class="w-full"
+                            />
+                            <USelect
+                                v-model="sortByPrice"
+                                :items="sortByPriceOptions"
+                                value-key="value"
+                                placeholder="Sort by price"
+                                class="w-full"
+                            />
+                            <UInput
+                                v-model.number="priceMin"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="Min price"
+                                class="w-full"
+                            />
+                            <UInput
+                                v-model.number="priceMax"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="Max price"
+                                class="w-full"
+                            />
+                        </div>
                     </div>
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
@@ -429,7 +461,24 @@ useSearchDebounce(productSearch, () => {
 
 const quantities = ref<Record<string, number>>({})
 const selectedCategory = ref('all')
+const statusFilter = ref('all')
+const sortByPrice = ref('none')
+const priceMin = ref<number | null>(null)
+const priceMax = ref<number | null>(null)
 const isCartOpen = ref(false)
+
+const statusFilterOptions = [
+    { label: 'All statuses', value: 'all' },
+    { label: 'Buy 1 Take 1', value: 'b1t1' },
+    { label: 'Out of stock', value: 'out_of_stock' },
+    { label: 'None', value: 'none' }
+]
+
+const sortByPriceOptions = [
+    { label: 'Default order', value: 'none' },
+    { label: 'Price: Low to High', value: 'asc' },
+    { label: 'Price: High to Low', value: 'desc' }
+]
 
 const imageLoadFailed = ref<Record<string, boolean>>({})
 
@@ -484,10 +533,21 @@ const categoryTabs = computed(() => {
 
 const filteredProducts = computed(() => {
     const query = debouncedProductSearch.value.trim().toLowerCase()
-    return catalogItems.value.filter((product) => {
+    const items = catalogItems.value.filter((product) => {
         if (query && !product.name.toLowerCase().includes(query)) return false
         if (selectedCategory.value !== 'all' && product.category?.uuid !== selectedCategory.value) return false
+        if (statusFilter.value !== 'all' && resolvedStatus(product) !== statusFilter.value) return false
+        const price = Number(resolvedPrice(product))
+        if (priceMin.value !== null && price < priceMin.value) return false
+        if (priceMax.value !== null && price > priceMax.value) return false
         return true
+    })
+
+    if (sortByPrice.value === 'none') return items
+
+    return [...items].sort((a, b) => {
+        const diff = Number(resolvedPrice(a)) - Number(resolvedPrice(b))
+        return sortByPrice.value === 'asc' ? diff : -diff
     })
 })
 

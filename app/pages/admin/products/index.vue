@@ -26,6 +26,39 @@
                         />
                     </div>
 
+                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        <USelect
+                            v-model="productStatusFilter"
+                            :items="statusFilterOptions"
+                            value-key="value"
+                            placeholder="Status"
+                            class="w-full"
+                        />
+                        <USelect
+                            v-model="productSortByPrice"
+                            :items="sortByPriceOptions"
+                            value-key="value"
+                            placeholder="Sort by price"
+                            class="w-full"
+                        />
+                        <UInput
+                            v-model.number="productPriceMin"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="Min price"
+                            class="w-full"
+                        />
+                        <UInput
+                            v-model.number="productPriceMax"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="Max price"
+                            class="w-full"
+                        />
+                    </div>
+
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
                         <ResponsiveTable
                             :data="products"
@@ -377,6 +410,23 @@ const productsPage = ref(1)
 const productsTotal = ref(0)
 const productSearch = ref('')
 const productCategoryFilter = ref('all')
+const productStatusFilter = ref('all')
+const productSortByPrice = ref('none')
+const productPriceMin = ref<number | null>(null)
+const productPriceMax = ref<number | null>(null)
+
+const statusFilterOptions = [
+    { label: 'All statuses', value: 'all' },
+    { label: 'None', value: 'none' },
+    { label: 'B1T1', value: 'b1t1' },
+    { label: 'Out of stock', value: 'out_of_stock' }
+]
+
+const sortByPriceOptions = [
+    { label: 'Default order', value: 'none' },
+    { label: 'Price: Low to High', value: 'asc' },
+    { label: 'Price: High to Low', value: 'desc' }
+]
 
 const imageLoadFailed = ref<Record<string, boolean>>({})
 
@@ -416,7 +466,11 @@ async function loadProducts() {
             page: productsPage.value,
             per_page: perPage,
             search: productSearch.value || undefined,
-            category_uuid: productCategoryFilter.value !== 'all' ? productCategoryFilter.value : undefined
+            category_uuid: productCategoryFilter.value !== 'all' ? productCategoryFilter.value : undefined,
+            status: productStatusFilter.value !== 'all' ? productStatusFilter.value : undefined,
+            sort_by_price: productSortByPrice.value !== 'none' ? productSortByPrice.value : undefined,
+            price_min: productPriceMin.value ?? undefined,
+            price_max: productPriceMax.value ?? undefined
         })
         products.value = response.data.data
         productsTotal.value = response.data.total
@@ -431,7 +485,7 @@ async function loadProducts() {
 
 watch(productsPage, loadProducts)
 
-watch(productCategoryFilter, () => {
+watch([productCategoryFilter, productStatusFilter, productSortByPrice], () => {
     productsPage.value = 1
     loadProducts()
 })
@@ -439,6 +493,15 @@ watch(productCategoryFilter, () => {
 useSearchDebounce(productSearch, () => {
     productsPage.value = 1
     loadProducts()
+})
+
+let priceRangeDebounce: ReturnType<typeof setTimeout>
+watch([productPriceMin, productPriceMax], () => {
+    clearTimeout(priceRangeDebounce)
+    priceRangeDebounce = setTimeout(() => {
+        productsPage.value = 1
+        loadProducts()
+    }, 300)
 })
 
 const isProductModalOpen = ref(false)
