@@ -67,7 +67,7 @@ async function loadSchedules() {
             page: page.value,
             per_page: perPage
         })
-        schedules.value = response.data.data
+        schedules.value = response.data.items
         total.value = response.data.total
     } catch (err) {
         error.value = (err as APIError).message

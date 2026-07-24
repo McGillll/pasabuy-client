@@ -231,7 +231,7 @@ async function loadSchedules() {
             month: monthFilter.value || undefined,
             year: yearFilter.value || undefined
         })
-        schedules.value = response.data.data
+        schedules.value = response.data.items
         total.value = response.data.total
     } catch (error) {
         toast.add({ title: 'Failed to load schedules', description: (error as APIError).message, color: 'error' })

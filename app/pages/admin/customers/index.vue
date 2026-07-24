@@ -276,7 +276,7 @@ async function loadApproved() {
             is_approved: '1'
         }, approvedEtag.value)
         if (result === 'not-modified') return
-        approvedCustomers.value = result.data.data
+        approvedCustomers.value = result.data.items
         approvedTotal.value = result.data.total
         approvedEtag.value = result.etag
     } catch (error) {
@@ -295,7 +295,7 @@ async function loadPending() {
             is_approved: '0'
         }, pendingEtag.value)
         if (result === 'not-modified') return
-        pendingCustomers.value = result.data.data
+        pendingCustomers.value = result.data.items
         pendingTotal.value = result.data.total
         pendingEtag.value = result.etag
     } catch (error) {

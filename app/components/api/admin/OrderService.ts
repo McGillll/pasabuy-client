@@ -30,7 +30,7 @@ class OrderService extends BaseAPIService {
     async fetchPaymentsCacheable(orderUuid: string, etag: string | null): Promise<{ data: any; etag: string | null } | 'not-modified'> {
         const result = await this.requestCacheable<any>(`/admin/orders/${orderUuid}/payments`, {}, etag)
         if (result === 'not-modified') return result
-        return { data: result.data.data, etag: result.etag }
+        return { data: result.data, etag: result.etag }
     }
 
     async recordPayment(orderUuid: string, payload: OrderPaymentPayload): Promise<any> {

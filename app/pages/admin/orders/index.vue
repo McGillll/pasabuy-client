@@ -326,7 +326,7 @@ async function loadOrders() {
             delivery_status: deliveryStatusFilter.value !== 'all' ? deliveryStatusFilter.value : undefined
         }, ordersEtag.value)
         if (result === 'not-modified') return
-        orders.value = result.data.data
+        orders.value = result.data.items
         total.value = result.data.total
         ordersEtag.value = result.etag
     } catch (error) {

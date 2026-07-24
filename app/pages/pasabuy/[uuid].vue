@@ -665,7 +665,7 @@ async function loadMyOrder() {
     try {
         const result = await customerOrderService.fetchMyOrdersCacheable({ per_page: 100 }, myOrderEtag.value)
         if (result === 'not-modified') return
-        const orders = result.data.data as MyOrder[]
+        const orders = result.data.items as MyOrder[]
         myOrder.value = orders.find((o) => o.pasabuy_schedule?.uuid === uuid && o.status !== 'cancelled') ?? null
         myOrderEtag.value = result.etag
     } catch {

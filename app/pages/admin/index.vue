@@ -202,7 +202,7 @@ async function loadDashboard(force = false) {
 
         totalProducts.value = productsResponse.data.total
 
-        pendingOrders.value = (ordersResponse.data.data as Order[])
+        pendingOrders.value = (ordersResponse.data.items as Order[])
             .map((order) => ({
                 ...order,
                 scheduleUuid: order.pasabuy_schedule.uuid,

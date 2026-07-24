@@ -355,7 +355,7 @@ async function loadOrders() {
             date_to: dateTo.value || undefined,
             schedule_title: search.value || undefined
         })
-        orders.value = response.data.data
+        orders.value = response.data.items
         total.value = response.data.total
     } catch (error) {
         toast.add({ title: 'Failed to load orders', description: (error as APIError).message, color: 'error' })

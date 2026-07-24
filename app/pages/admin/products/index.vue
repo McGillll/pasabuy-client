@@ -526,7 +526,7 @@ async function loadProducts() {
             price_max: productPriceMax.value ?? undefined
         }, productsEtag.value)
         if (result === 'not-modified') return
-        products.value = result.data.data
+        products.value = result.data.items
         productsTotal.value = result.data.total
         productsEtag.value = result.etag
         productActionsCache.clear()
@@ -688,7 +688,7 @@ async function loadCategories() {
     categoriesLoading.value = true
     try {
         const response = await productCategoryService.fetchCategories({ page: categoriesPage.value, per_page: perPage, search: categorySearch.value || undefined })
-        categories.value = response.data.data
+        categories.value = response.data.items
         categoriesTotal.value = response.data.total
         categoryActionsCache.clear()
     } catch (error) {

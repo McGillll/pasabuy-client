@@ -14,7 +14,7 @@ class ProductCategoryService extends BaseAPIService {
     async fetchCategoriesCacheable(params: object, etag: string | null): Promise<{ data: any[]; etag: string | null } | 'not-modified'> {
         const result = await this.requestCacheable<any>('/admin/product-categories', params, etag)
         if (result === 'not-modified') return result
-        return { data: result.data.data, etag: result.etag }
+        return { data: result.data.items, etag: result.etag }
     }
 
     async fetchCategory(uuid: string): Promise<any> {
