@@ -82,6 +82,7 @@ class BaseAPIService {
                 headers,
                 signal,
             })
+            if (response.status === 304) return 'not-modified'
             return { data: response._data as T, etag: response.headers.get('etag') }
         } catch (error: any) {
             if (error?.name === 'AbortError') throw error
