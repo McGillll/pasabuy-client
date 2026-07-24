@@ -165,18 +165,21 @@ const loading = ref(true)
 const actingOn = ref<string | null>(null)
 
 const totalProducts = ref(0)
-const schedules = ref<Schedule[]>([])
+const { data: schedules, ensure: ensureSchedulesLoaded } = useCachedFetch<Schedule[]>(
+    'admin-pasabuy-schedules',
+    async () => (await pasabuyScheduleService.fetchSchedules({ per_page: 100 })).data.data
+)
 const pendingOrders = ref<PendingOrder[]>([])
 
 const stats = computed(() => [
     { label: 'Total products', value: totalProducts.value, icon: 'i-lucide-package' },
-    { label: 'Open schedules', value: schedules.value.filter((s) => s.status === 'open').length, icon: 'i-lucide-calendar-clock' },
-    { label: 'Finished schedules', value: schedules.value.filter((s) => s.status === 'finished').length, icon: 'i-lucide-check-circle' },
+    { label: 'Open schedules', value: (schedules.value ?? []).filter((s) => s.status === 'open').length, icon: 'i-lucide-calendar-clock' },
+    { label: 'Finished schedules', value: (schedules.value ?? []).filter((s) => s.status === 'finished').length, icon: 'i-lucide-check-circle' },
     { label: 'Pending orders', value: pendingOrders.value.length, icon: 'i-lucide-clock-alert' }
 ])
 
 const recentSchedules = computed(() =>
-    [...schedules.value]
+    [...(schedules.value ?? [])]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 5)
 )
@@ -188,17 +191,16 @@ const orderColumns: TableColumn<PendingOrder>[] = [
     { id: 'actions', header: '' }
 ]
 
-async function loadDashboard() {
+async function loadDashboard(force = false) {
     loading.value = true
     try {
-        const [productsResponse, schedulesResponse, ordersResponse] = await Promise.all([
+        const [productsResponse, , ordersResponse] = await Promise.all([
             productService.fetchProducts({ per_page: 1 }),
-            pasabuyScheduleService.fetchSchedules({ per_page: 100 }),
+            ensureSchedulesLoaded(force),
             orderService.fetchOrders({ status: 'pending', per_page: 100 })
         ])
 
         totalProducts.value = productsResponse.data.total
-        schedules.value = schedulesResponse.data.data
 
         pendingOrders.value = (ordersResponse.data.data as Order[])
             .map((order) => ({
@@ -249,6 +251,6 @@ function pendingOrderActions(order: PendingOrder): DropdownMenuItem[] {
     ]
 }
 
-onMounted(loadDashboard)
-onPullToRefresh(loadDashboard)
+onMounted(() => loadDashboard())
+onPullToRefresh(() => loadDashboard(true))
 </script>

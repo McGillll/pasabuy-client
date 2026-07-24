@@ -20,9 +20,9 @@
                             v-model="productCategoryFilter"
                             :items="categoryFilterTabs"
                             variant="pill"
-                            size="sm"
+                            size="md"
                             class="w-full"
-                            :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0' }"
+                            :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center py-2.5' }"
                         />
                     </div>
 

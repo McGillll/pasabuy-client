@@ -254,7 +254,10 @@ const statusFilter = ref('all')
 const scheduleFilter = ref('all')
 const paymentStatusFilter = ref('all')
 const deliveryStatusFilter = ref('all')
-const schedules = ref<ScheduleOption[]>([])
+const { data: schedules, ensure: ensureSchedulesLoaded } = useCachedFetch<ScheduleOption[]>(
+    'admin-pasabuy-schedules',
+    async () => (await pasabuyScheduleService.fetchSchedules({ per_page: 100 })).data.data
+)
 const isFiltersOpen = ref(false)
 
 const activeFilterCount = computed(() =>
@@ -278,7 +281,7 @@ const statusFilterOptions = [
 
 const scheduleFilterOptions = computed(() => [
     { label: 'All schedules', value: 'all' },
-    ...schedules.value.map((schedule) => ({ label: schedule.title, value: schedule.uuid }))
+    ...(schedules.value ?? []).map((schedule) => ({ label: schedule.title, value: schedule.uuid }))
 ])
 
 const paymentStatusFilterOptions = [
@@ -307,15 +310,6 @@ const orderColumns: TableColumn<Order>[] = [
     { accessorKey: 'delivery_status', header: 'Delivery' },
     { id: 'actions', header: '' }
 ]
-
-async function loadSchedules() {
-    try {
-        const response = await pasabuyScheduleService.fetchSchedules({ per_page: 100 })
-        schedules.value = response.data.data
-    } catch (error) {
-        toast.add({ title: 'Failed to load schedules', description: (error as APIError).message, color: 'error' })
-    }
-}
 
 async function loadOrders() {
     loading.value = true
@@ -510,8 +504,10 @@ function paymentActions(payment: OrderPayment): DropdownMenuItem[] {
 
 onMounted(() => {
     loadOrders()
-    loadSchedules()
+    ensureSchedulesLoaded().catch((error) => {
+        toast.add({ title: 'Failed to load schedules', description: (error as APIError).message, color: 'error' })
+    })
 })
 
-onPullToRefresh(() => Promise.all([loadOrders(), loadSchedules()]))
+onPullToRefresh(() => Promise.all([loadOrders(), ensureSchedulesLoaded(true)]))
 </script>
