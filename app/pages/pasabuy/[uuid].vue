@@ -98,7 +98,7 @@
                             placeholder="Search items…"
                             class="w-full"
                         />
-                        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        <div class="hidden sm:grid grid-cols-4 gap-2">
                             <USelect
                                 v-model="statusFilter"
                                 :items="statusFilterOptions"
@@ -130,6 +130,44 @@
                                 class="w-full"
                             />
                         </div>
+
+                        <BaseButton
+                            class="sm:hidden"
+                            color="neutral"
+                            variant="outline"
+                            icon="i-lucide-list-filter"
+                            @click="isFiltersOpen = true"
+                        >
+                            Filters
+                            <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
+                        </BaseButton>
+
+                        <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
+                            <template #body>
+                                <div class="space-y-4">
+                                    <UFormField label="Status">
+                                        <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full" />
+                                    </UFormField>
+                                    <UFormField label="Sort by price">
+                                        <USelect v-model="sortByPrice" :items="sortByPriceOptions" value-key="value" class="w-full" />
+                                    </UFormField>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <UFormField label="Min price">
+                                            <UInput v-model.number="priceMin" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" />
+                                        </UFormField>
+                                        <UFormField label="Max price">
+                                            <UInput v-model.number="priceMax" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" />
+                                        </UFormField>
+                                    </div>
+                                </div>
+                            </template>
+                            <template #footer>
+                                <div class="w-full flex items-center gap-2">
+                                    <BaseButton class="flex-1" color="neutral" variant="outline" @click="clearFilters">Clear filters</BaseButton>
+                                    <BaseButton class="flex-1" @click="isFiltersOpen = false">Done</BaseButton>
+                                </div>
+                            </template>
+                        </USlideover>
                     </div>
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
@@ -265,7 +303,7 @@
         </aside>
         </div>
 
-        <div v-if="showBottomBar" class="fixed inset-x-0 bottom-0 z-10 border-t border-default bg-default/95 backdrop-blur-sm lg:hidden">
+        <div v-if="showBottomBar" class="fixed inset-x-0 bottom-0 z-10 border-t border-default bg-muted/95 shadow-[0_-2px_10px_-4px_rgba(0,0,0,0.08)] backdrop-blur-sm lg:hidden">
             <UTabs
                 v-if="categoryTabs.length > 2"
                 v-model="selectedCategory"
@@ -447,7 +485,7 @@ const { user, fetchCurrentUser } = useAuth()
 const schedule = ref<Schedule | null>(null)
 const { data: catalog, ensure: ensureCatalogLoaded } = useCachedFetch<Product[]>(
     'public-product-catalog',
-    async () => (await publicProductService.fetchCatalog({ per_page: 200 })).data.data
+    (etag) => publicProductService.fetchCatalogCacheable({ per_page: 200 }, etag)
 )
 const loading = ref(true)
 const notFound = ref(false)
@@ -466,6 +504,19 @@ const sortByPrice = ref('none')
 const priceMin = ref<number | null>(null)
 const priceMax = ref<number | null>(null)
 const isCartOpen = ref(false)
+const isFiltersOpen = ref(false)
+
+const activeFilterCount = computed(() =>
+    [statusFilter.value !== 'all', sortByPrice.value !== 'none', priceMin.value !== null, priceMax.value !== null]
+        .filter(Boolean).length
+)
+
+function clearFilters() {
+    statusFilter.value = 'all'
+    sortByPrice.value = 'none'
+    priceMin.value = null
+    priceMax.value = null
+}
 
 const statusFilterOptions = [
     { label: 'All statuses', value: 'all' },

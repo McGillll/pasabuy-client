@@ -26,7 +26,7 @@
                         />
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <div class="hidden sm:grid grid-cols-4 gap-2">
                         <USelect
                             v-model="productStatusFilter"
                             :items="statusFilterOptions"
@@ -58,6 +58,44 @@
                             class="w-full"
                         />
                     </div>
+
+                    <BaseButton
+                        class="sm:hidden"
+                        color="neutral"
+                        variant="outline"
+                        icon="i-lucide-list-filter"
+                        @click="isProductFiltersOpen = true"
+                    >
+                        Filters
+                        <UBadge v-if="productActiveFilterCount" color="primary" variant="subtle" size="sm">{{ productActiveFilterCount }}</UBadge>
+                    </BaseButton>
+
+                    <USlideover v-model:open="isProductFiltersOpen" side="bottom" title="Filters">
+                        <template #body>
+                            <div class="space-y-4">
+                                <UFormField label="Status">
+                                    <USelect v-model="productStatusFilter" :items="statusFilterOptions" value-key="value" class="w-full" />
+                                </UFormField>
+                                <UFormField label="Sort by price">
+                                    <USelect v-model="productSortByPrice" :items="sortByPriceOptions" value-key="value" class="w-full" />
+                                </UFormField>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <UFormField label="Min price">
+                                        <UInput v-model.number="productPriceMin" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" />
+                                    </UFormField>
+                                    <UFormField label="Max price">
+                                        <UInput v-model.number="productPriceMax" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" />
+                                    </UFormField>
+                                </div>
+                            </div>
+                        </template>
+                        <template #footer>
+                            <div class="w-full flex items-center gap-2">
+                                <BaseButton class="flex-1" color="neutral" variant="outline" @click="clearProductFilters">Clear filters</BaseButton>
+                                <BaseButton class="flex-1" @click="isProductFiltersOpen = false">Done</BaseButton>
+                            </div>
+                        </template>
+                    </USlideover>
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
                         <ResponsiveTable
@@ -403,7 +441,7 @@ const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd
 const products = ref<Product[]>([])
 const { data: allCategories, ensure: ensureCategoriesLoaded } = useCachedFetch<Category[]>(
     'admin-product-categories',
-    async () => (await productCategoryService.fetchCategories({ per_page: 200 })).data.data
+    (etag) => productCategoryService.fetchCategoriesCacheable({ per_page: 200 }, etag)
 )
 const productsLoading = ref(false)
 const productsPage = ref(1)
@@ -414,6 +452,19 @@ const productStatusFilter = ref('all')
 const productSortByPrice = ref('none')
 const productPriceMin = ref<number | null>(null)
 const productPriceMax = ref<number | null>(null)
+const isProductFiltersOpen = ref(false)
+
+const productActiveFilterCount = computed(() =>
+    [productStatusFilter.value !== 'all', productSortByPrice.value !== 'none', productPriceMin.value !== null, productPriceMax.value !== null]
+        .filter(Boolean).length
+)
+
+function clearProductFilters() {
+    productStatusFilter.value = 'all'
+    productSortByPrice.value = 'none'
+    productPriceMin.value = null
+    productPriceMax.value = null
+}
 
 const statusFilterOptions = [
     { label: 'All statuses', value: 'all' },

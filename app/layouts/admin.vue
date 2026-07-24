@@ -1,6 +1,6 @@
 <template>
     <div class="h-screen h-dvh flex bg-default overflow-hidden">
-        <aside class="hidden md:flex md:w-64 md:flex-col md:shrink-0 border-r border-default">
+        <aside class="hidden md:flex md:w-64 md:flex-col md:shrink-0 border-r border-default bg-muted shadow-[2px_0_10px_-4px_rgba(0,0,0,0.08)]">
             <div class="flex items-center justify-between gap-2 px-6 py-5">
                 <div class="flex items-center gap-2">
                     <div class="flex items-center justify-center size-8 rounded-lg bg-primary text-inverted font-bold">
@@ -42,7 +42,7 @@
         </aside>
 
         <div class="flex-1 min-w-0 flex flex-col">
-            <header class="md:hidden border-b border-default">
+            <header class="md:hidden border-b border-default bg-muted shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
                 <div class="flex items-center justify-between px-4 py-3">
                     <div class="flex items-center gap-2">
                         <div class="flex items-center justify-center size-7 rounded-lg bg-primary text-inverted font-bold text-sm">
@@ -72,16 +72,18 @@
             </main>
         </div>
 
-        <nav class="md:hidden fixed inset-x-0 bottom-0 z-10 flex w-full border-t border-default bg-default pb-[env(safe-area-inset-bottom)]">
+        <nav class="md:hidden fixed inset-x-0 bottom-0 z-10 flex w-full border-t border-default bg-muted shadow-[0_-2px_10px_-4px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]">
             <NuxtLink
                 v-for="link in mobileLinks"
                 :key="link.label"
                 :to="link.to"
-                class="flex flex-1 min-w-0 flex-col items-center justify-center gap-1 py-2 text-muted"
+                class="group flex flex-1 min-w-0 flex-col items-center justify-center gap-1 py-2 text-muted transition-colors duration-300 motion-reduce:transition-none"
                 active-class="text-primary"
             >
-                <UIcon :name="link.icon" class="size-6" />
-                <span class="text-xs leading-tight">{{ link.label }}</span>
+                <span class="rounded-full px-3.5 py-1 transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none motion-reduce:transform-none group-[.text-primary]:-translate-y-1 group-[.text-primary]:bg-primary group-[.text-primary]:scale-110">
+                    <UIcon :name="link.icon" class="size-6 transition-colors duration-300 group-[.text-primary]:text-inverted" />
+                </span>
+                <span class="text-xs leading-tight transition-all duration-300 motion-reduce:transition-none group-[.text-primary]:font-semibold">{{ link.label }}</span>
             </NuxtLink>
         </nav>
     </div>
