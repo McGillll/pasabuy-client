@@ -212,7 +212,7 @@
                                 </button>
 
                                 <div class="min-w-0 flex-1">
-                                    <p class="font-medium text-highlighted">{{ product.name }}</p>
+                                    <p class="truncate font-medium text-highlighted">{{ product.name }}</p>
 
                                     <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                                         <p class="text-sm text-muted">
