@@ -32,14 +32,14 @@
                             :items="statusFilterOptions"
                             value-key="value"
                             placeholder="Status"
-                            class="w-full"
+                            class="w-full h-11"
                         />
                         <USelect
                             v-model="productSortByPrice"
                             :items="sortByPriceOptions"
                             value-key="value"
                             placeholder="Sort by price"
-                            class="w-full"
+                            class="w-full h-11"
                         />
                         <UInput
                             v-model.number="productPriceMin"
@@ -48,6 +48,7 @@
                             step="0.01"
                             placeholder="Min price"
                             class="w-full"
+                            :ui="{ base: 'h-11' }"
                         />
                         <UInput
                             v-model.number="productPriceMax"
@@ -56,6 +57,7 @@
                             step="0.01"
                             placeholder="Max price"
                             class="w-full"
+                            :ui="{ base: 'h-11' }"
                         />
                     </div>
 

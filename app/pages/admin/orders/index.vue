@@ -8,10 +8,10 @@
             <SearchInput v-model="search" placeholder="Search by customer name, contact, or order no…" class="w-full" />
 
             <div class="hidden sm:grid grid-cols-4 gap-2">
-                <USelect v-model="scheduleFilter" :items="scheduleFilterOptions" value-key="value" class="w-full" />
-                <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full" />
-                <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full" />
-                <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full" />
+                <USelect v-model="scheduleFilter" :items="scheduleFilterOptions" value-key="value" class="w-full h-11" />
+                <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
+                <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full h-11" />
+                <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full h-11" />
             </div>
 
             <BaseButton

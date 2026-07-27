@@ -11,8 +11,8 @@
             <SearchInput v-model="search" placeholder="Search schedules…" class="w-full" />
 
             <div class="hidden sm:grid grid-cols-2 gap-2">
-                <USelect v-model="monthFilter" :items="monthFilterOptions" value-key="value" placeholder="All months" class="w-full" />
-                <USelect v-model="yearFilter" :items="yearFilterOptions" value-key="value" placeholder="All years" class="w-full" />
+                <USelect v-model="monthFilter" :items="monthFilterOptions" value-key="value" placeholder="All months" class="w-full h-11" />
+                <USelect v-model="yearFilter" :items="yearFilterOptions" value-key="value" placeholder="All years" class="w-full h-11" />
             </div>
 
             <BaseButton

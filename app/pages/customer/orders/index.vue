@@ -43,14 +43,15 @@
                 icon="i-lucide-search"
                 placeholder="Search by pasabuy title…"
                 class="w-full sm:w-72"
+                :ui="{ base: 'h-11' }"
             />
 
             <div class="hidden sm:grid grid-cols-2 gap-2 lg:grid-cols-5">
-                <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full" />
-                <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full" />
-                <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full" />
-                <UInput v-model="dateFrom" type="date" placeholder="From" class="w-full" />
-                <UInput v-model="dateTo" type="date" placeholder="To" class="w-full" />
+                <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
+                <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full h-11" />
+                <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full h-11" />
+                <UInput v-model="dateFrom" type="date" placeholder="From" class="w-full" :ui="{ base: 'h-11' }" />
+                <UInput v-model="dateTo" type="date" placeholder="To" class="w-full" :ui="{ base: 'h-11' }" />
             </div>
 
             <BaseButton

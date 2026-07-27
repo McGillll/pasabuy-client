@@ -97,6 +97,7 @@
                             icon="i-lucide-search"
                             placeholder="Search items…"
                             class="w-full"
+                            :ui="{ base: 'h-11' }"
                         />
                         <div class="hidden sm:grid grid-cols-4 gap-2">
                             <USelect
@@ -104,14 +105,14 @@
                                 :items="statusFilterOptions"
                                 value-key="value"
                                 placeholder="Status"
-                                class="w-full"
+                                class="w-full h-11"
                             />
                             <USelect
                                 v-model="sortByPrice"
                                 :items="sortByPriceOptions"
                                 value-key="value"
                                 placeholder="Sort by price"
-                                class="w-full"
+                                class="w-full h-11"
                             />
                             <UInput
                                 v-model.number="priceMin"
@@ -120,6 +121,7 @@
                                 step="0.01"
                                 placeholder="Min price"
                                 class="w-full"
+                                :ui="{ base: 'h-11' }"
                             />
                             <UInput
                                 v-model.number="priceMax"
@@ -128,6 +130,7 @@
                                 step="0.01"
                                 placeholder="Max price"
                                 class="w-full"
+                                :ui="{ base: 'h-11' }"
                             />
                         </div>
 
@@ -184,16 +187,16 @@
                             <div
                                 v-for="product in filteredProducts"
                                 :key="product.uuid"
-                                class="flex items-center gap-4 p-4"
+                                class="flex items-start gap-4 p-4"
                             >
                                 <button
-                                    v-if="product.image_url && !imageLoadFailed[product.uuid]"
                                     type="button"
                                     class="shrink-0 cursor-pointer"
-                                    aria-label="Preview image"
+                                    :aria-label="`View details for ${product.name}`"
                                     @click="openPreview(product)"
                                 >
                                     <img
+                                        v-if="product.image_url && !imageLoadFailed[product.uuid]"
                                         :src="product.image_url"
                                         loading="lazy"
                                         width="56"
@@ -202,50 +205,58 @@
                                         alt=""
                                         @error="onImageError(product.uuid)"
                                     >
+                                    <div v-else class="flex size-14 items-center justify-center rounded-lg bg-elevated text-dimmed transition hover:opacity-80">
+                                        <UIcon name="i-lucide-image" class="size-5" />
+                                    </div>
                                 </button>
-                                <div v-else class="flex size-14 shrink-0 items-center justify-center rounded-lg bg-elevated text-dimmed">
-                                    <UIcon name="i-lucide-image" class="size-5" />
-                                </div>
 
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex items-center gap-2">
-                                        <p class="min-w-0 flex-1 truncate font-medium text-highlighted">{{ product.name }}</p>
-                                        <StatusBadge v-if="resolvedStatus(product) === 'b1t1'" color="success" label="Buy 1 Take 1" size="sm" class="shrink-0" />
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <p class="text-sm text-muted">₱{{ resolvedPrice(product) }}</p>
-                                        <span class="text-xs text-dimmed">{{ isPriceConfirmed(product) ? 'confirmed' : 'estimated' }}</span>
-                                    </div>
-                                    <p v-if="quantities[product.uuid]" class="text-sm font-medium text-primary">
-                                        Subtotal: ₱{{ (Number(resolvedPrice(product)) * quantities[product.uuid]!).toFixed(2) }}
-                                    </p>
-                                </div>
+                                    <p class="font-medium text-highlighted">{{ product.name }}</p>
 
-                                <div class="flex shrink-0 items-center gap-2">
-                                    <span v-if="resolvedStatus(product) === 'out_of_stock'" class="text-sm font-medium text-error">
-                                        Out of stock
-                                    </span>
-                                    <template v-else>
-                                        <BaseButton
-                                            icon="i-lucide-minus"
-                                            size="xs"
-                                            color="neutral"
-                                            variant="soft"
-                                            :aria-label="`Decrease quantity for ${product.name}`"
-                                            :disabled="!schedule.is_open || !quantities[product.uuid]"
-                                            @click="decrement(product)"
-                                        />
-                                        <span class="w-6 text-center font-medium">{{ quantities[product.uuid] || 0 }}</span>
-                                        <BaseButton
-                                            icon="i-lucide-plus"
-                                            size="xs"
-                                            color="neutral"
-                                            variant="soft"
-                                            :aria-label="`Increase quantity for ${product.name}`"
-                                            :disabled="!schedule.is_open"
-                                            @click="increment(product)"
-                                        />
-                                    </template>
+                                    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                                        <p class="text-sm text-muted">
+                                            ₱{{ resolvedPrice(product) }}
+                                            <span class="text-xs text-dimmed">{{ isPriceConfirmed(product) ? 'confirmed' : 'estimated' }}</span>
+                                        </p>
+                                        <UBadge v-if="resolvedStatus(product) === 'b1t1'" color="success" variant="outline" size="sm" icon="i-lucide-check">
+                                            B1T1
+                                        </UBadge>
+                                        <p v-if="quantities[product.uuid]" class="ml-auto text-sm font-semibold text-primary">
+                                            ₱{{ (Number(resolvedPrice(product)) * quantities[product.uuid]!).toFixed(2) }}
+                                        </p>
+                                    </div>
+
+                                    <div class="mt-2">
+                                        <span v-if="resolvedStatus(product) === 'out_of_stock'" class="text-sm font-medium text-error">
+                                            Out of stock
+                                        </span>
+                                        <div v-else class="flex items-center gap-2">
+                                            <BaseButton
+                                                icon="i-lucide-minus"
+                                                size="xs"
+                                                color="neutral"
+                                                :variant="quantities[product.uuid] ? 'soft' : 'ghost'"
+                                                :aria-label="`Decrease quantity for ${product.name}`"
+                                                :disabled="!schedule.is_open || !quantities[product.uuid]"
+                                                @click="decrement(product)"
+                                            />
+                                            <span
+                                                class="w-8 text-center text-base font-bold tabular-nums"
+                                                :class="quantities[product.uuid] ? 'text-primary' : 'text-dimmed'"
+                                            >
+                                                {{ quantities[product.uuid] || 0 }}
+                                            </span>
+                                            <BaseButton
+                                                icon="i-lucide-plus"
+                                                size="xs"
+                                                color="neutral"
+                                                :variant="quantities[product.uuid] ? 'soft' : 'ghost'"
+                                                :aria-label="`Increase quantity for ${product.name}`"
+                                                :disabled="!schedule.is_open"
+                                                @click="increment(product)"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
