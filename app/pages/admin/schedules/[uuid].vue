@@ -431,13 +431,12 @@
                             <UBadge v-if="getScheduleProductStatus(item.product_uuid) === 'out_of_stock'" color="error" variant="subtle" size="sm">
                                 Out of stock
                             </UBadge>
-                            <UInput
+                            <BaseQuantityInput
                                 v-else
-                                v-model.number="findEditableItem(item.product_uuid)!.quantity"
-                                type="number"
-                                min="1"
+                                v-model="findEditableItem(item.product_uuid)!.quantity"
+                                :min="1"
                                 size="sm"
-                                class="w-20"
+                                class="w-28"
                             />
                             <BaseButton
                                 icon="i-lucide-x"
@@ -495,7 +494,7 @@
                     >
                         <span class="flex-1 truncate font-medium text-highlighted">{{ newItem.product_name }}</span>
                         <UBadge color="neutral" variant="subtle" size="sm">New</UBadge>
-                        <UInput v-model.number="newItem.quantity" type="number" min="1" size="sm" class="w-20" />
+                        <BaseQuantityInput v-model="newItem.quantity" :min="1" size="sm" class="w-28" />
                         <BaseButton
                             icon="i-lucide-x"
                             size="xs"

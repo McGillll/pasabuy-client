@@ -187,11 +187,11 @@
                             <div
                                 v-for="product in filteredProducts"
                                 :key="product.uuid"
-                                class="flex items-start gap-4 p-4"
+                                class="flex items-stretch gap-4 p-4"
                             >
                                 <button
                                     type="button"
-                                    class="shrink-0 cursor-pointer"
+                                    class="aspect-square max-h-28 shrink-0 cursor-pointer self-stretch overflow-hidden rounded-lg"
                                     :aria-label="`View details for ${product.name}`"
                                     @click="openPreview(product)"
                                 >
@@ -199,13 +199,11 @@
                                         v-if="product.image_url && !imageLoadFailed[product.uuid]"
                                         :src="product.image_url"
                                         loading="lazy"
-                                        width="56"
-                                        height="56"
-                                        class="size-14 rounded-lg object-cover transition hover:opacity-80"
+                                        class="h-full w-full object-cover transition hover:opacity-80"
                                         alt=""
                                         @error="onImageError(product.uuid)"
                                     >
-                                    <div v-else class="flex size-14 items-center justify-center rounded-lg bg-elevated text-dimmed transition hover:opacity-80">
+                                    <div v-else class="flex h-full w-full items-center justify-center bg-elevated text-dimmed transition hover:opacity-80">
                                         <UIcon name="i-lucide-image" class="size-5" />
                                     </div>
                                 </button>
@@ -221,40 +219,27 @@
                                         <UBadge v-if="resolvedStatus(product) === 'b1t1'" color="success" variant="outline" size="sm" icon="i-lucide-check">
                                             B1T1
                                         </UBadge>
-                                        <p v-if="quantities[product.uuid]" class="ml-auto text-sm font-semibold text-primary">
-                                            ₱{{ (Number(resolvedPrice(product)) * quantities[product.uuid]!).toFixed(2) }}
-                                        </p>
                                     </div>
 
                                     <div class="mt-2">
                                         <span v-if="resolvedStatus(product) === 'out_of_stock'" class="text-sm font-medium text-error">
                                             Out of stock
                                         </span>
-                                        <div v-else class="flex items-center gap-2">
-                                            <BaseButton
-                                                icon="i-lucide-minus"
-                                                size="xs"
-                                                color="neutral"
-                                                :variant="quantities[product.uuid] ? 'soft' : 'ghost'"
-                                                :aria-label="`Decrease quantity for ${product.name}`"
-                                                :disabled="!schedule.is_open || !quantities[product.uuid]"
-                                                @click="decrement(product)"
-                                            />
-                                            <span
-                                                class="w-8 text-center text-base font-bold tabular-nums"
-                                                :class="quantities[product.uuid] ? 'text-primary' : 'text-dimmed'"
-                                            >
-                                                {{ quantities[product.uuid] || 0 }}
-                                            </span>
-                                            <BaseButton
-                                                icon="i-lucide-plus"
-                                                size="xs"
-                                                color="neutral"
-                                                :variant="quantities[product.uuid] ? 'soft' : 'ghost'"
-                                                :aria-label="`Increase quantity for ${product.name}`"
+                                        <div v-else class="flex flex-wrap items-center gap-3">
+                                            <BaseQuantityInput
+                                                :model-value="quantities[product.uuid] || 0"
+                                                :min="0"
+                                                size="xl"
+                                                :color="quantities[product.uuid] ? 'primary' : 'neutral'"
+                                                :variant="quantities[product.uuid] ? 'subtle' : 'ghost'"
+                                                class="w-32"
                                                 :disabled="!schedule.is_open"
-                                                @click="increment(product)"
+                                                :aria-label="`Quantity for ${product.name}`"
+                                                @update:model-value="(value: number | null) => setQuantity(product, value)"
                                             />
+                                            <p v-if="quantities[product.uuid]" class="text-sm font-semibold text-primary">
+                                                ₱{{ (Number(resolvedPrice(product)) * quantities[product.uuid]!).toFixed(2) }}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -725,6 +710,10 @@ function increment(product: Product) {
 function decrement(product: Product) {
     const current = quantities.value[product.uuid] || 0
     quantities.value[product.uuid] = Math.max(0, current - 1)
+}
+
+function setQuantity(product: Product, value: number | null) {
+    quantities.value[product.uuid] = Math.max(0, Math.floor(value ?? 0))
 }
 
 async function submitOrder() {
