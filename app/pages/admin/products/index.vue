@@ -13,7 +13,21 @@
             <template #products>
                 <div class="overflow-hidden">
                 <div class="mt-4 space-y-4" ref="panelEl">
-                    <SearchInput v-model="productSearch" placeholder="Search products…" />
+                    <div class="flex items-center gap-2">
+                        <div class="min-w-0 flex-1">
+                            <SearchInput v-model="productSearch" placeholder="Search products…" class="w-full" />
+                        </div>
+                        <BaseButton
+                            class="sm:hidden shrink-0"
+                            color="neutral"
+                            variant="outline"
+                            icon="i-lucide-list-filter"
+                            @click="isProductFiltersOpen = true"
+                        >
+                            Filters
+                            <UBadge v-if="productActiveFilterCount" color="primary" variant="subtle" size="sm">{{ productActiveFilterCount }}</UBadge>
+                        </BaseButton>
+                    </div>
 
                     <div v-if="categoryFilterTabs.length > 2" data-swipe-ignore>
                         <UTabs
@@ -60,17 +74,6 @@
                             :ui="{ base: 'h-11' }"
                         />
                     </div>
-
-                    <BaseButton
-                        class="sm:hidden"
-                        color="neutral"
-                        variant="outline"
-                        icon="i-lucide-list-filter"
-                        @click="isProductFiltersOpen = true"
-                    >
-                        Filters
-                        <UBadge v-if="productActiveFilterCount" color="primary" variant="subtle" size="sm">{{ productActiveFilterCount }}</UBadge>
-                    </BaseButton>
 
                     <USlideover v-model:open="isProductFiltersOpen" side="bottom" title="Filters">
                         <template #body>

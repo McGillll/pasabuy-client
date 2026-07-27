@@ -92,13 +92,25 @@
                     />
 
                     <div v-if="catalogItems.length > 5" class="sticky top-0 z-10 -mx-4 space-y-2 bg-default/95 px-4 py-2 backdrop-blur-sm">
-                        <UInput
-                            v-model="productSearch"
-                            icon="i-lucide-search"
-                            placeholder="Search items…"
-                            class="w-full"
-                            :ui="{ base: 'h-11' }"
-                        />
+                        <div class="flex items-center gap-2">
+                            <UInput
+                                v-model="productSearch"
+                                icon="i-lucide-search"
+                                placeholder="Search items…"
+                                class="flex-1"
+                                :ui="{ base: 'h-11' }"
+                            />
+                            <BaseButton
+                                class="sm:hidden shrink-0"
+                                color="neutral"
+                                variant="outline"
+                                icon="i-lucide-list-filter"
+                                @click="isFiltersOpen = true"
+                            >
+                                Filters
+                                <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
+                            </BaseButton>
+                        </div>
                         <div class="hidden sm:grid grid-cols-4 gap-2">
                             <USelect
                                 v-model="statusFilter"
@@ -133,17 +145,6 @@
                                 :ui="{ base: 'h-11' }"
                             />
                         </div>
-
-                        <BaseButton
-                            class="sm:hidden"
-                            color="neutral"
-                            variant="outline"
-                            icon="i-lucide-list-filter"
-                            @click="isFiltersOpen = true"
-                        >
-                            Filters
-                            <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
-                        </BaseButton>
 
                         <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
                             <template #body>
@@ -187,11 +188,11 @@
                             <div
                                 v-for="product in filteredProducts"
                                 :key="product.uuid"
-                                class="flex items-stretch gap-4 p-4"
+                                class="flex items-center gap-4 p-4"
                             >
                                 <button
                                     type="button"
-                                    class="aspect-square max-h-28 shrink-0 cursor-pointer self-stretch overflow-hidden rounded-lg"
+                                    class="shrink-0 cursor-pointer"
                                     :aria-label="`View details for ${product.name}`"
                                     @click="openPreview(product)"
                                 >
@@ -199,11 +200,13 @@
                                         v-if="product.image_url && !imageLoadFailed[product.uuid]"
                                         :src="product.image_url"
                                         loading="lazy"
-                                        class="h-full w-full object-cover transition hover:opacity-80"
+                                        width="56"
+                                        height="56"
+                                        class="size-14 rounded-lg object-cover transition hover:opacity-80"
                                         alt=""
                                         @error="onImageError(product.uuid)"
                                     >
-                                    <div v-else class="flex h-full w-full items-center justify-center bg-elevated text-dimmed transition hover:opacity-80">
+                                    <div v-else class="flex size-14 items-center justify-center rounded-lg bg-elevated text-dimmed transition hover:opacity-80">
                                         <UIcon name="i-lucide-image" class="size-5" />
                                     </div>
                                 </button>
@@ -229,10 +232,10 @@
                                             <BaseQuantityInput
                                                 :model-value="quantities[product.uuid] || 0"
                                                 :min="0"
-                                                size="xl"
+                                                size="sm"
                                                 :color="quantities[product.uuid] ? 'primary' : 'neutral'"
                                                 :variant="quantities[product.uuid] ? 'subtle' : 'ghost'"
-                                                class="w-32"
+                                                class="w-24"
                                                 :disabled="!schedule.is_open"
                                                 :aria-label="`Quantity for ${product.name}`"
                                                 @update:model-value="(value: number | null) => setQuantity(product, value)"

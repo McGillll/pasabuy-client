@@ -5,7 +5,21 @@
         </div>
 
         <div class="space-y-3">
-            <SearchInput v-model="search" placeholder="Search by customer name, contact, or order no…" class="w-full" />
+            <div class="flex items-center gap-2">
+                <div class="min-w-0 flex-1">
+                    <SearchInput v-model="search" placeholder="Search by customer name, contact, or order no…" class="w-full" />
+                </div>
+                <BaseButton
+                    class="sm:hidden shrink-0"
+                    color="neutral"
+                    variant="outline"
+                    icon="i-lucide-list-filter"
+                    @click="isFiltersOpen = true"
+                >
+                    Filters
+                    <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
+                </BaseButton>
+            </div>
 
             <div class="hidden sm:grid grid-cols-4 gap-2">
                 <USelect v-model="scheduleFilter" :items="scheduleFilterOptions" value-key="value" class="w-full h-11" />
@@ -13,17 +27,6 @@
                 <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full h-11" />
                 <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full h-11" />
             </div>
-
-            <BaseButton
-                class="sm:hidden"
-                color="neutral"
-                variant="outline"
-                icon="i-lucide-list-filter"
-                @click="isFiltersOpen = true"
-            >
-                Filters
-                <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
-            </BaseButton>
         </div>
 
         <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">

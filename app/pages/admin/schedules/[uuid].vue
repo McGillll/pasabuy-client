@@ -436,7 +436,7 @@
                                 v-model="findEditableItem(item.product_uuid)!.quantity"
                                 :min="1"
                                 size="sm"
-                                class="w-28"
+                                class="w-24"
                             />
                             <BaseButton
                                 icon="i-lucide-x"
@@ -494,7 +494,7 @@
                     >
                         <span class="flex-1 truncate font-medium text-highlighted">{{ newItem.product_name }}</span>
                         <UBadge color="neutral" variant="subtle" size="sm">New</UBadge>
-                        <BaseQuantityInput v-model="newItem.quantity" :min="1" size="sm" class="w-28" />
+                        <BaseQuantityInput v-model="newItem.quantity" :min="1" size="sm" class="w-24" />
                         <BaseButton
                             icon="i-lucide-x"
                             size="xs"

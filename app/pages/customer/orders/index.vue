@@ -38,13 +38,25 @@
         </UCard>
 
         <div class="space-y-3">
-            <UInput
-                v-model="search"
-                icon="i-lucide-search"
-                placeholder="Search by pasabuy title…"
-                class="w-full sm:w-72"
-                :ui="{ base: 'h-11' }"
-            />
+            <div class="flex items-center gap-2">
+                <UInput
+                    v-model="search"
+                    icon="i-lucide-search"
+                    placeholder="Search by pasabuy title…"
+                    class="flex-1 sm:w-72 sm:flex-none"
+                    :ui="{ base: 'h-11' }"
+                />
+                <BaseButton
+                    class="sm:hidden shrink-0"
+                    color="neutral"
+                    variant="outline"
+                    icon="i-lucide-list-filter"
+                    @click="isFiltersOpen = true"
+                >
+                    Filters
+                    <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
+                </BaseButton>
+            </div>
 
             <div class="hidden sm:grid grid-cols-2 gap-2 lg:grid-cols-5">
                 <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
@@ -53,17 +65,6 @@
                 <UInput v-model="dateFrom" type="date" placeholder="From" class="w-full" :ui="{ base: 'h-11' }" />
                 <UInput v-model="dateTo" type="date" placeholder="To" class="w-full" :ui="{ base: 'h-11' }" />
             </div>
-
-            <BaseButton
-                class="sm:hidden"
-                color="neutral"
-                variant="outline"
-                icon="i-lucide-list-filter"
-                @click="isFiltersOpen = true"
-            >
-                Filters
-                <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
-            </BaseButton>
         </div>
 
         <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
