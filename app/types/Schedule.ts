@@ -5,7 +5,7 @@ export interface ScheduleProduct {
     actual_price: string | null
     product_status: 'none' | 'b1t1' | 'out_of_stock'
     price_confirmed_at: string | null
-    product: Product
+    product: Product | null
 }
 
 export interface Schedule {
@@ -32,7 +32,7 @@ export interface ScheduleBrowseItem {
 }
 
 export interface ScheduleSummaryItem {
-    product_uuid: string
+    product_uuid: string | null
     product_name: string
     category_name: string | null
     default_price: string
@@ -41,7 +41,7 @@ export interface ScheduleSummaryItem {
 }
 
 export interface ChecklistItem {
-    product_uuid: string
+    product_uuid: string | null
     product_name: string
     category_name: string | null
     quantity: number

@@ -202,7 +202,7 @@
                                 <template #is_checked-cell="{ row }">
                                     <UCheckbox
                                         :model-value="row.original.is_checked"
-                                        :disabled="togglingUuid === row.original.product_uuid"
+                                        :disabled="!row.original.product_uuid || togglingUuid === row.original.product_uuid"
                                         @update:model-value="(value) => toggleChecklist(row.original, !!value)"
                                     />
                                 </template>
@@ -226,7 +226,7 @@
                                         <template #leading>
                                             <UCheckbox
                                                 :model-value="item.is_checked"
-                                                :disabled="togglingUuid === item.product_uuid"
+                                                :disabled="!item.product_uuid || togglingUuid === item.product_uuid"
                                                 @update:model-value="(value) => toggleChecklist(item, !!value)"
                                             />
                                         </template>
@@ -678,7 +678,7 @@ const buyersLoading = ref(false)
 const buyers = ref<ProductBuyer[]>([])
 const selectedSummaryItem = ref<ScheduleSummaryItem | null>(null)
 const selectedScheduleProduct = computed(() =>
-    schedule.value?.products.find((sp) => sp.product.uuid === selectedSummaryItem.value?.product_uuid) ?? null
+    schedule.value?.products.find((sp) => sp.product?.uuid === selectedSummaryItem.value?.product_uuid) ?? null
 )
 
 const buyerColumns: TableColumn<ProductBuyer>[] = [
@@ -698,10 +698,15 @@ async function openBuyersModal(item: ScheduleSummaryItem) {
     selectedSummaryItem.value = item
     isBuyersModalOpen.value = true
 
-    const scheduleProduct = schedule.value?.products.find((sp) => sp.product.uuid === item.product_uuid)
+    if (!item.product_uuid) {
+        buyers.value = []
+        return
+    }
+
+    const scheduleProduct = schedule.value?.products.find((sp) => sp.product?.uuid === item.product_uuid)
     confirmForm.actual_price = scheduleProduct?.actual_price !== null && scheduleProduct?.actual_price !== undefined
         ? Number(scheduleProduct.actual_price)
-        : Number(scheduleProduct?.product.default_price ?? 0)
+        : Number(scheduleProduct?.product?.default_price ?? 0)
     confirmForm.product_status = scheduleProduct?.product_status ?? 'none'
 
     buyersLoading.value = true
@@ -883,6 +888,8 @@ watch(
 onUnmounted(stopChecklistLiveSync)
 
 async function toggleChecklist(item: ChecklistItem, isChecked: boolean) {
+    if (!item.product_uuid) return
+
     const previousIsChecked = item.is_checked
     const previousCheckedAt = item.checked_at
 
@@ -1131,14 +1138,14 @@ function findEditableItem(productUuid?: string) {
     return editableItems.value.find((item) => item.product_uuid === productUuid)
 }
 
-function getScheduleProductStatus(productUuid: string) {
-    return schedule.value?.products.find((sp) => sp.product.uuid === productUuid)?.product_status
+function getScheduleProductStatus(productUuid: string | null) {
+    return schedule.value?.products.find((sp) => sp.product?.uuid === productUuid)?.product_status
 }
 
-function getScheduleProductPrice(productUuid: string) {
-    const sp = schedule.value?.products.find((p) => p.product.uuid === productUuid)
+function getScheduleProductPrice(productUuid: string | null) {
+    const sp = schedule.value?.products.find((p) => p.product?.uuid === productUuid)
     if (!sp) return 0
-    return sp.actual_price !== null && sp.actual_price !== undefined ? Number(sp.actual_price) : Number(sp.product.default_price)
+    return sp.actual_price !== null && sp.actual_price !== undefined ? Number(sp.actual_price) : Number(sp.product?.default_price ?? 0)
 }
 
 // Live preview of the order total while editing, since viewingOrder.total_amount only updates after Save.
@@ -1165,8 +1172,8 @@ function getLineSubtotal(item: OrderItem) {
 const addableProductOptions = computed(() => {
     const usedUuids = new Set(editableItems.value.map((item) => item.product_uuid))
     return (schedule.value?.products ?? [])
-        .filter((sp) => !usedUuids.has(sp.product.uuid))
-        .map((sp) => ({ label: sp.product.name, value: sp.product.uuid }))
+        .filter((sp) => sp.product && !usedUuids.has(sp.product.uuid))
+        .map((sp) => ({ label: sp.product!.name, value: sp.product!.uuid }))
 })
 
 function syncViewingOrder() {
@@ -1194,8 +1201,8 @@ function removeEditableItem(productUuid: string) {
 
 function addEditableItem() {
     if (!itemToAdd.value) return
-    const sp = schedule.value?.products.find((p) => p.product.uuid === itemToAdd.value)
-    if (!sp) return
+    const sp = schedule.value?.products.find((p) => p.product?.uuid === itemToAdd.value)
+    if (!sp?.product) return
 
     editableItems.value.push({ product_uuid: sp.product.uuid, product_name: sp.product.name, quantity: 1 })
     itemToAdd.value = undefined

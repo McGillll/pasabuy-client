@@ -35,7 +35,7 @@
                             <template #leading>
                                 <UCheckbox
                                     :model-value="item.is_checked"
-                                    :disabled="togglingUuid === item.product_uuid"
+                                    :disabled="!item.product_uuid || togglingUuid === item.product_uuid"
                                     @update:model-value="(value) => toggleItem(item, !!value)"
                                 />
                             </template>
@@ -99,6 +99,8 @@ async function load() {
 }
 
 async function toggleItem(item: ChecklistItem, isChecked: boolean) {
+    if (!item.product_uuid) return
+
     const previousIsChecked = item.is_checked
     const previousCheckedAt = item.checked_at
 

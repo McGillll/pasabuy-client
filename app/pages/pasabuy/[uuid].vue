@@ -550,7 +550,7 @@ const showBottomBar = computed(() => !!schedule.value && (!myOrder.value || edit
 const scheduleProductByUuid = computed(() => {
     const map = new Map<string, ScheduleProduct>()
     for (const scheduleProduct of schedule.value?.products ?? []) {
-        map.set(scheduleProduct.product.uuid, scheduleProduct)
+        if (scheduleProduct.product) map.set(scheduleProduct.product.uuid, scheduleProduct)
     }
     return map
 })
