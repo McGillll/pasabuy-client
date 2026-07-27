@@ -33,16 +33,16 @@
             <template #body>
                 <div class="space-y-4">
                     <UFormField label="Schedule">
-                        <USelect v-model="scheduleFilter" :items="scheduleFilterOptions" value-key="value" class="w-full" />
+                        <USelect v-model="scheduleFilter" :items="scheduleFilterOptions" value-key="value" class="w-full h-11" />
                     </UFormField>
                     <UFormField label="Status">
-                        <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full" />
+                        <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
                     </UFormField>
                     <UFormField label="Payment status">
-                        <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full" />
+                        <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full h-11" />
                     </UFormField>
                     <UFormField label="Delivery status">
-                        <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full" />
+                        <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full h-11" />
                     </UFormField>
                 </div>
             </template>

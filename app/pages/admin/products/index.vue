@@ -79,17 +79,17 @@
                         <template #body>
                             <div class="space-y-4">
                                 <UFormField label="Status">
-                                    <USelect v-model="productStatusFilter" :items="statusFilterOptions" value-key="value" class="w-full" />
+                                    <USelect v-model="productStatusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
                                 </UFormField>
                                 <UFormField label="Sort by price">
-                                    <USelect v-model="productSortByPrice" :items="sortByPriceOptions" value-key="value" class="w-full" />
+                                    <USelect v-model="productSortByPrice" :items="sortByPriceOptions" value-key="value" class="w-full h-11" />
                                 </UFormField>
                                 <div class="grid grid-cols-2 gap-4">
                                     <UFormField label="Min price">
-                                        <UInput v-model.number="productPriceMin" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" />
+                                        <UInput v-model.number="productPriceMin" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" :ui="{ base: 'h-11' }" />
                                     </UFormField>
                                     <UFormField label="Max price">
-                                        <UInput v-model.number="productPriceMax" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" />
+                                        <UInput v-model.number="productPriceMax" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" :ui="{ base: 'h-11' }" />
                                     </UFormField>
                                 </div>
                             </div>

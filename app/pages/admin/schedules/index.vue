@@ -35,10 +35,10 @@
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <UFormField label="Month">
-                            <USelect v-model="monthFilter" :items="monthFilterOptions" value-key="value" placeholder="All months" class="w-full" />
+                            <USelect v-model="monthFilter" :items="monthFilterOptions" value-key="value" placeholder="All months" class="w-full h-11" />
                         </UFormField>
                         <UFormField label="Year">
-                            <USelect v-model="yearFilter" :items="yearFilterOptions" value-key="value" placeholder="All years" class="w-full" />
+                            <USelect v-model="yearFilter" :items="yearFilterOptions" value-key="value" placeholder="All years" class="w-full h-11" />
                         </UFormField>
                     </div>
                 </div>

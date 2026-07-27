@@ -71,20 +71,20 @@
             <template #body>
                 <div class="space-y-4">
                     <UFormField label="Status">
-                        <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full" />
+                        <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
                     </UFormField>
                     <UFormField label="Payment status">
-                        <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full" />
+                        <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full h-11" />
                     </UFormField>
                     <UFormField label="Delivery status">
-                        <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full" />
+                        <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full h-11" />
                     </UFormField>
                     <div class="grid grid-cols-2 gap-4">
                         <UFormField label="From date">
-                            <UInput v-model="dateFrom" type="date" class="w-full" />
+                            <UInput v-model="dateFrom" type="date" class="w-full" :ui="{ base: 'h-11' }" />
                         </UFormField>
                         <UFormField label="To date">
-                            <UInput v-model="dateTo" type="date" class="w-full" />
+                            <UInput v-model="dateTo" type="date" class="w-full" :ui="{ base: 'h-11' }" />
                         </UFormField>
                     </div>
                 </div>
