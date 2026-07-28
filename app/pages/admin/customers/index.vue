@@ -8,7 +8,9 @@
             <template #approved>
                 <div class="overflow-hidden">
                 <div class="mt-4 space-y-4" ref="panelEl">
-                    <SearchInput v-model="search" placeholder="Search customers…" />
+                    <div class="sticky top-0 z-10 -mx-6 bg-default/95 px-6 py-2 backdrop-blur-sm">
+                        <SearchInput v-model="search" placeholder="Search customers…" />
+                    </div>
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
                         <ResponsiveTable

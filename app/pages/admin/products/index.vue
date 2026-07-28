@@ -13,66 +13,68 @@
             <template #products>
                 <div class="overflow-hidden">
                 <div class="mt-4 space-y-4" ref="panelEl">
-                    <div class="flex items-center gap-2">
-                        <div class="min-w-0 flex-1">
-                            <SearchInput v-model="productSearch" placeholder="Search products…" class="w-full" />
+                    <div class="sticky top-0 z-10 -mx-6 space-y-2 bg-default/95 px-6 py-2 backdrop-blur-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="min-w-0 flex-1">
+                                <SearchInput v-model="productSearch" placeholder="Search products…" class="w-full" />
+                            </div>
+                            <BaseButton
+                                class="sm:hidden shrink-0"
+                                color="neutral"
+                                variant="outline"
+                                icon="i-lucide-list-filter"
+                                @click="isProductFiltersOpen = true"
+                            >
+                                Filters
+                                <UBadge v-if="productActiveFilterCount" color="primary" variant="subtle" size="sm">{{ productActiveFilterCount }}</UBadge>
+                            </BaseButton>
                         </div>
-                        <BaseButton
-                            class="sm:hidden shrink-0"
-                            color="neutral"
-                            variant="outline"
-                            icon="i-lucide-list-filter"
-                            @click="isProductFiltersOpen = true"
-                        >
-                            Filters
-                            <UBadge v-if="productActiveFilterCount" color="primary" variant="subtle" size="sm">{{ productActiveFilterCount }}</UBadge>
-                        </BaseButton>
-                    </div>
 
-                    <div v-if="categoryFilterTabs.length > 2" data-swipe-ignore>
-                        <UTabs
-                            v-model="productCategoryFilter"
-                            :items="categoryFilterTabs"
-                            variant="pill"
-                            size="md"
-                            class="w-full"
-                            :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center py-2.5' }"
-                        />
-                    </div>
+                        <div v-if="categoryFilterTabs.length > 2" data-swipe-ignore>
+                            <UTabs
+                                v-model="productCategoryFilter"
+                                :items="categoryFilterTabs"
+                                variant="pill"
+                                size="md"
+                                class="w-full"
+                                :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center py-2.5' }"
+                            />
+                        </div>
 
-                    <div class="hidden sm:grid grid-cols-4 gap-2">
-                        <USelect
-                            v-model="productStatusFilter"
-                            :items="statusFilterOptions"
-                            value-key="value"
-                            placeholder="Status"
-                            class="w-full h-11"
-                        />
-                        <USelect
-                            v-model="productSortByPrice"
-                            :items="sortByPriceOptions"
-                            value-key="value"
-                            placeholder="Sort by price"
-                            class="w-full h-11"
-                        />
-                        <UInput
-                            v-model.number="productPriceMin"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="Min price"
-                            class="w-full"
-                            :ui="{ base: 'h-11' }"
-                        />
-                        <UInput
-                            v-model.number="productPriceMax"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="Max price"
-                            class="w-full"
-                            :ui="{ base: 'h-11' }"
-                        />
+                        <div class="hidden sm:grid grid-cols-4 gap-2">
+                            <USelect
+                                v-model="productStatusFilter"
+                                :items="statusFilterOptions"
+                                value-key="value"
+                                placeholder="Status"
+                                class="w-full h-11"
+                            />
+                            <USelect
+                                v-model="productSortByPrice"
+                                :items="sortByPriceOptions"
+                                value-key="value"
+                                placeholder="Sort by price"
+                                class="w-full h-11"
+                            />
+                            <UInput
+                                v-model.number="productPriceMin"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="Min price"
+                                class="w-full"
+                                :ui="{ base: 'h-11' }"
+                            />
+                            <UInput
+                                v-model.number="productPriceMax"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="Max price"
+                                class="w-full"
+                                :ui="{ base: 'h-11' }"
+                            />
+                        </div>
                     </div>
 
                     <USlideover v-model:open="isProductFiltersOpen" side="bottom" title="Filters">
@@ -161,7 +163,7 @@
                                 </div>
                             </template>
                             <template #list-item="{ item: product }">
-                                <ListCard :dimmed="!product.is_active" :actions="productActions(product)">
+                                <ListCard clickable :dimmed="!product.is_active" :actions="productActions(product)" @click="openProductPreview(product)">
                                     <template #leading>
                                         <img
                                             v-if="product.image_url && !imageLoadFailed[product.uuid]"
@@ -176,20 +178,19 @@
                                         </div>
                                     </template>
                                     <template #title>
-                                        <p class="font-medium text-highlighted">{{ product.name }}</p>
-                                    </template>
-                                    <template #subtitle>
-                                        <span v-if="product.description" class="truncate">{{ product.description }}</span>
+                                        <p class="min-w-0 truncate font-medium text-highlighted">{{ product.name }}</p>
                                     </template>
                                     <template #meta>
                                         <span class="text-muted">{{ product.category?.name ?? '-' }}</span>
-                                        <span class="font-medium text-highlighted">₱{{ product.default_price }}</span>
                                     </template>
                                     <template #status>
-                                        <StatusBadge
-                                            :color="product.is_active ? 'success' : 'neutral'"
-                                            :label="product.is_active ? 'Active' : 'Inactive'"
-                                        />
+                                        <div class="flex w-full items-center justify-between">
+                                            <StatusBadge
+                                                :color="product.is_active ? 'success' : 'neutral'"
+                                                :label="product.is_active ? 'Active' : 'Inactive'"
+                                            />
+                                            <span class="font-medium text-highlighted">₱{{ product.default_price }}</span>
+                                        </div>
                                     </template>
                                 </ListCard>
                             </template>
@@ -214,7 +215,9 @@
             <template #categories>
                 <div class="overflow-hidden">
                 <div class="mt-4 space-y-4" ref="panelEl">
-                    <SearchInput v-model="categorySearch" placeholder="Search categories…" />
+                    <div class="sticky top-0 z-10 -mx-6 bg-default/95 px-6 py-2 backdrop-blur-sm">
+                        <SearchInput v-model="categorySearch" placeholder="Search categories…" />
+                    </div>
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
                         <ResponsiveTable
@@ -381,6 +384,33 @@
             </form>
         </BaseModal>
 
+        <BaseModal v-model:open="isProductPreviewOpen" :title="previewProduct?.name" view-only>
+            <div class="space-y-4">
+                <img
+                    v-if="previewProduct?.image_url && !imageLoadFailed[previewProduct.uuid]"
+                    :src="previewProduct.image_url"
+                    class="max-h-[50vh] w-full rounded-lg object-contain"
+                    :alt="previewProduct.name"
+                    @error="onImageError(previewProduct!.uuid)"
+                >
+                <div v-else class="flex h-40 items-center justify-center rounded-lg bg-elevated text-dimmed">
+                    <UIcon name="i-lucide-image-off" class="size-8" />
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <StatusBadge
+                        :color="previewProduct?.is_active ? 'success' : 'neutral'"
+                        :label="previewProduct?.is_active ? 'Active' : 'Inactive'"
+                    />
+                    <span class="text-sm text-muted">{{ previewProduct?.category?.name ?? '-' }}</span>
+                </div>
+
+                <p class="text-xl font-semibold text-highlighted">₱{{ previewProduct?.default_price }}</p>
+
+                <p v-if="previewProduct?.description" class="text-sm text-muted">{{ previewProduct.description }}</p>
+            </div>
+        </BaseModal>
+
         <BaseModal
             v-model:open="isCategoryModalOpen"
             :title="editingCategory ? 'Edit Category' : 'Add Category'"
@@ -488,6 +518,14 @@ const imageLoadFailed = ref<Record<string, boolean>>({})
 
 function onImageError(productUuid: string) {
     imageLoadFailed.value[productUuid] = true
+}
+
+const isProductPreviewOpen = ref(false)
+const previewProduct = ref<Product | null>(null)
+
+function openProductPreview(product: Product) {
+    previewProduct.value = product
+    isProductPreviewOpen.value = true
 }
 
 const categoryOptions = computed(() => [

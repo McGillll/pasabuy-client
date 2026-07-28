@@ -4,7 +4,7 @@
             <h1 class="text-xl font-semibold text-highlighted">Orders</h1>
         </div>
 
-        <div class="space-y-3">
+        <div class="sticky top-0 z-10 -mx-6 space-y-2 bg-default/95 px-6 py-2 backdrop-blur-sm">
             <div class="flex items-center gap-2">
                 <div class="min-w-0 flex-1">
                     <SearchInput v-model="search" placeholder="Search by customer name, contact, or order no…" class="w-full" />
