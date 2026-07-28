@@ -85,7 +85,7 @@
                 <UTabs v-model="activeSummaryTab" :items="summaryTabs" class="w-full mt-4">
                     <template #pricing>
                         <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
-                            <ResponsiveTable
+                            <BaseTable
                                 :data="pagedSummary"
                                 :columns="summaryColumns"
                                 :ui="{ tr: 'hover:bg-elevated/50 transition-colors cursor-pointer' }"
@@ -142,9 +142,9 @@
                                     </ListCard>
                                 </template>
                                 <template #empty>
-                                    <TableEmptyState icon="i-lucide-clipboard-list" message="No orders yet. The checklist fills in once customers order." />
+                                    <BaseEmptyState icon="i-lucide-clipboard-list" message="No orders yet. The checklist fills in once customers order." />
                                 </template>
-                            </ResponsiveTable>
+                            </BaseTable>
                             <template v-if="summary.length > 0" #footer>
                                 <div class="flex items-center justify-between font-medium text-highlighted">
                                     <span>Grand total</span>
@@ -215,7 +215,7 @@
                                 <USwitch v-model="checklistHideChecked" label="Hide checked" />
                             </div>
 
-                            <ResponsiveTable :data="filteredChecklistItems" :columns="checklistColumns" :loading="checklistLoading" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
+                            <BaseTable :data="filteredChecklistItems" :columns="checklistColumns" :loading="checklistLoading" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
                                 <template #is_checked-cell="{ row }">
                                     <UCheckbox
                                         :model-value="row.original.is_checked"
@@ -267,23 +267,23 @@
                                     </ListCard>
                                 </template>
                                 <template #empty>
-                                    <TableEmptyState
+                                    <BaseEmptyState
                                         v-if="checklistItems.length === 0"
                                         icon="i-lucide-list-checks"
                                         message="Close the schedule to generate the shopping checklist."
                                     />
-                                    <TableEmptyState
+                                    <BaseEmptyState
                                         v-else-if="checklistHideChecked"
                                         icon="i-lucide-check-check"
                                         message="Everything's checked off."
                                     />
-                                    <TableEmptyState
+                                    <BaseEmptyState
                                         v-else
                                         icon="i-lucide-list-checks"
                                         message="No items in this category."
                                     />
                                 </template>
-                            </ResponsiveTable>
+                            </BaseTable>
                         </UCard>
                     </template>
                 </UTabs>
@@ -297,7 +297,7 @@
                 <div class="mt-4 space-y-3">
                     <div class="flex items-center gap-2">
                         <div class="min-w-0 flex-1">
-                            <SearchInput v-model="orderSearch" placeholder="Search by customer name, contact, or order no…" class="w-full" />
+                            <BaseSearchInput v-model="orderSearch" placeholder="Search by customer name, contact, or order no…" class="w-full" />
                         </div>
                         <BaseButton
                             class="sm:hidden shrink-0"
@@ -341,7 +341,7 @@
                 </USlideover>
 
                 <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
-                    <ResponsiveTable :data="filteredOrders" :columns="orderColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
+                    <BaseTable :data="filteredOrders" :columns="orderColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
                         <template #status-cell="{ row }">
                             <OrderStatusBadge :status="row.original.status" />
                         </template>
@@ -414,9 +414,9 @@
                             </ListCard>
                         </template>
                         <template #empty>
-                            <TableEmptyState icon="i-lucide-receipt" :message="orders.length === 0 ? 'No orders yet.' : 'No orders match your search.'" />
+                            <BaseEmptyState icon="i-lucide-receipt" :message="orders.length === 0 ? 'No orders yet.' : 'No orders match your search.'" />
                         </template>
-                    </ResponsiveTable>
+                    </BaseTable>
                 </UCard>
                 </div>
                 </div>
@@ -429,7 +429,7 @@
             view-only
         >
             <div class="space-y-4">
-                <ResponsiveTable :data="buyers" :columns="buyerColumns" :loading="buyersLoading">
+                <BaseTable :data="buyers" :columns="buyerColumns" :loading="buyersLoading">
                     <template #status-cell="{ row }">
                         <OrderStatusBadge :status="row.original.status" />
                     </template>
@@ -448,9 +448,9 @@
                         </ListCard>
                     </template>
                     <template #empty>
-                        <TableEmptyState icon="i-lucide-users" message="No buyers yet." padding="py-6" />
+                        <BaseEmptyState icon="i-lucide-users" message="No buyers yet." padding="py-6" />
                     </template>
-                </ResponsiveTable>
+                </BaseTable>
 
                 <div v-if="canConfirmPrice" class="border-t border-default pt-4">
                     <div class="mb-2 flex items-center justify-between gap-2">
@@ -637,7 +637,7 @@
             </div>
         </BaseModal>
 
-        <ConfirmDialogModal
+        <BaseConfirmModal
             v-model:open="confirmDialog.open"
             :title="confirmDialog.title"
             :description="confirmDialog.description"

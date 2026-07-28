@@ -3,7 +3,7 @@
         Cancel order
     </BaseButton>
 
-    <ConfirmDialogModal
+    <BaseConfirmModal
         v-model:open="open"
         title="Cancel order?"
         description="This cannot be undone."

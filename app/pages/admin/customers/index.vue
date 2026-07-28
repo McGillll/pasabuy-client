@@ -9,11 +9,11 @@
                 <div class="overflow-x-clip">
                 <div class="mt-4 space-y-4" ref="panelEl">
                     <div class="sticky top-0 z-10 -mx-6 bg-default/95 px-6 py-2 backdrop-blur-sm">
-                        <SearchInput v-model="search" placeholder="Search customers…" />
+                        <BaseSearchInput v-model="search" placeholder="Search customers…" />
                     </div>
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-                        <ResponsiveTable
+                        <BaseTable
                             :data="approvedCustomers"
                             :columns="approvedColumns"
                             :loading="approvedLoading"
@@ -59,9 +59,9 @@
                                 </ListCard>
                             </template>
                             <template #empty>
-                                <TableEmptyState icon="i-lucide-users" message="No approved customers found." />
+                                <BaseEmptyState icon="i-lucide-users" message="No approved customers found." />
                             </template>
-                        </ResponsiveTable>
+                        </BaseTable>
                     </UCard>
 
                     <div v-if="approvedTotal > perPage" class="flex justify-center">
@@ -75,7 +75,7 @@
                 <div class="overflow-x-clip">
                 <div class="mt-4 space-y-4" ref="panelEl">
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-                        <ResponsiveTable
+                        <BaseTable
                             :data="pendingCustomers"
                             :columns="pendingColumns"
                             :loading="pendingLoading"
@@ -116,9 +116,9 @@
                                 </ListCard>
                             </template>
                             <template #empty>
-                                <TableEmptyState icon="i-lucide-user-check" message="No pending registrations." />
+                                <BaseEmptyState icon="i-lucide-user-check" message="No pending registrations." />
                             </template>
-                        </ResponsiveTable>
+                        </BaseTable>
                     </UCard>
 
                     <div v-if="pendingTotal > perPage" class="flex justify-center">
@@ -134,7 +134,7 @@
             :title="selectedCustomer ? `${selectedCustomer.first_name} ${selectedCustomer.last_name}'s orders` : 'Orders'"
             view-only
         >
-            <ResponsiveTable :data="customerOrders" :columns="orderColumns" :loading="loadingOrders">
+            <BaseTable :data="customerOrders" :columns="orderColumns" :loading="loadingOrders">
                 <template #pasabuy_schedule-cell="{ row }">
                     <NuxtLink
                         v-if="row.original.pasabuy_schedule"
@@ -168,12 +168,12 @@
                     </ListCard>
                 </template>
                 <template #empty>
-                    <TableEmptyState icon="i-lucide-receipt" message="No orders yet." />
+                    <BaseEmptyState icon="i-lucide-receipt" message="No orders yet." />
                 </template>
-            </ResponsiveTable>
+            </BaseTable>
         </BaseModal>
 
-        <ConfirmDialogModal
+        <BaseConfirmModal
             v-model:open="confirmDialog.open"
             :title="confirmDialog.title"
             :description="confirmDialog.description"

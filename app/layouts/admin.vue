@@ -1,6 +1,6 @@
 <template>
     <div class="h-screen h-dvh flex bg-default overflow-hidden">
-        <aside class="hidden md:flex md:w-64 md:flex-col md:shrink-0 border-r border-default bg-muted shadow-[2px_0_10px_-4px_rgba(0,0,0,0.08)]">
+        <aside v-if="sidebarMode.mode.value === 'labeled'" class="hidden md:flex md:w-64 md:flex-col md:shrink-0 border-r border-default bg-muted shadow-[2px_0_10px_-4px_rgba(0,0,0,0.08)]">
             <div class="flex items-center justify-between gap-2 px-6 py-5">
                 <div class="flex items-center gap-2">
                     <div class="flex items-center justify-center size-8 rounded-lg bg-primary text-inverted font-bold">
@@ -8,7 +8,14 @@
                     </div>
                     <span class="font-semibold text-highlighted">Pasabuy</span>
                 </div>
-                <UColorModeButton color="neutral" variant="ghost" size="sm" square />
+                <div class="flex items-center gap-1">
+                    <BaseIconButton
+                        icon="i-lucide-panel-left-close"
+                        aria-label="Toggle sidebar style"
+                        @click="sidebarMode.toggle()"
+                    />
+                    <UColorModeButton color="neutral" variant="ghost" size="sm" square />
+                </div>
             </div>
 
             <UNavigationMenu
@@ -37,6 +44,37 @@
                             <p class="text-xs text-muted truncate">{{ user?.email }}</p>
                         </div>
                     </BaseButton>
+                </UDropdownMenu>
+            </div>
+        </aside>
+
+        <aside v-else class="hidden md:flex md:w-[76px] md:flex-col md:shrink-0 border-r border-default bg-muted shadow-[2px_0_10px_-4px_rgba(0,0,0,0.08)]">
+            <div class="flex flex-col items-center gap-2 px-2 py-5">
+                <div class="flex items-center justify-center size-8 rounded-lg bg-primary text-inverted font-bold">
+                    P
+                </div>
+                <BaseIconButton
+                    icon="i-lucide-panel-left"
+                    aria-label="Toggle sidebar style"
+                    @click="sidebarMode.toggle()"
+                />
+            </div>
+
+            <nav class="flex-1 flex flex-col items-center gap-2 px-2 py-2">
+                <NuxtLink
+                    v-for="link in links"
+                    :key="link.label"
+                    :to="link.to"
+                    class="flex items-center justify-center size-11 rounded-lg text-muted hover:bg-elevated hover:text-highlighted transition-colors"
+                    active-class="bg-primary/10 text-primary"
+                >
+                    <UIcon :name="link.icon!" class="size-6" />
+                </NuxtLink>
+            </nav>
+
+            <div class="border-t border-default p-2 flex justify-center">
+                <UDropdownMenu :items="accountMenuItems" :content="{ align: 'start' }" :ui="{ content: 'w-56' }">
+                    <BaseIconButton icon="i-lucide-user-round" aria-label="Account menu" />
                 </UDropdownMenu>
             </div>
         </aside>
@@ -95,6 +133,11 @@
 import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
 
 const { user, logout } = useAuth()
+const sidebarMode = useSidebarMode()
+
+onMounted(() => {
+    sidebarMode.init()
+})
 
 const accountMenuItems = computed<DropdownMenuItem[]>(() => [
     { label: 'My Account', icon: 'i-lucide-user', to: '/admin/account' },

@@ -213,6 +213,7 @@
 
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate font-medium text-highlighted">{{ product.name }}</p>
+                                    <p v-if="product.description" class="truncate text-sm text-muted">{{ product.description }}</p>
 
                                     <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                                         <p class="text-sm text-muted">

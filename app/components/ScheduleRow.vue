@@ -1,0 +1,40 @@
+<template>
+    <NuxtLink
+        :to="href"
+        class="flex flex-col gap-1.5 py-3 border-b border-default last:border-b-0 hover:text-highlighted"
+        :class="closingSoon ? 'border-l-2 border-l-warning bg-warning/5 pl-2.5 -ml-2.5 pr-2' : ''"
+    >
+        <div class="flex items-center justify-between gap-3">
+            <span class="text-sm truncate">{{ title }}</span>
+            <BaseStatusBadge :color="statusColor" :label="statusLabel" dot />
+        </div>
+
+        <div v-if="fillPct !== undefined && fillLabel" class="flex items-center gap-2">
+            <BaseProgressBar class="flex-1" :segments="[{ value: fillPct }]" :max="100" />
+            <span class="text-xs text-dimmed shrink-0">{{ fillLabel }}</span>
+        </div>
+
+        <div v-if="closingSoon && note" class="flex items-center gap-1 text-warning font-medium text-xs">
+            <UIcon name="i-lucide-alarm-clock" class="size-3.5" />
+            <span>{{ note }}</span>
+        </div>
+    </NuxtLink>
+</template>
+
+<script setup lang="ts">
+import type { BadgeProps } from '@nuxt/ui'
+
+withDefaults(defineProps<{
+    title: string
+    status: 'open' | 'closed' | 'finished'
+    statusColor: BadgeProps['color']
+    statusLabel: string
+    href: string
+    closingSoon?: boolean
+    fillPct?: number
+    fillLabel?: string
+    note?: string
+}>(), {
+    closingSoon: false
+})
+</script>

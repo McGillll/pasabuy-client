@@ -16,7 +16,7 @@
                     <div class="sticky top-0 z-10 -mx-6 space-y-2 bg-default/95 px-6 py-2 backdrop-blur-sm">
                         <div class="flex items-center gap-2">
                             <div class="min-w-0 flex-1">
-                                <SearchInput v-model="productSearch" placeholder="Search products…" class="w-full" />
+                                <BaseSearchInput v-model="productSearch" placeholder="Search products…" class="w-full" />
                             </div>
                             <BaseButton
                                 class="sm:hidden shrink-0"
@@ -105,7 +105,7 @@
                     </USlideover>
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-                        <ResponsiveTable
+                        <BaseTable
                             :data="products"
                             :columns="productColumns"
                             :loading="productsLoading"
@@ -137,7 +137,7 @@
                                 <span class="font-medium text-highlighted">₱{{ row.original.default_price }}</span>
                             </template>
                             <template #is_active-cell="{ row }">
-                                <StatusBadge
+                                <BaseStatusBadge
                                     :color="row.original.is_active ? 'success' : 'neutral'"
                                     :label="row.original.is_active ? 'Active' : 'Inactive'"
                                 />
@@ -185,7 +185,7 @@
                                     </template>
                                     <template #status>
                                         <div class="flex w-full items-center justify-between">
-                                            <StatusBadge
+                                            <BaseStatusBadge
                                                 :color="product.is_active ? 'success' : 'neutral'"
                                                 :label="product.is_active ? 'Active' : 'Inactive'"
                                             />
@@ -195,14 +195,14 @@
                                 </ListCard>
                             </template>
                             <template #empty>
-                                <TableEmptyState
+                                <BaseEmptyState
                                     icon="i-lucide-package-search"
                                     message="No products found."
                                     action-label="Add your first product"
                                     @action="openProductCreateModal"
                                 />
                             </template>
-                        </ResponsiveTable>
+                        </BaseTable>
                     </UCard>
 
                     <div v-if="productsTotal > perPage" class="flex justify-center">
@@ -216,11 +216,11 @@
                 <div class="overflow-x-clip">
                 <div class="mt-4 space-y-4" ref="panelEl">
                     <div class="sticky top-0 z-10 -mx-6 bg-default/95 px-6 py-2 backdrop-blur-sm">
-                        <SearchInput v-model="categorySearch" placeholder="Search categories…" />
+                        <BaseSearchInput v-model="categorySearch" placeholder="Search categories…" />
                     </div>
 
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-                        <ResponsiveTable
+                        <BaseTable
                             :data="categories"
                             :columns="categoryColumns"
                             :loading="categoriesLoading"
@@ -234,7 +234,7 @@
                                 </p>
                             </template>
                             <template #is_active-cell="{ row }">
-                                <StatusBadge
+                                <BaseStatusBadge
                                     :color="row.original.is_active ? 'success' : 'neutral'"
                                     :label="row.original.is_active ? 'Active' : 'Inactive'"
                                 />
@@ -268,7 +268,7 @@
                                         <span v-if="category.description" class="truncate">{{ category.description }}</span>
                                     </template>
                                     <template #status>
-                                        <StatusBadge
+                                        <BaseStatusBadge
                                             :color="category.is_active ? 'success' : 'neutral'"
                                             :label="category.is_active ? 'Active' : 'Inactive'"
                                         />
@@ -276,14 +276,14 @@
                                 </ListCard>
                             </template>
                             <template #empty>
-                                <TableEmptyState
+                                <BaseEmptyState
                                     icon="i-lucide-tags"
                                     message="No categories found."
                                     action-label="Add your first category"
                                     @action="openCategoryCreateModal"
                                 />
                             </template>
-                        </ResponsiveTable>
+                        </BaseTable>
                     </UCard>
 
                     <div v-if="categoriesTotal > perPage" class="flex justify-center">
@@ -398,7 +398,7 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    <StatusBadge
+                    <BaseStatusBadge
                         :color="previewProduct?.is_active ? 'success' : 'neutral'"
                         :label="previewProduct?.is_active ? 'Active' : 'Inactive'"
                     />
@@ -432,7 +432,7 @@
             </form>
         </BaseModal>
 
-        <ConfirmDialogModal
+        <BaseConfirmModal
             v-model:open="confirmDialog.open"
             :title="confirmDialog.title"
             :description="confirmDialog.description"

@@ -98,7 +98,7 @@
         </USlideover>
 
         <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <ResponsiveTable
+            <BaseTable
                 :data="orders"
                 :columns="columns"
                 :loading="loading"
@@ -165,7 +165,7 @@
                         <p class="text-sm text-muted">{{ emptyStateMessage }}</p>
                     </div>
                 </template>
-            </ResponsiveTable>
+            </BaseTable>
         </UCard>
 
         <div v-if="total > perPage" class="flex justify-center">

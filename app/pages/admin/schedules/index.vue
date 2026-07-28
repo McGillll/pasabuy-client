@@ -10,7 +10,7 @@
         <div class="sticky top-0 z-10 -mx-6 space-y-2 bg-default/95 px-6 py-2 backdrop-blur-sm">
             <div class="flex items-center gap-2">
                 <div class="min-w-0 flex-1">
-                    <SearchInput v-model="search" placeholder="Search schedules…" class="w-full" />
+                    <BaseSearchInput v-model="search" placeholder="Search schedules…" class="w-full" />
                 </div>
                 <BaseButton
                     class="sm:hidden shrink-0"
@@ -52,7 +52,7 @@
         </USlideover>
 
         <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <ResponsiveTable
+            <BaseTable
                 :data="schedules"
                 :columns="columns"
                 :loading="loading"
@@ -64,7 +64,7 @@
                     </NuxtLink>
                 </template>
                 <template #status-cell="{ row }">
-                    <StatusBadge :color="scheduleStatusColor[row.original.status]" :label="row.original.status" />
+                    <BaseStatusBadge :color="scheduleStatusColor[row.original.status]" :label="row.original.status" />
                 </template>
                 <template #pasabuy_schedule_date-cell="{ row }">
                     <span class="text-muted">{{ row.original.pasabuy_schedule_date ? formatDate(row.original.pasabuy_schedule_date) : '-' }}</span>
@@ -107,19 +107,19 @@
                             <span class="text-muted">{{ scheduleRow.pasabuy_schedule_date ? formatDate(scheduleRow.pasabuy_schedule_date) : '-' }}</span>
                         </template>
                         <template #status>
-                            <StatusBadge :color="scheduleStatusColor[scheduleRow.status]" :label="scheduleRow.status" />
+                            <BaseStatusBadge :color="scheduleStatusColor[scheduleRow.status]" :label="scheduleRow.status" />
                         </template>
                     </ListCard>
                 </template>
                 <template #empty>
-                    <TableEmptyState
+                    <BaseEmptyState
                         icon="i-lucide-calendar-search"
                         message="No schedules found."
                         action-label="Create your first schedule"
                         @action="openCreateModal"
                     />
                 </template>
-            </ResponsiveTable>
+            </BaseTable>
         </UCard>
 
         <div v-if="total > perPage" class="flex justify-center">
@@ -147,7 +147,7 @@
             </form>
         </BaseModal>
 
-        <ConfirmDialogModal
+        <BaseConfirmModal
             v-model:open="confirmDialog.open"
             :title="confirmDialog.title"
             :description="confirmDialog.description"

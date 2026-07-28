@@ -1,115 +1,52 @@
 <template>
     <div class="space-y-6">
-        <div>
-            <h1 class="text-xl font-semibold text-highlighted">Dashboard</h1>
-            <p class="text-sm text-muted mt-1">A quick look at your catalog, schedules, and orders that need action.</p>
-        </div>
+        <PageHeader
+            title="Dashboard"
+            subtitle="A quick look at your catalog, schedules, and orders that need action."
+            primary-label="New schedule"
+            primary-icon="i-lucide-calendar-plus"
+            secondary-label="Add product"
+            secondary-icon="i-lucide-plus"
+            @primary-click="navigateTo('/admin/schedules')"
+            @secondary-click="navigateTo('/admin/products')"
+        />
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            <UCard v-for="stat in stats" :key="stat.label">
-                <div class="flex items-center gap-3">
-                    <div class="flex items-center justify-center size-10 rounded-lg bg-elevated text-primary">
-                        <UIcon :name="stat.icon" class="size-5" />
-                    </div>
-                    <div>
-                        <p class="text-xs text-muted">{{ stat.label }}</p>
-                        <p class="text-2xl font-semibold text-highlighted">{{ stat.value }}</p>
-                    </div>
-                </div>
-            </UCard>
-        </div>
+        <KpiStrip :items="kpiItems" />
 
-        <UCard>
-            <template #header>
-                <div class="flex items-center justify-between">
-                    <h2 class="font-medium">Needs attention</h2>
-                    <UBadge v-if="pendingOrders.length" color="warning" variant="subtle">
-                        {{ pendingOrders.length }} pending
-                    </UBadge>
-                </div>
-            </template>
+        <div class="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-6">
+            <div class="space-y-6">
+                <p class="text-xs font-bold uppercase tracking-wide text-dimmed">Today</p>
 
-            <p v-if="!loading && pendingOrders.length === 0" class="text-sm text-muted py-6 text-center">
-                No pending orders right now.
-            </p>
+                <AttentionQueue
+                    title="Needs attention"
+                    hint="Orders waiting on confirm or cancel"
+                    :count="pendingOrders.length"
+                    :items="attentionQueueItems"
+                    view-all-href="/admin/orders"
+                    :loading="loading"
+                />
 
-            <template v-else>
-                <div class="hidden sm:block max-h-80 overflow-y-auto">
-                    <UTable :data="pendingOrders" :columns="orderColumns" :loading="loading">
-                        <template #schedule-cell="{ row }">
-                            <NuxtLink :to="`/admin/schedules/${row.original.scheduleUuid}`" class="text-primary hover:underline">
-                                {{ row.original.scheduleTitle }}
-                            </NuxtLink>
-                        </template>
-                        <template #actions-cell="{ row }">
-                            <div class="flex items-center gap-2">
-                                <BaseButton
-                                    v-if="row.original.scheduleStatus === 'closed'"
-                                    size="xs"
-                                    color="success"
-                                    variant="soft"
-                                    :loading="actingOn === row.original.uuid"
-                                    @click="setOrderStatus(row.original, 'confirmed')"
-                                >
-                                    Confirm
-                                </BaseButton>
-                                <span v-else class="text-xs text-dimmed">Close schedule to confirm</span>
-                                <BaseButton
-                                    size="xs"
-                                    color="error"
-                                    variant="soft"
-                                    :loading="actingOn === row.original.uuid"
-                                    @click="cancelOrder(row.original)"
-                                >
-                                    Cancel
-                                </BaseButton>
-                            </div>
-                        </template>
-                    </UTable>
-                </div>
-                <div class="sm:hidden space-y-2 p-2 max-h-80 overflow-y-auto">
-                    <ListCard v-for="order in pendingOrders" :key="order.uuid" :actions="pendingOrderActions(order)">
-                        <template #title>
-                            <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
-                        </template>
-                        <template #subtitle>
-                            <NuxtLink :to="`/admin/schedules/${order.scheduleUuid}`" class="text-primary hover:underline">
-                                {{ order.scheduleTitle }}
-                            </NuxtLink>
-                        </template>
-                        <template #meta>
-                            <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
-                        </template>
-                    </ListCard>
-                </div>
-            </template>
-        </UCard>
-
-        <UCard>
-            <template #header>
-                <div class="flex items-center justify-between">
-                    <h2 class="font-medium">Recent schedules</h2>
-                    <BaseButton to="/admin/schedules" size="xs" color="neutral" variant="ghost">View all</BaseButton>
-                </div>
-            </template>
-
-            <div class="divide-y divide-default">
-                <NuxtLink
-                    v-for="schedule in recentSchedules"
-                    :key="schedule.uuid"
-                    :to="`/admin/schedules/${schedule.uuid}`"
-                    class="flex items-center justify-between py-3 first:pt-0 last:pb-0 hover:text-highlighted"
-                >
-                    <span class="text-sm">{{ schedule.title }}</span>
-                    <StatusBadge :color="scheduleStatusColor[schedule.status]" :label="schedule.status" />
-                </NuxtLink>
-                <p v-if="!loading && recentSchedules.length === 0" class="text-sm text-muted py-6 text-center">
-                    No schedules yet.
-                </p>
+                <SchedulePreviewList
+                    title="Recent schedules"
+                    :items="scheduleRowItems"
+                    view-all-href="/admin/schedules"
+                    :loading="loading"
+                />
             </div>
-        </UCard>
 
-        <ConfirmDialogModal
+            <div class="space-y-6">
+                <PipelineBar title="Order pipeline" :stages="pipelineStages" />
+
+                <RankedList
+                    title="Top products"
+                    :items="[]"
+                    empty-message="Product rankings aren't available yet"
+                    empty-description="We'll show your best-selling products here once order data is available."
+                />
+            </div>
+        </div>
+
+        <BaseConfirmModal
             v-model:open="confirmDialog.open"
             :title="confirmDialog.title"
             :description="confirmDialog.description"
@@ -127,7 +64,8 @@ import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleSe
 import { orderService } from '@/components/api/admin/OrderService'
 import { customerService } from '@/components/api/admin/CustomerService'
 import APIError from '@/components/api/user/APIError'
-import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
+import type { DropdownMenuItem } from '@nuxt/ui'
+import type { PipelineStage } from '@/components/PipelineBar.vue'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
@@ -181,18 +119,44 @@ const stats = computed(() => [
     { label: 'Pending orders', value: pendingOrders.value.length, icon: 'i-lucide-clock-alert' }
 ])
 
+const kpiItems = computed(() => [
+    { ...stats.value[0], color: 'info' as const },
+    { ...stats.value[1], color: 'primary' as const },
+    { ...stats.value[2], color: 'success' as const },
+    { ...stats.value[3], color: 'neutral' as const },
+    { ...stats.value[4], color: 'warning' as const }
+])
+
 const recentSchedules = computed(() =>
     [...(schedules.value ?? [])]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 5)
 )
 
-const orderColumns: TableColumn<PendingOrder>[] = [
-    { accessorKey: 'customer_name', header: 'Customer' },
-    { id: 'schedule', header: 'Schedule' },
-    { accessorKey: 'total_amount', header: 'Total' },
-    { id: 'actions', header: '' }
-]
+const attentionQueueItems = computed(() =>
+    pendingOrders.value.map((order) => ({
+        uuid: order.uuid,
+        name: order.customer_name,
+        subtitleLabel: order.scheduleTitle,
+        subtitleHref: `/admin/schedules/${order.scheduleUuid}`,
+        timestamp: new Date(order.created_at).toLocaleDateString(),
+        amount: `₱${order.total_amount}`,
+        menuItems: pendingOrderActions(order)
+    }))
+)
+
+const scheduleRowItems = computed(() =>
+    recentSchedules.value.map((schedule) => ({
+        uuid: schedule.uuid,
+        title: schedule.title,
+        status: schedule.status,
+        statusColor: scheduleStatusColor[schedule.status],
+        statusLabel: schedule.status,
+        href: `/admin/schedules/${schedule.uuid}`
+    }))
+)
+
+const pipelineStages: PipelineStage[] = []
 
 async function loadDashboard(force = false) {
     loading.value = true

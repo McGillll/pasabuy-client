@@ -7,7 +7,7 @@
         <div class="sticky top-0 z-10 -mx-6 space-y-2 bg-default/95 px-6 py-2 backdrop-blur-sm">
             <div class="flex items-center gap-2">
                 <div class="min-w-0 flex-1">
-                    <SearchInput v-model="search" placeholder="Search by customer name, contact, or order no…" class="w-full" />
+                    <BaseSearchInput v-model="search" placeholder="Search by customer name, contact, or order no…" class="w-full" />
                 </div>
                 <BaseButton
                     class="sm:hidden shrink-0"
@@ -55,7 +55,7 @@
         </USlideover>
 
         <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <ResponsiveTable :data="orders" :columns="orderColumns" :loading="loading" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
+            <BaseTable :data="orders" :columns="orderColumns" :loading="loading" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
                 <template #customer-cell="{ row }">
                     <p class="font-medium text-highlighted">{{ row.original.customer_name }}</p>
                     <p class="text-sm text-muted">{{ row.original.customer_contact }}</p>
@@ -133,9 +133,9 @@
                     </ListCard>
                 </template>
                 <template #empty>
-                    <TableEmptyState icon="i-lucide-receipt" message="No orders found." />
+                    <BaseEmptyState icon="i-lucide-receipt" message="No orders found." />
                 </template>
-            </ResponsiveTable>
+            </BaseTable>
         </UCard>
 
         <div v-if="total > perPage" class="flex justify-center">
@@ -156,7 +156,7 @@
                 </div>
                 <InvoiceBreakdown v-else-if="invoice" :invoice="invoice" :order-items="selectedOrder.items" />
 
-                <ResponsiveTable :data="payments" :columns="paymentColumns" :loading="paymentsLoading">
+                <BaseTable :data="payments" :columns="paymentColumns" :loading="paymentsLoading">
                     <template #method-cell="{ row }">
                         <span class="capitalize">{{ row.original.method.replace('_', ' ') }}</span>
                     </template>
@@ -184,9 +184,9 @@
                         </ListCard>
                     </template>
                     <template #empty>
-                        <TableEmptyState icon="i-lucide-wallet" message="No payments recorded yet." padding="py-6" />
+                        <BaseEmptyState icon="i-lucide-wallet" message="No payments recorded yet." padding="py-6" />
                     </template>
-                </ResponsiveTable>
+                </BaseTable>
 
                 <form class="space-y-3 border-t border-default pt-4" @submit.prevent="submitPayment">
                     <div class="grid grid-cols-2 gap-3">
@@ -215,7 +215,7 @@
             </div>
         </BaseModal>
 
-        <ConfirmDialogModal
+        <BaseConfirmModal
             v-model:open="confirmDialog.open"
             :title="confirmDialog.title"
             :description="confirmDialog.description"
