@@ -66,9 +66,11 @@
                 </div>
             </header>
 
-            <main class="flex-1 min-h-0 overflow-y-auto p-6 pb-24 md:pb-6">
-                <VerifyEmailBanner />
-                <slot />
+            <main class="flex-1 min-h-0 overflow-y-auto">
+                <div class="p-6 pb-24 md:pb-6">
+                    <VerifyEmailBanner />
+                    <slot />
+                </div>
             </main>
         </div>
 

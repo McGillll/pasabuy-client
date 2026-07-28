@@ -7,7 +7,7 @@
 
         <FabButton aria-label="New schedule" @click="openCreateModal" />
 
-        <div class="sticky top-0 z-10 mt-0! -mx-6 space-y-2 bg-default/95 px-6 pt-6 pb-2 backdrop-blur-sm">
+        <div class="sticky top-0 z-10 -mx-6 space-y-2 bg-default/95 px-6 py-2 backdrop-blur-sm">
             <div class="flex items-center gap-2">
                 <div class="min-w-0 flex-1">
                     <SearchInput v-model="search" placeholder="Search schedules…" class="w-full" />
