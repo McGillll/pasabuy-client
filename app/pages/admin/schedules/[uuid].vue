@@ -86,7 +86,7 @@
                     <template #pricing>
                         <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
                             <ResponsiveTable
-                                :data="summary"
+                                :data="pagedSummary"
                                 :columns="summaryColumns"
                                 :ui="{ tr: 'hover:bg-elevated/50 transition-colors cursor-pointer' }"
                                 @select="(_event: Event, row: { original: ScheduleSummaryItem }) => openBuyersModal(row.original)"
@@ -152,6 +152,10 @@
                                 </div>
                             </template>
                         </UCard>
+
+                        <div v-if="summary.length > summaryPerPage" class="mt-4 flex justify-center">
+                            <UPagination v-model:page="summaryPage" :total="summary.length" :items-per-page="summaryPerPage" />
+                        </div>
                     </template>
 
                     <template #checklist>
@@ -198,7 +202,20 @@
                                     </div>
                                 </div>
                             </template>
-                            <ResponsiveTable :data="checklistItems" :columns="checklistColumns" :loading="checklistLoading" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
+
+                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-default px-4 py-3">
+                                <USelect
+                                    v-if="checklistCategoryOptions.length > 2"
+                                    v-model="checklistCategoryFilter"
+                                    :items="checklistCategoryOptions"
+                                    value-key="value"
+                                    class="w-44"
+                                />
+                                <div v-else />
+                                <USwitch v-model="checklistHideChecked" label="Hide checked" />
+                            </div>
+
+                            <ResponsiveTable :data="filteredChecklistItems" :columns="checklistColumns" :loading="checklistLoading" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
                                 <template #is_checked-cell="{ row }">
                                     <UCheckbox
                                         :model-value="row.original.is_checked"
@@ -250,7 +267,21 @@
                                     </ListCard>
                                 </template>
                                 <template #empty>
-                                    <TableEmptyState icon="i-lucide-list-checks" message="Close the schedule to generate the shopping checklist." />
+                                    <TableEmptyState
+                                        v-if="checklistItems.length === 0"
+                                        icon="i-lucide-list-checks"
+                                        message="Close the schedule to generate the shopping checklist."
+                                    />
+                                    <TableEmptyState
+                                        v-else-if="checklistHideChecked"
+                                        icon="i-lucide-check-check"
+                                        message="Everything's checked off."
+                                    />
+                                    <TableEmptyState
+                                        v-else
+                                        icon="i-lucide-list-checks"
+                                        message="No items in this category."
+                                    />
                                 </template>
                             </ResponsiveTable>
                         </UCard>
@@ -263,10 +294,64 @@
             <template #orders>
                 <div class="overflow-hidden">
                 <div ref="panelEl">
+                <div class="mt-4 space-y-3">
+                    <div class="flex items-center gap-2">
+                        <div class="min-w-0 flex-1">
+                            <SearchInput v-model="orderSearch" placeholder="Search by customer name, contact, or order no…" class="w-full" />
+                        </div>
+                        <BaseButton
+                            class="sm:hidden shrink-0"
+                            color="neutral"
+                            variant="outline"
+                            icon="i-lucide-list-filter"
+                            @click="isOrderFiltersOpen = true"
+                        >
+                            Filters
+                            <UBadge v-if="orderActiveFilterCount" color="primary" variant="subtle" size="sm">{{ orderActiveFilterCount }}</UBadge>
+                        </BaseButton>
+                    </div>
+
+                    <div class="hidden sm:grid grid-cols-3 gap-2">
+                        <USelect v-model="orderStatusFilter" :items="orderStatusFilterOptions" value-key="value" class="w-full h-11" />
+                        <USelect v-model="orderPaymentStatusFilter" :items="orderPaymentStatusFilterOptions" value-key="value" class="w-full h-11" />
+                        <USelect v-model="orderDeliveryStatusFilter" :items="orderDeliveryStatusFilterOptions" value-key="value" class="w-full h-11" />
+                    </div>
+                </div>
+
+                <USlideover v-model:open="isOrderFiltersOpen" side="bottom" title="Filters">
+                    <template #body>
+                        <div class="space-y-4">
+                            <UFormField label="Status">
+                                <USelect v-model="orderStatusFilter" :items="orderStatusFilterOptions" value-key="value" class="w-full h-11" />
+                            </UFormField>
+                            <UFormField label="Payment status">
+                                <USelect v-model="orderPaymentStatusFilter" :items="orderPaymentStatusFilterOptions" value-key="value" class="w-full h-11" />
+                            </UFormField>
+                            <UFormField label="Delivery status">
+                                <USelect v-model="orderDeliveryStatusFilter" :items="orderDeliveryStatusFilterOptions" value-key="value" class="w-full h-11" />
+                            </UFormField>
+                        </div>
+                    </template>
+                    <template #footer>
+                        <div class="w-full flex items-center gap-2">
+                            <BaseButton class="flex-1" color="neutral" variant="outline" @click="clearOrderFilters">Clear filters</BaseButton>
+                            <BaseButton class="flex-1" @click="isOrderFiltersOpen = false">Done</BaseButton>
+                        </div>
+                    </template>
+                </USlideover>
+
                 <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
-                    <ResponsiveTable :data="orders" :columns="orderColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
+                    <ResponsiveTable :data="filteredOrders" :columns="orderColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
                         <template #status-cell="{ row }">
                             <OrderStatusBadge :status="row.original.status" />
+                        </template>
+                        <template #payment_status-cell="{ row }">
+                            <PaymentStatusBadge v-if="row.original.status === 'confirmed'" :status="row.original.payment_status" />
+                            <span v-else class="text-muted">-</span>
+                        </template>
+                        <template #delivery_status-cell="{ row }">
+                            <DeliveryStatusBadge v-if="row.original.status === 'confirmed'" :status="row.original.delivery_status" />
+                            <span v-else class="text-muted">-</span>
                         </template>
                         <template #total_amount-cell="{ row }">
                             {{ orderDisplayAmount(row.original) }}
@@ -321,11 +406,15 @@
                                 </template>
                                 <template #status>
                                     <OrderStatusBadge :status="order.status" />
+                                    <template v-if="order.status === 'confirmed'">
+                                        <PaymentStatusBadge :status="order.payment_status" />
+                                        <DeliveryStatusBadge :status="order.delivery_status" />
+                                    </template>
                                 </template>
                             </ListCard>
                         </template>
                         <template #empty>
-                            <TableEmptyState icon="i-lucide-receipt" message="No orders yet." />
+                            <TableEmptyState icon="i-lucide-receipt" :message="orders.length === 0 ? 'No orders yet.' : 'No orders match your search.'" />
                         </template>
                     </ResponsiveTable>
                 </UCard>
@@ -576,6 +665,56 @@ const toast = useToast()
 
 const schedule = ref<Schedule | null>(null)
 const orders = ref<Order[]>([])
+const orderSearch = ref('')
+const orderStatusFilter = ref('all')
+const orderPaymentStatusFilter = ref('all')
+const orderDeliveryStatusFilter = ref('all')
+const isOrderFiltersOpen = ref(false)
+
+const orderStatusFilterOptions = [
+    { label: 'All statuses', value: 'all' },
+    { label: customerOrderStatusLabel.pending, value: 'pending' },
+    { label: customerOrderStatusLabel.confirmed, value: 'confirmed' },
+    { label: customerOrderStatusLabel.cancelled, value: 'cancelled' }
+]
+
+const orderPaymentStatusFilterOptions = [
+    { label: 'All payment statuses', value: 'all' },
+    { label: paymentStatusLabel.unpaid, value: 'unpaid' },
+    { label: paymentStatusLabel.partially_paid, value: 'partially_paid' },
+    { label: paymentStatusLabel.paid, value: 'paid' }
+]
+
+const orderDeliveryStatusFilterOptions = [
+    { label: 'All delivery statuses', value: 'all' },
+    { label: deliveryStatusLabel.not_delivered, value: 'not_delivered' },
+    { label: deliveryStatusLabel.delivered, value: 'delivered' }
+]
+
+const orderActiveFilterCount = computed(() =>
+    [orderStatusFilter.value, orderPaymentStatusFilter.value, orderDeliveryStatusFilter.value].filter((value) => value !== 'all').length
+)
+
+function clearOrderFilters() {
+    orderStatusFilter.value = 'all'
+    orderPaymentStatusFilter.value = 'all'
+    orderDeliveryStatusFilter.value = 'all'
+}
+
+const filteredOrders = computed(() => {
+    const query = orderSearch.value.trim().toLowerCase()
+    return orders.value.filter((order) => {
+        if (query) {
+            const haystack = `${order.customer_name} ${order.customer_contact} ${order.order_no}`.toLowerCase()
+            if (!haystack.includes(query)) return false
+        }
+        if (orderStatusFilter.value !== 'all' && order.status !== orderStatusFilter.value) return false
+        if (orderPaymentStatusFilter.value !== 'all' && order.payment_status !== orderPaymentStatusFilter.value) return false
+        if (orderDeliveryStatusFilter.value !== 'all' && order.delivery_status !== orderDeliveryStatusFilter.value) return false
+        return true
+    })
+})
+
 const summary = ref<ScheduleSummaryItem[]>([])
 const loading = ref(true)
 const scheduleEtag = ref<string | null>(null)
@@ -666,6 +805,17 @@ const summaryColumns: TableColumn<ScheduleSummaryItem>[] = [
 ]
 
 const summaryGrandTotal = computed(() => summary.value.reduce((sum, item) => sum + Number(item.subtotal), 0))
+
+const summaryPerPage = 15
+const summaryPage = ref(1)
+const pagedSummary = computed(() => {
+    const start = (summaryPage.value - 1) * summaryPerPage
+    return summary.value.slice(start, start + summaryPerPage)
+})
+
+watch(summary, () => {
+    summaryPage.value = 1
+})
 
 function getDisplayQuantity(item: ScheduleSummaryItem) {
     return getScheduleProductStatus(item.product_uuid) === 'b1t1' ? item.total_quantity * 2 : item.total_quantity
@@ -758,6 +908,25 @@ const regeneratingChecklist = ref(false)
 const togglingUuid = ref<string | null>(null)
 const loadingChecklistShareLink = ref(false)
 const regeneratingChecklistShareLink = ref(false)
+const checklistHideChecked = ref(false)
+const checklistCategoryFilter = ref('all')
+
+const checklistCategoryOptions = computed(() => {
+    const seen = new Map<string, string>()
+    for (const item of checklistItems.value) {
+        const name = item.category_name ?? 'Uncategorized'
+        seen.set(name, name)
+    }
+    return [{ label: 'All categories', value: 'all' }, ...[...seen.values()].sort().map((name) => ({ label: name, value: name }))]
+})
+
+const filteredChecklistItems = computed(() => {
+    return checklistItems.value.filter((item) => {
+        if (checklistHideChecked.value && item.is_checked) return false
+        if (checklistCategoryFilter.value !== 'all' && (item.category_name ?? 'Uncategorized') !== checklistCategoryFilter.value) return false
+        return true
+    })
+})
 
 const checklistColumns: TableColumn<ChecklistItem>[] = [
     { id: 'is_checked', header: '' },
@@ -1249,6 +1418,8 @@ const orderColumns: TableColumn<Order>[] = [
     { accessorKey: 'order_no', header: 'Order no' },
     { accessorKey: 'total_amount', header: 'Total' },
     { accessorKey: 'status', header: 'Status' },
+    { accessorKey: 'payment_status', header: 'Payment' },
+    { accessorKey: 'delivery_status', header: 'Delivery' },
     { id: 'actions', header: '' }
 ]
 

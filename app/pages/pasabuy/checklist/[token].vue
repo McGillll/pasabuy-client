@@ -26,10 +26,22 @@
                 </div>
 
                 <UCard :ui="{ body: 'p-0 sm:p-0' }">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-default px-4 py-3">
+                        <USelect
+                            v-if="categoryOptions.length > 2"
+                            v-model="categoryFilter"
+                            :items="categoryOptions"
+                            value-key="value"
+                            class="w-44"
+                        />
+                        <div v-else />
+                        <USwitch v-model="hideChecked" label="Hide checked" />
+                    </div>
+
                     <div class="space-y-2 p-2">
                         <ListCard
-                            v-for="item in checklistItems"
-                            :key="item.product_uuid"
+                            v-for="(item, index) in filteredChecklistItems"
+                            :key="item.product_uuid ?? index"
                             :dimmed="item.is_checked"
                         >
                             <template #leading>
@@ -62,6 +74,10 @@
                             <UIcon name="i-lucide-list-checks" class="size-8 text-dimmed" />
                             <p class="text-sm text-muted">Nothing on the checklist yet.</p>
                         </div>
+                        <div v-else-if="filteredChecklistItems.length === 0" class="flex flex-col items-center gap-3 py-10">
+                            <UIcon :name="hideChecked ? 'i-lucide-check-check' : 'i-lucide-list-checks'" class="size-8 text-dimmed" />
+                            <p class="text-sm text-muted">{{ hideChecked ? "Everything's checked off." : 'No items in this category.' }}</p>
+                        </div>
                     </div>
                 </UCard>
             </template>
@@ -85,6 +101,25 @@ const checklistItems = ref<ChecklistItem[]>([])
 const loading = ref(true)
 const errorMessage = ref<string | null>(null)
 const togglingUuid = ref<string | null>(null)
+const hideChecked = ref(false)
+const categoryFilter = ref('all')
+
+const categoryOptions = computed(() => {
+    const seen = new Map<string, string>()
+    for (const item of checklistItems.value) {
+        const name = item.category_name ?? 'Uncategorized'
+        seen.set(name, name)
+    }
+    return [{ label: 'All categories', value: 'all' }, ...[...seen.values()].sort().map((name) => ({ label: name, value: name }))]
+})
+
+const filteredChecklistItems = computed(() => {
+    return checklistItems.value.filter((item) => {
+        if (hideChecked.value && item.is_checked) return false
+        if (categoryFilter.value !== 'all' && (item.category_name ?? 'Uncategorized') !== categoryFilter.value) return false
+        return true
+    })
+})
 
 async function load() {
     try {
