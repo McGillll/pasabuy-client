@@ -5,7 +5,7 @@
             <p class="text-sm text-muted mt-1">A quick look at your catalog, schedules, and orders that need action.</p>
         </div>
 
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <UCard v-for="stat in stats" :key="stat.label">
                 <div class="flex items-center gap-3">
                     <div class="flex items-center justify-center size-10 rounded-lg bg-elevated text-primary">
@@ -125,6 +125,7 @@
 import { productService } from '@/components/api/admin/ProductService'
 import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
 import { orderService } from '@/components/api/admin/OrderService'
+import { customerService } from '@/components/api/admin/CustomerService'
 import APIError from '@/components/api/user/APIError'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 
@@ -165,6 +166,7 @@ const loading = ref(true)
 const actingOn = ref<string | null>(null)
 
 const totalProducts = ref(0)
+const totalMembers = ref(0)
 const { data: schedules, ensure: ensureSchedulesLoaded } = useCachedFetch<Schedule[]>(
     'admin-pasabuy-schedules',
     (etag) => pasabuyScheduleService.fetchSchedulesCacheable({ per_page: 100 }, etag)
@@ -172,6 +174,7 @@ const { data: schedules, ensure: ensureSchedulesLoaded } = useCachedFetch<Schedu
 const pendingOrders = ref<PendingOrder[]>([])
 
 const stats = computed(() => [
+    { label: 'Total members', value: totalMembers.value, icon: 'i-lucide-users' },
     { label: 'Total products', value: totalProducts.value, icon: 'i-lucide-package' },
     { label: 'Open schedules', value: (schedules.value ?? []).filter((s) => s.status === 'open').length, icon: 'i-lucide-calendar-clock' },
     { label: 'Finished schedules', value: (schedules.value ?? []).filter((s) => s.status === 'finished').length, icon: 'i-lucide-check-circle' },
@@ -194,13 +197,15 @@ const orderColumns: TableColumn<PendingOrder>[] = [
 async function loadDashboard(force = false) {
     loading.value = true
     try {
-        const [productsResponse, , ordersResponse] = await Promise.all([
+        const [productsResponse, , ordersResponse, customersResponse] = await Promise.all([
             productService.fetchProducts({ per_page: 1 }),
             ensureSchedulesLoaded(force),
-            orderService.fetchOrders({ status: 'pending', per_page: 100 })
+            orderService.fetchOrders({ status: 'pending', per_page: 100 }),
+            customerService.fetchCustomers({ per_page: 1, is_approved: '1' })
         ])
 
         totalProducts.value = productsResponse.data.total
+        totalMembers.value = customersResponse.data.total
 
         pendingOrders.value = (ordersResponse.data.items as Order[])
             .map((order) => ({
