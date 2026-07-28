@@ -6,7 +6,7 @@
 
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #approved>
-                <div class="overflow-hidden">
+                <div class="overflow-x-hidden">
                 <div class="mt-4 space-y-4" ref="panelEl">
                     <div class="sticky top-0 z-10 -mx-6 bg-default/95 px-6 py-2 backdrop-blur-sm">
                         <SearchInput v-model="search" placeholder="Search customers…" />
@@ -72,7 +72,7 @@
             </template>
 
             <template #pending>
-                <div class="overflow-hidden">
+                <div class="overflow-x-hidden">
                 <div class="mt-4 space-y-4" ref="panelEl">
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
                         <ResponsiveTable
