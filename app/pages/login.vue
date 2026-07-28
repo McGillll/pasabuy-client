@@ -15,7 +15,7 @@
             class="flex flex-col gap-5"
             @submit="onSubmit"
         >
-            <UFormField label="Email" name="email" required>
+            <UFormField label="Email" name="email" :error="emailError" required>
                 <UInput
                     v-model="state.email"
                     type="email"
@@ -27,7 +27,7 @@
                 />
             </UFormField>
 
-            <UFormField label="Password" name="password" required>
+            <UFormField label="Password" name="password" :error="passwordError" required>
                 <PasswordInput v-model="state.password" autocomplete="current-password" />
             </UFormField>
 
@@ -75,5 +75,5 @@ const registerLink = computed(() => {
     return redirect ? `/register?redirect=${encodeURIComponent(redirect)}` : '/register'
 })
 
-const { state, isSubmitting, authError, validate, onSubmit } = useLoginForm()
+const { state, isSubmitting, authError, emailError, passwordError, validate, onSubmit } = useLoginForm()
 </script>
