@@ -11,7 +11,7 @@
 
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #products>
-                <div class="overflow-x-hidden">
+                <div class="overflow-x-clip">
                 <div class="mt-4 space-y-4" ref="panelEl">
                     <div class="sticky top-0 z-10 -mx-6 space-y-2 bg-default/95 px-6 py-2 backdrop-blur-sm">
                         <div class="flex items-center gap-2">
@@ -213,7 +213,7 @@
             </template>
 
             <template #categories>
-                <div class="overflow-x-hidden">
+                <div class="overflow-x-clip">
                 <div class="mt-4 space-y-4" ref="panelEl">
                     <div class="sticky top-0 z-10 -mx-6 bg-default/95 px-6 py-2 backdrop-blur-sm">
                         <SearchInput v-model="categorySearch" placeholder="Search categories…" />

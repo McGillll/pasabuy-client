@@ -41,7 +41,7 @@
             </div>
         </aside>
 
-        <div class="flex-1 min-w-0 flex flex-col">
+        <div class="flex-1 min-w-0 min-h-0 flex flex-col">
             <header class="md:hidden border-b border-default bg-muted shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
                 <div class="flex items-center justify-between px-4 py-3">
                     <div class="flex items-center gap-2">
@@ -66,7 +66,7 @@
                 </div>
             </header>
 
-            <main class="flex-1 overflow-y-auto p-6 pb-24 md:pb-6">
+            <main class="flex-1 min-h-0 overflow-y-auto p-6 pb-24 md:pb-6">
                 <VerifyEmailBanner />
                 <slot />
             </main>
