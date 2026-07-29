@@ -596,9 +596,10 @@
                 </div>
 
                 <div v-if="canEditOrderItems" class="flex items-center gap-2">
-                    <USelect
+                    <USelectMenu
                         v-model="itemToAdd"
                         :items="addableProductOptions"
+                        :loading="loadingAllProducts"
                         value-key="value"
                         placeholder="Add a product…"
                         class="flex-1"
@@ -651,7 +652,9 @@
 
 <script setup lang="ts">
 import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
+import { productService } from '@/components/api/admin/ProductService'
 import APIError from '@/components/api/user/APIError'
+import type { Product } from '@/types/Product'
 import type { Schedule, ScheduleProduct, ScheduleSummaryItem, ChecklistItem, ProductBuyer } from '@/types/Schedule'
 import type { Order } from '@/types/Order'
 import type { OrderItem } from '@/types/OrderItem'
@@ -662,6 +665,7 @@ definePageMeta({ layout: 'admin', middleware: 'auth' })
 const route = useRoute()
 const uuid = route.params.uuid as string
 const toast = useToast()
+const { displayName } = useProductDisplayName()
 
 const schedule = ref<Schedule | null>(null)
 const orders = ref<Order[]>([])
@@ -1313,8 +1317,11 @@ function getScheduleProductStatus(productUuid: string | null) {
 
 function getScheduleProductPrice(productUuid: string | null) {
     const sp = schedule.value?.products.find((p) => p.product?.uuid === productUuid)
-    if (!sp) return 0
-    return sp.actual_price !== null && sp.actual_price !== undefined ? Number(sp.actual_price) : Number(sp.product?.default_price ?? 0)
+    if (sp) {
+        return sp.actual_price !== null && sp.actual_price !== undefined ? Number(sp.actual_price) : Number(sp.product?.default_price ?? 0)
+    }
+    const product = allProducts.value.find((p) => p.uuid === productUuid)
+    return Number(product?.default_price ?? 0)
 }
 
 // Live preview of the order total while editing, since viewingOrder.total_amount only updates after Save.
@@ -1338,11 +1345,27 @@ function getLineSubtotal(item: OrderItem) {
     return getScheduleProductPrice(item.product_uuid) * getLineQuantity(item)
 }
 
+const allProducts = ref<Product[]>([])
+const loadingAllProducts = ref(false)
+
+async function loadAllProducts() {
+    if (allProducts.value.length > 0 || loadingAllProducts.value) return
+    loadingAllProducts.value = true
+    try {
+        const response = await productService.fetchProducts({ per_page: 1000 })
+        allProducts.value = response.data.items
+    } catch (error) {
+        toast.add({ title: 'Failed to load products', description: (error as APIError).message, color: 'error' })
+    } finally {
+        loadingAllProducts.value = false
+    }
+}
+
 const addableProductOptions = computed(() => {
     const usedUuids = new Set(editableItems.value.map((item) => item.product_uuid))
-    return (schedule.value?.products ?? [])
-        .filter((sp) => sp.product && !usedUuids.has(sp.product.uuid))
-        .map((sp) => ({ label: sp.product!.name, value: sp.product!.uuid }))
+    return allProducts.value
+        .filter((product) => product.is_active && !usedUuids.has(product.uuid))
+        .map((product) => ({ label: displayName(product), value: product.uuid }))
 })
 
 function syncViewingOrder() {
@@ -1362,6 +1385,7 @@ function viewOrder(order: Order) {
     itemToAdd.value = undefined
     editingProductUuid.value = null
     isOrderModalOpen.value = true
+    if (canEditOrderItems.value) loadAllProducts()
 }
 
 function removeEditableItem(productUuid: string) {
@@ -1370,10 +1394,10 @@ function removeEditableItem(productUuid: string) {
 
 function addEditableItem() {
     if (!itemToAdd.value) return
-    const sp = schedule.value?.products.find((p) => p.product?.uuid === itemToAdd.value)
-    if (!sp?.product) return
+    const product = allProducts.value.find((p) => p.uuid === itemToAdd.value)
+    if (!product) return
 
-    editableItems.value.push({ product_uuid: sp.product.uuid, product_name: sp.product.name, quantity: 1 })
+    editableItems.value.push({ product_uuid: product.uuid, product_name: displayName(product), quantity: 1 })
     itemToAdd.value = undefined
 }
 

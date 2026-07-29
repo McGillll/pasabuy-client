@@ -81,17 +81,29 @@
                 </UCard>
 
                 <template v-if="!myOrder || editingOrder">
-                    <UTabs
-                        v-if="categoryTabs.length > 2"
-                        v-model="selectedCategory"
-                        :items="categoryTabs"
-                        variant="pill"
-                        size="md"
-                        class="hidden w-full lg:flex"
-                        :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center py-2.5' }"
-                    />
+                    <div v-if="catalogItems.length > 5 || categoryTabs.length > 2 || brandTabs.length > 2" class="sticky top-0 z-10 -mx-4 space-y-2 bg-default/95 px-4 py-2 backdrop-blur-sm">
+                        <div v-if="categoryTabs.length > 2">
+                            <UTabs
+                                v-model="selectedCategory"
+                                :items="categoryTabs"
+                                variant="pill"
+                                size="md"
+                                class="w-full"
+                                :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center py-2.5' }"
+                            />
+                        </div>
 
-                    <div v-if="catalogItems.length > 5" class="sticky top-0 z-10 -mx-4 space-y-2 bg-default/95 px-4 py-2 backdrop-blur-sm">
+                        <div v-if="brandTabs.length > 2">
+                            <UTabs
+                                v-model="selectedBrand"
+                                :items="brandTabs"
+                                variant="pill"
+                                size="md"
+                                class="w-full"
+                                :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center py-2.5' }"
+                            />
+                        </div>
+
                         <div class="flex items-center gap-2">
                             <UInput
                                 v-model="productSearch"
@@ -111,6 +123,9 @@
                                 <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
                             </BaseButton>
                         </div>
+                        <p v-if="productSearch.trim().length > 0" class="pl-1 text-xs text-muted">
+                            {{ filteredProducts.length }} item{{ filteredProducts.length === 1 ? '' : 's' }} match
+                        </p>
                         <div class="hidden sm:grid grid-cols-4 gap-2">
                             <USelect
                                 v-model="statusFilter"
@@ -150,25 +165,25 @@
                             <template #body>
                                 <div class="space-y-4">
                                     <UFormField label="Status">
-                                        <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
+                                        <USelect v-model="draftStatusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
                                     </UFormField>
                                     <UFormField label="Sort by price">
-                                        <USelect v-model="sortByPrice" :items="sortByPriceOptions" value-key="value" class="w-full h-11" />
+                                        <USelect v-model="draftSortByPrice" :items="sortByPriceOptions" value-key="value" class="w-full h-11" />
                                     </UFormField>
                                     <div class="grid grid-cols-2 gap-4">
                                         <UFormField label="Min price">
-                                            <UInput v-model.number="priceMin" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" :ui="{ base: 'h-11' }" />
+                                            <UInput v-model.number="draftPriceMin" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" :ui="{ base: 'h-11' }" />
                                         </UFormField>
                                         <UFormField label="Max price">
-                                            <UInput v-model.number="priceMax" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" :ui="{ base: 'h-11' }" />
+                                            <UInput v-model.number="draftPriceMax" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" :ui="{ base: 'h-11' }" />
                                         </UFormField>
                                     </div>
                                 </div>
                             </template>
                             <template #footer>
                                 <div class="w-full flex items-center gap-2">
-                                    <BaseButton class="flex-1" color="neutral" variant="outline" @click="clearFilters">Clear filters</BaseButton>
-                                    <BaseButton class="flex-1" @click="isFiltersOpen = false">Done</BaseButton>
+                                    <BaseButton class="flex-1" color="neutral" variant="outline" @click="clearDraftFilters">Clear filters</BaseButton>
+                                    <BaseButton class="flex-1" @click="applyDraftFilters">Show {{ draftFilteredCount }} Result{{ draftFilteredCount === 1 ? '' : 's' }}</BaseButton>
                                 </div>
                             </template>
                         </USlideover>
@@ -186,14 +201,14 @@
 
                         <div class="divide-y divide-default">
                             <div
-                                v-for="product in filteredProducts"
+                                v-for="product in visibleProducts"
                                 :key="product.uuid"
                                 class="flex items-center gap-4 p-4"
                             >
                                 <button
                                     type="button"
                                     class="shrink-0 cursor-pointer"
-                                    :aria-label="`View details for ${product.name}`"
+                                    :aria-label="`View details for ${displayName(product)}`"
                                     @click="openPreview(product)"
                                 >
                                     <img
@@ -212,8 +227,7 @@
                                 </button>
 
                                 <div class="min-w-0 flex-1">
-                                    <p class="truncate font-medium text-highlighted">{{ product.name }}</p>
-                                    <p v-if="product.description" class="truncate text-sm text-muted">{{ product.description }}</p>
+                                    <p class="truncate font-medium text-highlighted">{{ displayName(product) }}</p>
 
                                     <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                                         <p class="text-sm text-muted">
@@ -238,7 +252,7 @@
                                                 :variant="quantities[product.uuid] ? 'subtle' : 'ghost'"
                                                 class="w-24"
                                                 :disabled="!schedule.is_open"
-                                                :aria-label="`Quantity for ${product.name}`"
+                                                :aria-label="`Quantity for ${displayName(product)}`"
                                                 @update:model-value="(value: number | null) => setQuantity(product, value)"
                                             />
                                             <p v-if="quantities[product.uuid]" class="text-sm font-semibold text-primary">
@@ -256,6 +270,15 @@
                                 </p>
                             </div>
                         </div>
+
+                        <template v-if="filteredProducts.length > 0" #footer>
+                            <div class="flex flex-col items-center gap-3">
+                                <p class="text-sm text-muted">Showing {{ visibleProducts.length }} of {{ filteredProducts.length }} items</p>
+                                <BaseButton v-if="hasMoreProducts" color="neutral" variant="outline" @click="loadMoreProducts">
+                                    Load more
+                                </BaseButton>
+                            </div>
+                        </template>
                     </UCard>
                 </template>
 
@@ -304,16 +327,6 @@
         </div>
 
         <div v-if="showBottomBar" class="fixed inset-x-0 bottom-0 z-10 border-t border-default bg-muted/95 shadow-[0_-2px_10px_-4px_rgba(0,0,0,0.08)] backdrop-blur-sm lg:hidden">
-            <UTabs
-                v-if="categoryTabs.length > 2"
-                v-model="selectedCategory"
-                :items="categoryTabs"
-                variant="pill"
-                size="md"
-                class="w-full border-b border-default"
-                :ui="{ root: 'px-4 py-3', list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center py-2.5' }"
-            />
-
             <div class="mx-auto max-w-2xl space-y-3 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <template v-if="!isLoggedIn">
                     <div class="flex items-center justify-between gap-3">
@@ -352,12 +365,12 @@
             </div>
         </div>
 
-        <BaseModal v-model:open="isPreviewOpen" :title="previewProduct?.name" view-only>
+        <BaseModal v-model:open="isPreviewOpen" :title="displayName(previewProduct)" view-only>
             <img
                 v-if="previewProduct?.image_url && !imageLoadFailed[previewProduct.uuid]"
                 :src="previewProduct.image_url"
                 class="max-h-[70vh] w-full rounded-lg object-contain"
-                :alt="previewProduct.name"
+                :alt="displayName(previewProduct)"
                 @error="onImageError(previewProduct!.uuid)"
             >
             <div v-else class="flex h-40 items-center justify-center rounded-lg bg-elevated text-dimmed">
@@ -392,7 +405,7 @@
                         </div>
 
                         <div class="min-w-0 flex-1">
-                            <p class="truncate font-medium text-highlighted">{{ product.name }}</p>
+                            <p class="truncate font-medium text-highlighted">{{ displayName(product) }}</p>
                             <p class="text-sm font-medium text-primary">
                                 ₱{{ (Number(resolvedPrice(product)) * quantities[product.uuid]!).toFixed(2) }}
                             </p>
@@ -404,7 +417,7 @@
                                 size="xs"
                                 color="neutral"
                                 variant="soft"
-                                :aria-label="`Decrease quantity for ${product.name}`"
+                                :aria-label="`Decrease quantity for ${displayName(product)}`"
                                 :disabled="!schedule?.is_open"
                                 @click="decrement(product)"
                             />
@@ -414,7 +427,7 @@
                                 size="xs"
                                 color="neutral"
                                 variant="soft"
-                                :aria-label="`Increase quantity for ${product.name}`"
+                                :aria-label="`Increase quantity for ${displayName(product)}`"
                                 :disabled="!schedule?.is_open"
                                 @click="increment(product)"
                             />
@@ -481,6 +494,7 @@ const route = useRoute()
 const uuid = route.params.uuid as string
 const toast = useToast()
 const { user, fetchCurrentUser } = useAuth()
+const { displayName } = useProductDisplayName()
 
 const schedule = ref<Schedule | null>(null)
 const { data: catalog, ensure: ensureCatalogLoaded } = useCachedFetch<Product[]>(
@@ -499,6 +513,7 @@ useSearchDebounce(productSearch, () => {
 
 const quantities = ref<Record<string, number>>({})
 const selectedCategory = ref('all')
+const selectedBrand = ref('all')
 const statusFilter = ref('all')
 const sortByPrice = ref('none')
 const priceMin = ref<number | null>(null)
@@ -506,16 +521,37 @@ const priceMax = ref<number | null>(null)
 const isCartOpen = ref(false)
 const isFiltersOpen = ref(false)
 
+const draftStatusFilter = ref('all')
+const draftSortByPrice = ref('none')
+const draftPriceMin = ref<number | null>(null)
+const draftPriceMax = ref<number | null>(null)
+
 const activeFilterCount = computed(() =>
     [statusFilter.value !== 'all', sortByPrice.value !== 'none', priceMin.value !== null, priceMax.value !== null]
         .filter(Boolean).length
 )
 
-function clearFilters() {
-    statusFilter.value = 'all'
-    sortByPrice.value = 'none'
-    priceMin.value = null
-    priceMax.value = null
+watch(isFiltersOpen, (open) => {
+    if (!open) return
+    draftStatusFilter.value = statusFilter.value
+    draftSortByPrice.value = sortByPrice.value
+    draftPriceMin.value = priceMin.value
+    draftPriceMax.value = priceMax.value
+})
+
+function clearDraftFilters() {
+    draftStatusFilter.value = 'all'
+    draftSortByPrice.value = 'none'
+    draftPriceMin.value = null
+    draftPriceMax.value = null
+}
+
+function applyDraftFilters() {
+    statusFilter.value = draftStatusFilter.value
+    sortByPrice.value = draftSortByPrice.value
+    priceMin.value = draftPriceMin.value
+    priceMax.value = draftPriceMax.value
+    isFiltersOpen.value = false
 }
 
 const statusFilterOptions = [
@@ -583,17 +619,36 @@ const categoryTabs = computed(() => {
     return [{ label: 'All', value: 'all' }, ...sorted]
 })
 
-const filteredProducts = computed(() => {
+const brandTabs = computed(() => {
+    const seen = new Map<string, string>()
+    for (const product of catalogItems.value) {
+        if (product.brand) seen.set(product.brand.uuid, product.brand.name)
+    }
+    const sorted = Array.from(seen, ([value, label]) => ({ label, value }))
+        .sort((a, b) => a.label.localeCompare(b.label))
+    return [{ label: 'All brands', value: 'all' }, ...sorted]
+})
+
+function matchesSearchAndNav(product: Product): boolean {
     const query = debouncedProductSearch.value.trim().toLowerCase()
-    const items = catalogItems.value.filter((product) => {
-        if (query && !product.name.toLowerCase().includes(query)) return false
-        if (selectedCategory.value !== 'all' && product.category?.uuid !== selectedCategory.value) return false
-        if (statusFilter.value !== 'all' && resolvedStatus(product) !== statusFilter.value) return false
-        const price = Number(resolvedPrice(product))
-        if (priceMin.value !== null && price < priceMin.value) return false
-        if (priceMax.value !== null && price > priceMax.value) return false
-        return true
-    })
+    if (query && !displayName(product).toLowerCase().includes(query)) return false
+    if (selectedCategory.value !== 'all' && product.category?.uuid !== selectedCategory.value) return false
+    if (selectedBrand.value !== 'all' && product.brand?.uuid !== selectedBrand.value) return false
+    return true
+}
+
+function matchesAdvancedFilters(product: Product, status: string, min: number | null, max: number | null): boolean {
+    if (status !== 'all' && resolvedStatus(product) !== status) return false
+    const price = Number(resolvedPrice(product))
+    if (min !== null && price < min) return false
+    if (max !== null && price > max) return false
+    return true
+}
+
+const filteredProducts = computed(() => {
+    const items = catalogItems.value.filter((product) =>
+        matchesSearchAndNav(product) && matchesAdvancedFilters(product, statusFilter.value, priceMin.value, priceMax.value)
+    )
 
     if (sortByPrice.value === 'none') return items
 
@@ -601,6 +656,27 @@ const filteredProducts = computed(() => {
         const diff = Number(resolvedPrice(a)) - Number(resolvedPrice(b))
         return sortByPrice.value === 'asc' ? diff : -diff
     })
+})
+
+const draftFilteredCount = computed(() =>
+    catalogItems.value.filter((product) =>
+        matchesSearchAndNav(product) && matchesAdvancedFilters(product, draftStatusFilter.value, draftPriceMin.value, draftPriceMax.value)
+    ).length
+)
+
+const isDesktop = useIsDesktop()
+const initialBatchSize = computed(() => isDesktop.value ? 24 : 18)
+const visibleCount = ref(initialBatchSize.value)
+
+const visibleProducts = computed(() => filteredProducts.value.slice(0, visibleCount.value))
+const hasMoreProducts = computed(() => visibleCount.value < filteredProducts.value.length)
+
+function loadMoreProducts() {
+    visibleCount.value += initialBatchSize.value
+}
+
+watch([selectedCategory, selectedBrand, statusFilter, sortByPrice, priceMin, priceMax, debouncedProductSearch, isDesktop], () => {
+    visibleCount.value = initialBatchSize.value
 })
 
 const cartItems = computed(() => catalogItems.value.filter((product) => (quantities.value[product.uuid] || 0) > 0))
