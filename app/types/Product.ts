@@ -1,4 +1,5 @@
 import type { Category } from '@/types/Category'
+import type { Brand } from '@/types/Brand'
 
 export interface Product {
     uuid: string
@@ -9,6 +10,7 @@ export interface Product {
     default_price: string
     default_product_status: 'none' | 'b1t1' | 'out_of_stock'
     category: Category | null
+    brand: Brand | null
     last_confirmed_price?: string | null
     last_product_status?: 'none' | 'b1t1' | 'out_of_stock' | null
 }

@@ -3,11 +3,13 @@
         <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold text-highlighted">Products</h1>
             <BaseButton v-if="activeTab === 'products'" icon="i-lucide-plus" class="hidden sm:inline-flex" @click="openProductCreateModal">Add Product</BaseButton>
-            <BaseButton v-else icon="i-lucide-plus" class="hidden sm:inline-flex" @click="openCategoryCreateModal">Add Category</BaseButton>
+            <BaseButton v-else-if="activeTab === 'categories'" icon="i-lucide-plus" class="hidden sm:inline-flex" @click="openCategoryCreateModal">Add Category</BaseButton>
+            <BaseButton v-else icon="i-lucide-plus" class="hidden sm:inline-flex" @click="openBrandCreateModal">Add Brand</BaseButton>
         </div>
 
         <FabButton v-if="activeTab === 'products'" aria-label="Add product" @click="openProductCreateModal" />
-        <FabButton v-else aria-label="Add category" @click="openCategoryCreateModal" />
+        <FabButton v-else-if="activeTab === 'categories'" aria-label="Add category" @click="openCategoryCreateModal" />
+        <FabButton v-else aria-label="Add brand" @click="openBrandCreateModal" />
 
         <UTabs v-model="activeTab" :items="tabs" class="w-full">
             <template #products>
@@ -38,6 +40,16 @@
                                 size="md"
                                 class="w-full"
                                 :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center py-2.5' }"
+                            />
+                        </div>
+
+                        <div v-if="brandFilterOptions.length > 2" class="w-full sm:w-56">
+                            <USelect
+                                v-model="productBrandFilter"
+                                :items="brandFilterOptions"
+                                value-key="value"
+                                placeholder="Brand"
+                                class="w-full h-11"
                             />
                         </div>
 
@@ -80,6 +92,9 @@
                     <USlideover v-model:open="isProductFiltersOpen" side="bottom" title="Filters">
                         <template #body>
                             <div class="space-y-4">
+                                <UFormField v-if="brandFilterOptions.length > 2" label="Brand">
+                                    <USelect v-model="productBrandFilter" :items="brandFilterOptions" value-key="value" class="w-full h-11" />
+                                </UFormField>
                                 <UFormField label="Status">
                                     <USelect v-model="productStatusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
                                 </UFormField>
@@ -133,6 +148,19 @@
                             <template #category-cell="{ row }">
                                 <span class="text-sm text-muted">{{ row.original.category?.name ?? '-' }}</span>
                             </template>
+                            <template #brand-cell="{ row }">
+                                <div v-if="row.original.brand" class="flex items-center gap-2">
+                                    <img
+                                        v-if="row.original.brand.logo_url"
+                                        :src="row.original.brand.logo_url"
+                                        loading="lazy"
+                                        class="size-5 rounded object-contain"
+                                        alt=""
+                                    >
+                                    <span class="text-sm text-muted">{{ row.original.brand.name }}</span>
+                                </div>
+                                <span v-else class="text-sm text-muted">-</span>
+                            </template>
                             <template #default_price-cell="{ row }">
                                 <span class="font-medium text-highlighted">₱{{ row.original.default_price }}</span>
                             </template>
@@ -182,6 +210,11 @@
                                     </template>
                                     <template #meta>
                                         <span class="text-muted">{{ product.category?.name ?? '-' }}</span>
+                                        <span v-if="product.brand" class="inline-flex items-center gap-1 text-muted">
+                                            ·
+                                            <img v-if="product.brand.logo_url" :src="product.brand.logo_url" class="size-4 rounded object-contain" alt="">
+                                            {{ product.brand.name }}
+                                        </span>
                                     </template>
                                     <template #status>
                                         <div class="flex w-full items-center justify-between">
@@ -292,6 +325,106 @@
                 </div>
                 </div>
             </template>
+
+            <template #brands>
+                <div class="overflow-x-clip">
+                <div class="mt-4 space-y-4" ref="panelEl">
+                    <div class="sticky top-0 z-10 -mx-6 bg-default/95 px-6 py-2 backdrop-blur-sm">
+                        <SearchInput v-model="brandSearch" placeholder="Search brands…" />
+                    </div>
+
+                    <UCard :ui="{ body: 'p-0 sm:p-0' }">
+                        <ResponsiveTable
+                            :data="brands"
+                            :columns="brandColumns"
+                            :loading="brandsLoading"
+                            :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
+                        >
+                            <template #logo-cell="{ row }">
+                                <img
+                                    v-if="row.original.logo_url && !brandLogoLoadFailed[row.original.uuid]"
+                                    :src="row.original.logo_url"
+                                    loading="lazy"
+                                    class="size-10 rounded-lg object-contain ring-1 ring-default bg-elevated"
+                                    alt=""
+                                    @error="onBrandLogoError(row.original.uuid)"
+                                >
+                                <div v-else class="flex items-center justify-center size-10 rounded-lg bg-elevated text-dimmed">
+                                    <UIcon name="i-lucide-tag" class="size-4" />
+                                </div>
+                            </template>
+                            <template #brand-cell="{ row }">
+                                <p class="font-medium text-highlighted">{{ row.original.name }}</p>
+                            </template>
+                            <template #is_active-cell="{ row }">
+                                <StatusBadge
+                                    :color="row.original.is_active ? 'success' : 'neutral'"
+                                    :label="row.original.is_active ? 'Active' : 'Inactive'"
+                                />
+                            </template>
+                            <template #actions-cell="{ row }">
+                                <div class="flex justify-end gap-1">
+                                    <BaseButton
+                                        icon="i-lucide-pencil"
+                                        size="sm"
+                                        color="neutral"
+                                        variant="ghost"
+                                        aria-label="Edit brand"
+                                        @click="openBrandEditModal(row.original)"
+                                    />
+                                    <BaseButton
+                                        icon="i-lucide-trash-2"
+                                        size="sm"
+                                        color="error"
+                                        variant="ghost"
+                                        aria-label="Delete brand"
+                                        @click="onDeleteBrand(row.original)"
+                                    />
+                                </div>
+                            </template>
+                            <template #list-item="{ item: brand }">
+                                <ListCard clickable :dimmed="!brand.is_active" :actions="brandActions(brand)" @click="openBrandEditModal(brand)">
+                                    <template #leading>
+                                        <img
+                                            v-if="brand.logo_url && !brandLogoLoadFailed[brand.uuid]"
+                                            :src="brand.logo_url"
+                                            loading="lazy"
+                                            class="size-10 rounded-lg object-contain ring-1 ring-default bg-elevated"
+                                            alt=""
+                                            @error="onBrandLogoError(brand.uuid)"
+                                        >
+                                        <div v-else class="flex items-center justify-center size-10 rounded-lg bg-elevated text-dimmed">
+                                            <UIcon name="i-lucide-tag" class="size-4" />
+                                        </div>
+                                    </template>
+                                    <template #title>
+                                        <p class="font-medium text-highlighted">{{ brand.name }}</p>
+                                    </template>
+                                    <template #status>
+                                        <StatusBadge
+                                            :color="brand.is_active ? 'success' : 'neutral'"
+                                            :label="brand.is_active ? 'Active' : 'Inactive'"
+                                        />
+                                    </template>
+                                </ListCard>
+                            </template>
+                            <template #empty>
+                                <TableEmptyState
+                                    icon="i-lucide-tag"
+                                    message="No brands found."
+                                    action-label="Add your first brand"
+                                    @action="openBrandCreateModal"
+                                />
+                            </template>
+                        </ResponsiveTable>
+                    </UCard>
+
+                    <div v-if="brandsTotal > perPage" class="flex justify-center">
+                        <UPagination v-model:page="brandsPage" :total="brandsTotal" :items-per-page="perPage" />
+                    </div>
+                </div>
+                </div>
+            </template>
         </UTabs>
 
         <BaseModal
@@ -368,6 +501,14 @@
                                 class="w-full"
                             />
                         </UFormField>
+                        <UFormField label="Brand">
+                            <USelect
+                                v-model="productForm.brand_id"
+                                :items="brandOptions"
+                                value-key="value"
+                                class="w-full"
+                            />
+                        </UFormField>
                         <UFormField label="Default product status">
                             <USelect
                                 v-model="productForm.default_product_status"
@@ -403,6 +544,11 @@
                         :label="previewProduct?.is_active ? 'Active' : 'Inactive'"
                     />
                     <span class="text-sm text-muted">{{ previewProduct?.category?.name ?? '-' }}</span>
+                    <span v-if="previewProduct?.brand" class="inline-flex items-center gap-1 text-sm text-muted">
+                        ·
+                        <img v-if="previewProduct.brand.logo_url" :src="previewProduct.brand.logo_url" class="size-4 rounded object-contain" alt="">
+                        {{ previewProduct.brand.name }}
+                    </span>
                 </div>
 
                 <p class="text-xl font-semibold text-highlighted">₱{{ previewProduct?.default_price }}</p>
@@ -432,6 +578,44 @@
             </form>
         </BaseModal>
 
+        <BaseModal
+            v-model:open="isBrandModalOpen"
+            :title="editingBrand ? 'Edit Brand' : 'Add Brand'"
+            show-default-footer
+            form-id="brand-form"
+            :confirm-label="editingBrand ? 'Save' : 'Create'"
+            :loading="savingBrand"
+        >
+            <form id="brand-form" class="space-y-4" @submit.prevent="onSaveBrand">
+                <div class="flex items-center gap-3">
+                    <img
+                        v-if="brandForm.logo_url && !brandLogoPreviewFailed"
+                        :src="brandForm.logo_url"
+                        class="size-14 shrink-0 rounded-lg object-contain ring-1 ring-default bg-elevated"
+                        alt=""
+                        @error="brandLogoPreviewFailed = true"
+                    >
+                    <div v-else class="flex items-center justify-center size-14 shrink-0 rounded-lg bg-elevated text-dimmed">
+                        <UIcon name="i-lucide-tag" class="size-5" />
+                    </div>
+                    <UFormField label="Logo URL" class="flex-1" hint="Optional">
+                        <UInput
+                            v-model="brandForm.logo_url"
+                            placeholder="https://example.com/logo.png"
+                            class="w-full"
+                            @change="brandLogoPreviewFailed = false"
+                        />
+                    </UFormField>
+                </div>
+                <UFormField label="Name" required>
+                    <UInput v-model="brandForm.name" placeholder="Nike" class="w-full" />
+                </UFormField>
+                <UFormField label="Active">
+                    <UCheckbox v-model="brandForm.is_active" label="Brand is active" />
+                </UFormField>
+            </form>
+        </BaseModal>
+
         <ConfirmDialogModal
             v-model:open="confirmDialog.open"
             :title="confirmDialog.title"
@@ -447,9 +631,11 @@
 <script setup lang="ts">
 import { productService } from '@/components/api/admin/ProductService'
 import { productCategoryService } from '@/components/api/admin/ProductCategoryService'
+import { brandService } from '@/components/api/admin/BrandService'
 import APIError from '@/components/api/user/APIError'
 import type { Product } from '@/types/Product'
 import type { Category } from '@/types/Category'
+import type { Brand } from '@/types/Brand'
 import type { DropdownMenuItem, TableColumn, TabsItem } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
@@ -459,16 +645,17 @@ useHead({ title: 'Products' })
 const toast = useToast()
 const perPage = 15
 
-const activeTab = ref<'products' | 'categories'>('products')
+const activeTab = ref<'products' | 'categories' | 'brands'>('products')
 
 const tabs = computed<TabsItem[]>(() => [
     { label: 'Products', icon: 'i-lucide-package', value: 'products', slot: 'products' },
-    { label: 'Categories', icon: 'i-lucide-tags', value: 'categories', slot: 'categories' }
+    { label: 'Categories', icon: 'i-lucide-tags', value: 'categories', slot: 'categories' },
+    { label: 'Brands', icon: 'i-lucide-tag', value: 'brands', slot: 'brands' }
 ])
 
 const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd: onTabsTouchEnd, panelEl } = useSwipeTabs(
     activeTab,
-    computed(() => tabs.value.map((tab) => tab.value as 'products' | 'categories'))
+    computed(() => tabs.value.map((tab) => tab.value as 'products' | 'categories' | 'brands'))
 )
 
 // ---- Products ----
@@ -478,11 +665,16 @@ const { data: allCategories, ensure: ensureCategoriesLoaded } = useCachedFetch<C
     'admin-product-categories',
     (etag) => productCategoryService.fetchCategoriesCacheable({ per_page: 200 }, etag)
 )
+const { data: allBrands, ensure: ensureBrandsLoaded } = useCachedFetch<Brand[]>(
+    'admin-brands',
+    (etag) => brandService.fetchBrandsCacheable({ per_page: 200 }, etag)
+)
 const productsLoading = ref(false)
 const productsPage = ref(1)
 const productsTotal = ref(0)
 const productSearch = ref('')
 const productCategoryFilter = ref('all')
+const productBrandFilter = ref('all')
 const productStatusFilter = ref('all')
 const productSortByPrice = ref('none')
 const productPriceMin = ref<number | null>(null)
@@ -490,11 +682,12 @@ const productPriceMax = ref<number | null>(null)
 const isProductFiltersOpen = ref(false)
 
 const productActiveFilterCount = computed(() =>
-    [productStatusFilter.value !== 'all', productSortByPrice.value !== 'none', productPriceMin.value !== null, productPriceMax.value !== null]
+    [productBrandFilter.value !== 'all', productStatusFilter.value !== 'all', productSortByPrice.value !== 'none', productPriceMin.value !== null, productPriceMax.value !== null]
         .filter(Boolean).length
 )
 
 function clearProductFilters() {
+    productBrandFilter.value = 'all'
     productStatusFilter.value = 'all'
     productSortByPrice.value = 'none'
     productPriceMin.value = null
@@ -538,6 +731,16 @@ const categoryFilterTabs = computed(() => [
     ...(allCategories.value ?? []).map((category) => ({ label: category.name, value: category.uuid }))
 ])
 
+const brandOptions = computed(() => [
+    { label: 'No brand', value: null },
+    ...(allBrands.value ?? []).map((brand) => ({ label: brand.name, value: brand.uuid }))
+])
+
+const brandFilterOptions = computed(() => [
+    { label: 'All brands', value: 'all' },
+    ...(allBrands.value ?? []).map((brand) => ({ label: brand.name, value: brand.uuid }))
+])
+
 const productStatusOptions = [
     { label: 'None', value: 'none' },
     { label: 'B1T1', value: 'b1t1' },
@@ -548,6 +751,7 @@ const productColumns: TableColumn<Product>[] = [
     { id: 'image', header: '' },
     { id: 'product', header: 'Product' },
     { id: 'category', header: 'Category' },
+    { id: 'brand', header: 'Brand' },
     { id: 'default_price', header: 'Price' },
     { accessorKey: 'is_active', header: 'Status' },
     { id: 'actions', header: '' }
@@ -563,6 +767,7 @@ async function loadProducts() {
             per_page: perPage,
             search: productSearch.value || undefined,
             category_uuid: productCategoryFilter.value !== 'all' ? productCategoryFilter.value : undefined,
+            brand_uuid: productBrandFilter.value !== 'all' ? productBrandFilter.value : undefined,
             status: productStatusFilter.value !== 'all' ? productStatusFilter.value : undefined,
             sort_by_price: productSortByPrice.value !== 'none' ? productSortByPrice.value : undefined,
             price_min: productPriceMin.value ?? undefined,
@@ -583,7 +788,7 @@ async function loadProducts() {
 
 watch(productsPage, loadProducts)
 
-watch([productCategoryFilter, productStatusFilter, productSortByPrice], () => {
+watch([productCategoryFilter, productBrandFilter, productStatusFilter, productSortByPrice], () => {
     productsPage.value = 1
     loadProducts()
 })
@@ -611,6 +816,7 @@ const productForm = reactive({
     default_price: null as number | null,
     default_product_status: 'none' as 'none' | 'b1t1' | 'out_of_stock',
     category_id: null as string | null,
+    brand_id: null as string | null,
     image: null as File | null
 })
 const savingProduct = ref(false)
@@ -639,6 +845,7 @@ function openProductCreateModal() {
     productForm.default_price = null
     productForm.default_product_status = 'none'
     productForm.category_id = null
+    productForm.brand_id = null
     productForm.image = null
     isProductModalOpen.value = true
 }
@@ -651,6 +858,7 @@ function openProductEditModal(product: Product) {
     productForm.default_price = Number(product.default_price)
     productForm.default_product_status = product.default_product_status
     productForm.category_id = product.category?.uuid ?? null
+    productForm.brand_id = product.brand?.uuid ?? null
     productForm.image = null
     isProductModalOpen.value = true
 }
@@ -665,6 +873,7 @@ async function onSaveProduct() {
             default_price: productForm.default_price ?? 0,
             default_product_status: productForm.default_product_status,
             category_uuid: productForm.category_id,
+            brand_uuid: productForm.brand_id,
             image: productForm.image
         }
         if (editingProduct.value) {
@@ -836,13 +1045,146 @@ function categoryActions(category: Category): DropdownMenuItem[] {
     return actions
 }
 
+// ---- Brands ----
+
+const brandsLoading = ref(false)
+const brands = ref<Brand[]>([])
+const brandsPage = ref(1)
+const brandsTotal = ref(0)
+const brandSearch = ref('')
+
+const brandColumns: TableColumn<Brand>[] = [
+    { id: 'logo', header: '' },
+    { id: 'brand', header: 'Brand' },
+    { accessorKey: 'is_active', header: 'Status' },
+    { id: 'actions', header: '' }
+]
+
+const brandLogoLoadFailed = ref<Record<string, boolean>>({})
+
+function onBrandLogoError(brandUuid: string) {
+    brandLogoLoadFailed.value[brandUuid] = true
+}
+
+async function loadBrands() {
+    brandsLoading.value = true
+    try {
+        const response = await brandService.fetchBrands({ page: brandsPage.value, per_page: perPage, search: brandSearch.value || undefined })
+        brands.value = response.data.items
+        brandsTotal.value = response.data.total
+        brandActionsCache.clear()
+        brandLogoLoadFailed.value = {}
+    } catch (error) {
+        toast.add({ title: 'Failed to load brands', description: (error as APIError).message, color: 'error' })
+    } finally {
+        brandsLoading.value = false
+    }
+}
+
+watch(brandsPage, loadBrands)
+
+useSearchDebounce(brandSearch, () => {
+    brandsPage.value = 1
+    loadBrands()
+})
+
+const isBrandModalOpen = ref(false)
+const editingBrand = ref<Brand | null>(null)
+const brandForm = reactive({
+    name: '',
+    logo_url: '',
+    is_active: true
+})
+const brandLogoPreviewFailed = ref(false)
+const savingBrand = ref(false)
+
+function openBrandCreateModal() {
+    editingBrand.value = null
+    brandForm.name = ''
+    brandForm.logo_url = ''
+    brandForm.is_active = true
+    brandLogoPreviewFailed.value = false
+    isBrandModalOpen.value = true
+}
+
+function openBrandEditModal(brand: Brand) {
+    editingBrand.value = brand
+    brandForm.name = brand.name
+    brandForm.logo_url = brand.logo_url ?? ''
+    brandForm.is_active = brand.is_active
+    brandLogoPreviewFailed.value = false
+    isBrandModalOpen.value = true
+}
+
+async function onSaveBrand() {
+    savingBrand.value = true
+    try {
+        const payload = {
+            name: brandForm.name,
+            logo_url: brandForm.logo_url || null,
+            is_active: brandForm.is_active
+        }
+        if (editingBrand.value) {
+            const response = await brandService.updateBrand(editingBrand.value.uuid, payload)
+            const brandList = allBrands.value ?? []
+            const index = brandList.findIndex((brand) => brand.uuid === response.data.uuid)
+            if (index !== -1) brandList[index] = response.data
+            allBrands.value = brandList
+            toast.add({ title: 'Brand updated', color: 'success' })
+        } else {
+            const response = await brandService.createBrand(payload)
+            allBrands.value = [...(allBrands.value ?? []), response.data]
+            toast.add({ title: 'Brand created', color: 'success' })
+        }
+        isBrandModalOpen.value = false
+        await loadBrands()
+    } catch (error) {
+        toast.add({ title: 'Save failed', description: (error as APIError).message, color: 'error' })
+    } finally {
+        savingBrand.value = false
+    }
+}
+
+function onDeleteBrand(brand: Brand) {
+    askConfirm({
+        title: 'Delete brand?',
+        description: `Delete "${brand.name}"?`,
+        confirmLabel: 'Delete',
+        color: 'error',
+        action: async () => {
+            await brandService.deleteBrand(brand.uuid)
+            allBrands.value = (allBrands.value ?? []).filter((item) => item.uuid !== brand.uuid)
+            toast.add({ title: 'Brand deleted', color: 'success' })
+            await loadBrands()
+        }
+    })
+}
+
+const brandActionsCache = new Map<string, DropdownMenuItem[]>()
+
+function brandActions(brand: Brand): DropdownMenuItem[] {
+    const cached = brandActionsCache.get(brand.uuid)
+    if (cached) return cached
+
+    const actions: DropdownMenuItem[] = [
+        { label: 'Edit', icon: 'i-lucide-pencil', onSelect: () => openBrandEditModal(brand) },
+        { label: 'Delete', icon: 'i-lucide-trash-2', color: 'error', onSelect: () => onDeleteBrand(brand) }
+    ]
+    brandActionsCache.set(brand.uuid, actions)
+    return actions
+}
+
 onMounted(() => {
     ensureCategoriesLoaded().catch((error) => {
         toast.add({ title: 'Failed to load categories', description: (error as APIError).message, color: 'error' })
     })
+    ensureBrandsLoaded().catch((error) => {
+        toast.add({ title: 'Failed to load brands', description: (error as APIError).message, color: 'error' })
+    })
     loadProducts()
     loadCategories()
+    loadBrands()
 })
 
-onPullToRefresh(() => Promise.all([ensureCategoriesLoaded(true), loadProducts(), loadCategories()]))
+onPullToRefresh(() => Promise.all([ensureCategoriesLoaded(true), ensureBrandsLoaded(true), loadProducts(), loadCategories(), loadBrands()]))
 </script>
