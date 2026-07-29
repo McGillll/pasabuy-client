@@ -208,7 +208,7 @@
                                 <button
                                     type="button"
                                     class="shrink-0 cursor-pointer"
-                                    :aria-label="`View details for ${product.name}`"
+                                    :aria-label="`View details for ${displayName(product)}`"
                                     @click="openPreview(product)"
                                 >
                                     <img
@@ -227,7 +227,7 @@
                                 </button>
 
                                 <div class="min-w-0 flex-1">
-                                    <p class="truncate font-medium text-highlighted">{{ product.name }}</p>
+                                    <p class="truncate font-medium text-highlighted">{{ displayName(product) }}</p>
 
                                     <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                                         <p class="text-sm text-muted">
@@ -252,7 +252,7 @@
                                                 :variant="quantities[product.uuid] ? 'subtle' : 'ghost'"
                                                 class="w-24"
                                                 :disabled="!schedule.is_open"
-                                                :aria-label="`Quantity for ${product.name}`"
+                                                :aria-label="`Quantity for ${displayName(product)}`"
                                                 @update:model-value="(value: number | null) => setQuantity(product, value)"
                                             />
                                             <p v-if="quantities[product.uuid]" class="text-sm font-semibold text-primary">
@@ -365,12 +365,12 @@
             </div>
         </div>
 
-        <BaseModal v-model:open="isPreviewOpen" :title="previewProduct?.name" view-only>
+        <BaseModal v-model:open="isPreviewOpen" :title="displayName(previewProduct)" view-only>
             <img
                 v-if="previewProduct?.image_url && !imageLoadFailed[previewProduct.uuid]"
                 :src="previewProduct.image_url"
                 class="max-h-[70vh] w-full rounded-lg object-contain"
-                :alt="previewProduct.name"
+                :alt="displayName(previewProduct)"
                 @error="onImageError(previewProduct!.uuid)"
             >
             <div v-else class="flex h-40 items-center justify-center rounded-lg bg-elevated text-dimmed">
@@ -405,7 +405,7 @@
                         </div>
 
                         <div class="min-w-0 flex-1">
-                            <p class="truncate font-medium text-highlighted">{{ product.name }}</p>
+                            <p class="truncate font-medium text-highlighted">{{ displayName(product) }}</p>
                             <p class="text-sm font-medium text-primary">
                                 ₱{{ (Number(resolvedPrice(product)) * quantities[product.uuid]!).toFixed(2) }}
                             </p>
@@ -417,7 +417,7 @@
                                 size="xs"
                                 color="neutral"
                                 variant="soft"
-                                :aria-label="`Decrease quantity for ${product.name}`"
+                                :aria-label="`Decrease quantity for ${displayName(product)}`"
                                 :disabled="!schedule?.is_open"
                                 @click="decrement(product)"
                             />
@@ -427,7 +427,7 @@
                                 size="xs"
                                 color="neutral"
                                 variant="soft"
-                                :aria-label="`Increase quantity for ${product.name}`"
+                                :aria-label="`Increase quantity for ${displayName(product)}`"
                                 :disabled="!schedule?.is_open"
                                 @click="increment(product)"
                             />
@@ -494,6 +494,7 @@ const route = useRoute()
 const uuid = route.params.uuid as string
 const toast = useToast()
 const { user, fetchCurrentUser } = useAuth()
+const { displayName } = useProductDisplayName()
 
 const schedule = ref<Schedule | null>(null)
 const { data: catalog, ensure: ensureCatalogLoaded } = useCachedFetch<Product[]>(
@@ -630,7 +631,7 @@ const brandTabs = computed(() => {
 
 function matchesSearchAndNav(product: Product): boolean {
     const query = debouncedProductSearch.value.trim().toLowerCase()
-    if (query && !product.name.toLowerCase().includes(query)) return false
+    if (query && !displayName(product).toLowerCase().includes(query)) return false
     if (selectedCategory.value !== 'all' && product.category?.uuid !== selectedCategory.value) return false
     if (selectedBrand.value !== 'all' && product.brand?.uuid !== selectedBrand.value) return false
     return true

@@ -665,6 +665,7 @@ definePageMeta({ layout: 'admin', middleware: 'auth' })
 const route = useRoute()
 const uuid = route.params.uuid as string
 const toast = useToast()
+const { displayName } = useProductDisplayName()
 
 const schedule = ref<Schedule | null>(null)
 const orders = ref<Order[]>([])
@@ -1364,7 +1365,7 @@ const addableProductOptions = computed(() => {
     const usedUuids = new Set(editableItems.value.map((item) => item.product_uuid))
     return allProducts.value
         .filter((product) => product.is_active && !usedUuids.has(product.uuid))
-        .map((product) => ({ label: product.name, value: product.uuid }))
+        .map((product) => ({ label: displayName(product), value: product.uuid }))
 })
 
 function syncViewingOrder() {
@@ -1396,7 +1397,7 @@ function addEditableItem() {
     const product = allProducts.value.find((p) => p.uuid === itemToAdd.value)
     if (!product) return
 
-    editableItems.value.push({ product_uuid: product.uuid, product_name: product.name, quantity: 1 })
+    editableItems.value.push({ product_uuid: product.uuid, product_name: displayName(product), quantity: 1 })
     itemToAdd.value = undefined
 }
 
