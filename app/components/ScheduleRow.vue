@@ -6,7 +6,7 @@
     >
         <div class="flex items-center justify-between gap-3">
             <span class="text-sm truncate">{{ title }}</span>
-            <BaseStatusBadge :color="statusColor" :label="statusLabel" dot />
+            <BaseStatusBadge :color="statusColor" :label="statusLabel"/>
         </div>
 
         <div v-if="fillPct !== undefined && fillLabel" class="flex items-center gap-2">

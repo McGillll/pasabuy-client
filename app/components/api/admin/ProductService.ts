@@ -38,6 +38,10 @@ class ProductService extends BaseAPIService {
         return await this.request(`/admin/products/${uuid}`, 'DELETE')
     }
 
+    async fetchTopSelling(params: object = {}): Promise<any> {
+        return await this.request('/admin/products/top-selling', 'GET', params)
+    }
+
     private buildFormData(payload: ProductPayload): FormData {
         const formData = new FormData()
         formData.append('name', payload.name)

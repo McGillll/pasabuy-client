@@ -14,3 +14,9 @@ export interface Product {
     last_confirmed_price?: string | null
     last_product_status?: 'none' | 'b1t1' | 'out_of_stock' | null
 }
+
+export interface TopProduct {
+    uuid: string
+    name: string
+    total_quantity: number
+}

@@ -4,15 +4,8 @@ Frontend features shipped ahead of an available backend endpoint. Each entry: wh
 
 ## Schedule closing-soon indicator
 - **Flagged:** 2026-07-28
-- **Gap:** Dashboard's Recent Schedules list has a `closingSoon`/`note` prop ready to show cutoff-proximity warnings, but the `Schedule` fetch here (`pasabuyScheduleService.fetchSchedulesCacheable`) doesn't return a cutoff date field usable for this.
-- **Needed:** The schedule list endpoint needs to expose cutoff-proximity, or the frontend needs to fetch/compute it from `pasabuy_schedule_date`.
+- ✅ **RESOLVED 2026-07-30:** No backend gap. `PasabuyScheduleResource` already returns `pasabuy_schedule_date` and `is_open` on the list endpoint. The gap was frontend-only: `fetchSchedulesCacheable` was typed as `any[]` and `admin/index.vue` had a narrower local `Schedule` interface that dropped the date field. Fixed by typing the service response as `ScheduleBrowseItem` (`app/types/Schedule.ts`, which already had the field) and computing `closingSoon`/`note` client-side in `admin/index.vue` from `pasabuy_schedule_date` (flags "Closes tomorrow"/"Closes today" when the cutoff is within 1 day and the schedule is still open).
 
-## Order pipeline
-- **Flagged:** 2026-07-28
-- **Gap:** Dashboard's Order Pipeline card needs order counts broken down by status (pending/confirmed/cancelled) in one call; currently this page only fetches pending orders, no cross-status aggregate endpoint exists.
-- **Needed:** Either a dashboard-summary endpoint or an aggregate endpoint on the orders resource.
+## Nice to haves
 
-## Top products ranking
-- **Flagged:** 2026-07-28
-- **Gap:** No per-product order-quantity aggregation endpoint exists yet; `RankedList` component is ready.
-- **Needed:** A backend endpoint returning top products by ordered quantity for the seller's schedules.
+- **Order pipeline aggregate:** Resolved 2026-07-29 via 2 extra `GET /api/admin/orders?status=X&per_page=1` calls (reusing the pending-orders total already fetched for the attention queue) to read `.data.total` per status. If seller order volume grows large, a dedicated single-call aggregate endpoint (counts per status in one query) would be a worthwhile perf optimization later.

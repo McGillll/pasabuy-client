@@ -7,3 +7,10 @@ export interface User {
     is_approved: boolean
     is_verified: boolean
 }
+
+export interface TopBuyer {
+    uuid: string
+    name: string
+    total_spend: string
+    order_count: number
+}

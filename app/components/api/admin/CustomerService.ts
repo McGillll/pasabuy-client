@@ -22,6 +22,10 @@ class CustomerService extends BaseAPIService {
     async rejectCustomer(uuid: string): Promise<any> {
         return await this.request(`/admin/customers/${uuid}/reject`, 'PATCH')
     }
+
+    async fetchTopBuyers(params: object = {}): Promise<any> {
+        return await this.request('/admin/customers/top-buyers', 'GET', params)
+    }
 }
 
 export const customerService = new CustomerService()

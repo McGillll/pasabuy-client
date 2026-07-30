@@ -1,16 +1,15 @@
 <template>
-    <div class="flex items-center justify-between">
+    <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
             <h1 class="text-xl font-semibold text-highlighted">{{ title }}</h1>
             <p v-if="subtitle" class="text-sm text-muted mt-1">{{ subtitle }}</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
             <BaseButton
                 v-if="secondaryLabel"
                 color="neutral"
                 variant="outline"
                 :icon="secondaryIcon"
-                class="hidden sm:inline-flex"
                 @click="emit('secondary-click')"
             >
                 {{ secondaryLabel }}
@@ -18,14 +17,12 @@
             <BaseButton
                 v-if="primaryLabel"
                 :icon="primaryIcon"
-                class="hidden sm:inline-flex"
                 @click="emit('primary-click')"
             >
                 {{ primaryLabel }}
             </BaseButton>
         </div>
     </div>
-    <FabButton v-if="primaryLabel" :aria-label="primaryLabel" @click="emit('primary-click')" />
 </template>
 
 <script setup lang="ts">

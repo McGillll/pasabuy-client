@@ -1,4 +1,5 @@
 import BaseAPIService from '@/components/api/BaseAPIService'
+import type { ScheduleBrowseItem } from '@/types/Schedule'
 
 export interface SchedulePayload {
     title: string
@@ -22,7 +23,7 @@ class PasabuyScheduleService extends BaseAPIService {
         return await this.request('/admin/pasabuy-schedules', 'GET', params)
     }
 
-    async fetchSchedulesCacheable(params: object, etag: string | null): Promise<{ data: any[]; etag: string | null } | 'not-modified'> {
+    async fetchSchedulesCacheable(params: object, etag: string | null): Promise<{ data: ScheduleBrowseItem[]; etag: string | null } | 'not-modified'> {
         const result = await this.requestCacheable<any>('/admin/pasabuy-schedules', params, etag)
         if (result === 'not-modified') return result
         return { data: result.data.items, etag: result.etag }

@@ -13,10 +13,10 @@
 
         <KpiStrip :items="kpiItems" />
 
+        <p class="text-xs font-bold uppercase tracking-wide text-dimmed">Today</p>
+
         <div class="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-6">
             <div class="space-y-6">
-                <p class="text-xs font-bold uppercase tracking-wide text-dimmed">Today</p>
-
                 <AttentionQueue
                     title="Needs attention"
                     hint="Orders waiting on confirm or cancel"
@@ -38,10 +38,16 @@
                 <PipelineBar title="Order pipeline" :stages="pipelineStages" />
 
                 <RankedList
-                    title="Top products"
-                    :items="[]"
-                    empty-message="Product rankings aren't available yet"
-                    empty-description="We'll show your best-selling products here once order data is available."
+                    :title="rankingTabs.find((tab) => tab.value === rankingTab)?.label ?? 'Rankings'"
+                    :tabs="rankingTabs"
+                    :active-tab="rankingTab"
+                    @update:active-tab="(value) => (rankingTab = value as 'products' | 'buyers')"
+                    :month="rankingMonth"
+                    :year="rankingYear"
+                    :items="rankingTab === 'products' ? topProductItems : topBuyerItems"
+                    :loading="loadingRankings"
+                    :empty-message="rankingTab === 'products' ? 'Product rankings aren\'t available yet' : 'No buyer rankings yet'"
+                    :empty-description="rankingTab === 'products' ? 'We\'ll show your best-selling products here once order data is available.' : 'We\'ll show your best customers here once order data is available.'"
                 />
             </div>
         </div>
@@ -66,18 +72,13 @@ import { customerService } from '@/components/api/admin/CustomerService'
 import APIError from '@/components/api/user/APIError'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import type { PipelineStage } from '@/components/PipelineBar.vue'
+import type { TopProduct } from '@/types/Product'
+import type { TopBuyer } from '@/types/User'
+import type { ScheduleBrowseItem } from '@/types/Schedule'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
 useHead({ title: 'Dashboard' })
-
-interface Schedule {
-    uuid: string
-    title: string
-    status: 'open' | 'closed' | 'finished'
-    is_open: boolean
-    created_at: string
-}
 
 interface Order {
     uuid: string
@@ -89,14 +90,14 @@ interface Order {
     pasabuy_schedule: {
         uuid: string
         title: string
-        status: Schedule['status']
+        status: ScheduleBrowseItem['status']
     }
 }
 
 interface PendingOrder extends Order {
     scheduleUuid: string
     scheduleTitle: string
-    scheduleStatus: Schedule['status']
+    scheduleStatus: ScheduleBrowseItem['status']
 }
 
 const toast = useToast()
@@ -105,11 +106,21 @@ const actingOn = ref<string | null>(null)
 
 const totalProducts = ref(0)
 const totalMembers = ref(0)
-const { data: schedules, ensure: ensureSchedulesLoaded } = useCachedFetch<Schedule[]>(
+const { data: schedules, ensure: ensureSchedulesLoaded } = useCachedFetch<ScheduleBrowseItem[]>(
     'admin-pasabuy-schedules',
     (etag) => pasabuyScheduleService.fetchSchedulesCacheable({ per_page: 100 }, etag)
 )
 const pendingOrders = ref<PendingOrder[]>([])
+const loadingRankings = ref(true)
+const topProducts = ref<TopProduct[]>([])
+const topBuyers = ref<TopBuyer[]>([])
+const rankingTab = ref<'products' | 'buyers'>('products')
+const rankingTabs = [
+    { label: 'Top products', value: 'products' },
+    { label: 'Top buyers', value: 'buyers' }
+]
+const rankingMonth = ref(new Date().getMonth() + 1)
+const rankingYear = ref(new Date().getFullYear())
 
 const stats = computed(() => [
     { label: 'Total members', value: totalMembers.value, icon: 'i-lucide-users' },
@@ -134,7 +145,7 @@ const recentSchedules = computed(() =>
 )
 
 const attentionQueueItems = computed(() =>
-    pendingOrders.value.map((order) => ({
+    pendingOrders.value.slice(0, 3).map((order) => ({
         uuid: order.uuid,
         name: order.customer_name,
         subtitleLabel: order.scheduleTitle,
@@ -145,6 +156,19 @@ const attentionQueueItems = computed(() =>
     }))
 )
 
+function scheduleClosingSoon(schedule: ScheduleBrowseItem): { closingSoon: boolean; note?: string } {
+    if (!schedule.is_open || !schedule.pasabuy_schedule_date) return { closingSoon: false }
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const cutoff = new Date(schedule.pasabuy_schedule_date)
+    const daysUntilCutoff = Math.round((cutoff.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+    if (daysUntilCutoff <= 0) return { closingSoon: true, note: 'Closes today' }
+    if (daysUntilCutoff === 1) return { closingSoon: true, note: 'Closes tomorrow' }
+    return { closingSoon: false }
+}
+
 const scheduleRowItems = computed(() =>
     recentSchedules.value.map((schedule) => ({
         uuid: schedule.uuid,
@@ -152,20 +176,54 @@ const scheduleRowItems = computed(() =>
         status: schedule.status,
         statusColor: scheduleStatusColor[schedule.status],
         statusLabel: schedule.status,
-        href: `/admin/schedules/${schedule.uuid}`
+        href: `/admin/schedules/${schedule.uuid}`,
+        ...scheduleClosingSoon(schedule)
     }))
 )
 
-const pipelineStages: PipelineStage[] = []
+const pipelineStages = ref<PipelineStage[]>([])
+
+const topProductItems = computed(() => {
+    const topQuantity = topProducts.value[0]?.total_quantity ?? 0
+    return topProducts.value.map((product, index) => ({
+        productId: product.uuid,
+        rank: index + 1,
+        name: product.name,
+        progressPct: topQuantity > 0 ? (product.total_quantity / topQuantity) * 100 : 0,
+        qty: product.total_quantity,
+        unit: 'ordered'
+    }))
+})
+
+const topBuyerItems = computed(() => {
+    const topSpend = Number(topBuyers.value[0]?.total_spend ?? 0)
+    return topBuyers.value.map((buyer, index) => ({
+        productId: buyer.uuid,
+        rank: index + 1,
+        name: buyer.name,
+        progressPct: topSpend > 0 ? (Number(buyer.total_spend) / topSpend) * 100 : 0,
+        qty: `₱${buyer.total_spend}`,
+        unit: `${buyer.order_count} orders`
+    }))
+})
 
 async function loadDashboard(force = false) {
     loading.value = true
     try {
-        const [productsResponse, , ordersResponse, customersResponse] = await Promise.all([
+        const [
+            productsResponse,
+            ,
+            ordersResponse,
+            customersResponse,
+            confirmedOrdersResponse,
+            cancelledOrdersResponse
+        ] = await Promise.all([
             productService.fetchProducts({ per_page: 1 }),
             ensureSchedulesLoaded(force),
             orderService.fetchOrders({ status: 'pending', per_page: 100 }),
-            customerService.fetchCustomers({ per_page: 1, is_approved: '1' })
+            customerService.fetchCustomers({ per_page: 1, is_approved: '1' }),
+            orderService.fetchOrders({ status: 'confirmed', per_page: 1 }),
+            orderService.fetchOrders({ status: 'cancelled', per_page: 1 })
         ])
 
         totalProducts.value = productsResponse.data.total
@@ -179,12 +237,37 @@ async function loadDashboard(force = false) {
                 scheduleStatus: order.pasabuy_schedule.status
             }))
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+        pipelineStages.value = [
+            { label: 'Pending', count: ordersResponse.data.total, color: 'bg-warning' },
+            { label: 'Confirmed', count: confirmedOrdersResponse.data.total, color: 'bg-success' },
+            { label: 'Cancelled', count: cancelledOrdersResponse.data.total, color: 'bg-error' }
+        ]
     } catch (error) {
         toast.add({ title: 'Failed to load dashboard', description: (error as APIError).message, color: 'error' })
     } finally {
         loading.value = false
     }
 }
+
+async function loadRankings() {
+    loadingRankings.value = true
+    try {
+        const [topProductsResponse, topBuyersResponse] = await Promise.all([
+            productService.fetchTopSelling({ month: rankingMonth.value, year: rankingYear.value }),
+            customerService.fetchTopBuyers({ month: rankingMonth.value, year: rankingYear.value })
+        ])
+
+        topProducts.value = topProductsResponse.data
+        topBuyers.value = topBuyersResponse.data
+    } catch (error) {
+        toast.add({ title: 'Failed to load rankings', description: (error as APIError).message, color: 'error' })
+    } finally {
+        loadingRankings.value = false
+    }
+}
+
+watch([rankingMonth, rankingYear], loadRankings)
 
 async function setOrderStatus(order: PendingOrder, status: 'confirmed' | 'cancelled') {
     actingOn.value = order.uuid
@@ -220,6 +303,12 @@ function pendingOrderActions(order: PendingOrder): DropdownMenuItem[] {
     ]
 }
 
-onMounted(() => loadDashboard())
-onPullToRefresh(() => loadDashboard(true))
+onMounted(() => {
+    loadDashboard()
+    loadRankings()
+})
+onPullToRefresh(() => {
+    loadDashboard(true)
+    loadRankings()
+})
 </script>
