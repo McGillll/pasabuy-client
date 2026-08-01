@@ -63,6 +63,13 @@
                                             </template>
                                         </UInput>
                                     </UFormField>
+                                    <UFormField label="Handling fee" name="handling_fee" description="Flat fee added on every order, on top of markup" required>
+                                        <UInput v-model.number="invoiceState.handling_fee" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading" class="w-full">
+                                            <template #leading>
+                                                <span class="text-sm text-dimmed">₱</span>
+                                            </template>
+                                        </UInput>
+                                    </UFormField>
                                 </div>
                             </div>
 
@@ -75,15 +82,6 @@
                                         </p>
                                     </div>
                                     <USwitch v-model="invoiceState.is_active" label="Apply" class="mt-0.5 shrink-0" :disabled="invoiceLoading" />
-                                </div>
-
-                                <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                                    <UFormField label="Due date starts from" name="due_date_reference" description="Event that starts the countdown" required>
-                                        <USelect v-model="invoiceState.due_date_reference" :items="dueDateReferenceOptions" value-key="value" :disabled="invoiceLoading" class="w-full" />
-                                    </UFormField>
-                                    <UFormField label="Due days" name="due_days" description="Days until payment is due" required>
-                                        <UInput v-model.number="invoiceState.due_days" type="number" inputmode="numeric" min="1" placeholder="7" :disabled="invoiceLoading" class="w-full" />
-                                    </UFormField>
                                 </div>
 
                                 <div v-if="invoiceState.is_active" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -202,18 +200,12 @@ const invoiceState = reactive({
     markup_threshold_amount: 1000,
     markup_percentage: 10,
     markup_fixed_amount: 100,
-    due_days: 15,
-    due_date_reference: 'delivery' as 'delivery' | 'schedule_finish',
+    handling_fee: 0,
     interest_rate: 1,
     interest_period: 'month' as 'day' | 'week' | 'month',
     interest_base: 'outstanding_balance' as 'outstanding_balance' | 'full_total',
     is_active: true
 })
-
-const dueDateReferenceOptions = [
-    { label: 'Order delivery date', value: 'delivery' },
-    { label: 'Schedule finish date', value: 'schedule_finish' }
-]
 
 const interestPeriodOptions = [
     { label: 'Per day', value: 'day' },
@@ -226,7 +218,7 @@ const interestBaseOptions = [
     { label: 'Full invoice total (ignores partial payments)', value: 'full_total' }
 ]
 
-function validateInvoice(state: { markup_threshold_amount: number, markup_percentage: number, markup_fixed_amount: number, due_days: number, interest_rate: number }): FormError[] {
+function validateInvoice(state: { markup_threshold_amount: number, markup_percentage: number, markup_fixed_amount: number, handling_fee: number, interest_rate: number }): FormError[] {
     const errors: FormError[] = []
     if (state.markup_threshold_amount === null || state.markup_threshold_amount < 0) {
         errors.push({ name: 'markup_threshold_amount', message: 'Threshold amount must be 0 or more' })
@@ -237,8 +229,8 @@ function validateInvoice(state: { markup_threshold_amount: number, markup_percen
     if (state.markup_fixed_amount === null || state.markup_fixed_amount < 0) {
         errors.push({ name: 'markup_fixed_amount', message: 'Fixed markup must be 0 or more' })
     }
-    if (!state.due_days || state.due_days < 1) {
-        errors.push({ name: 'due_days', message: 'Due days must be at least 1' })
+    if (state.handling_fee === null || state.handling_fee < 0) {
+        errors.push({ name: 'handling_fee', message: 'Handling fee must be 0 or more' })
     }
     if (state.interest_rate === null || state.interest_rate < 0) {
         errors.push({ name: 'interest_rate', message: 'Interest rate must be 0 or more' })
@@ -254,8 +246,7 @@ async function loadInvoiceSettings() {
         invoiceState.markup_threshold_amount = Number(data.markup_threshold_amount)
         invoiceState.markup_percentage = Number(data.markup_percentage)
         invoiceState.markup_fixed_amount = Number(data.markup_fixed_amount)
-        invoiceState.due_days = data.due_days
-        invoiceState.due_date_reference = data.due_date_reference
+        invoiceState.handling_fee = Number(data.handling_fee)
         invoiceState.interest_rate = Number(data.interest_rate)
         invoiceState.interest_period = data.interest_period
         invoiceState.interest_base = data.interest_base

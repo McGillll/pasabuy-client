@@ -15,6 +15,7 @@ export interface Schedule {
     pasabuy_schedule_date: string | null
     status: 'open' | 'closed' | 'finished'
     is_open: boolean
+    due_date: string | null
     products: ScheduleProduct[]
     created_at: string
 }
@@ -26,6 +27,7 @@ export interface ScheduleBrowseItem {
     pasabuy_schedule_date: string | null
     status: 'open' | 'closed' | 'finished'
     is_open: boolean
+    due_date: string | null
     seller_name: string | null
     product_count: number | null
     created_at: string
@@ -49,6 +51,9 @@ export interface ChecklistItem {
     checked_at: string | null
     additional_quantity: number
     return_quantity: number
+    default_price: number | null
+    actual_price: number | null
+    product_status: 'none' | 'b1t1' | 'out_of_stock' | null
 }
 
 export interface ProductBuyer {

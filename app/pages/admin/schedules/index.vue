@@ -2,33 +2,24 @@
     <div class="space-y-4">
         <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold text-highlighted">Pasabuy Schedules</h1>
-            <BaseButton icon="i-lucide-plus" class="hidden sm:inline-flex" @click="openCreateModal">New Schedule</BaseButton>
+            <BaseButton icon="i-lucide-plus" class="hidden sm:inline-flex" @click="isCreateModalOpen = true">New Schedule</BaseButton>
         </div>
 
-        <FabButton aria-label="New schedule" @click="openCreateModal" />
+        <FabButton aria-label="New schedule" @click="isCreateModalOpen = true" />
 
-        <div class="sticky top-0 z-10 -mx-6 space-y-2 bg-default/95 px-6 py-2 backdrop-blur-sm">
-            <div class="flex items-center gap-2">
-                <div class="min-w-0 flex-1">
-                    <BaseSearchInput v-model="search" placeholder="Search schedules…" class="w-full" />
-                </div>
-                <BaseButton
-                    class="sm:hidden shrink-0"
-                    color="neutral"
-                    variant="outline"
-                    icon="i-lucide-list-filter"
-                    @click="isFiltersOpen = true"
-                >
-                    Filters
-                    <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
-                </BaseButton>
+        <EntityFilterBar
+            v-model="search"
+            placeholder="Search schedules…"
+            :show-filter-button="true"
+            :filter-count="activeFilterCount"
+            @filter-click="isFiltersOpen = true"
+        >
+            <div class="hidden sm:grid grid-cols-3 gap-2">
+                <BaseDropdown v-model="monthFilter" :items="monthFilterOptions" placeholder="All months" />
+                <BaseDropdown v-model="yearFilter" :items="yearFilterOptions" placeholder="All years" />
+                <BaseDropdown v-model="statusFilter" :items="statusFilterOptions" placeholder="All statuses" />
             </div>
-
-            <div class="hidden sm:grid grid-cols-2 gap-2">
-                <USelect v-model="monthFilter" :items="monthFilterOptions" value-key="value" placeholder="All months" class="w-full h-11" />
-                <USelect v-model="yearFilter" :items="yearFilterOptions" value-key="value" placeholder="All years" class="w-full h-11" />
-            </div>
-        </div>
+        </EntityFilterBar>
 
         <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
             <template #body>
@@ -41,6 +32,9 @@
                             <USelect v-model="yearFilter" :items="yearFilterOptions" value-key="value" placeholder="All years" class="w-full h-11" />
                         </UFormField>
                     </div>
+                    <UFormField label="Status">
+                        <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" placeholder="All statuses" class="w-full h-11" />
+                    </UFormField>
                 </div>
             </template>
             <template #footer>
@@ -57,11 +51,15 @@
                 :columns="columns"
                 :loading="loading"
                 :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
+                :meta="{ class: { tr: (row: { original: Schedule }) => isClosingSoon(row.original) ? 'bg-warning/10 hover:bg-warning/15' : '' } }"
             >
                 <template #title-cell="{ row }">
                     <NuxtLink :to="`/admin/schedules/${row.original.uuid}`" class="font-medium text-highlighted hover:text-primary">
                         {{ row.original.title }}
                     </NuxtLink>
+                    <span v-if="isClosingSoon(row.original)" class="ml-2 inline-flex items-center gap-1 text-xs font-medium text-warning">
+                        <UIcon name="i-lucide-clock" class="size-3.5" /> closing soon
+                    </span>
                 </template>
                 <template #status-cell="{ row }">
                     <BaseStatusBadge :color="scheduleStatusColor[row.original.status]" :label="row.original.status" />
@@ -86,17 +84,17 @@
                             size="sm"
                             color="neutral"
                             variant="ghost"
-                            trailing-icon="i-lucide-arrow-right"
+                            icon="i-lucide-eye"
+                            aria-label="View schedule"
                             :to="`/admin/schedules/${row.original.uuid}`"
-                        >
-                            Manage
-                        </BaseButton>
+                        />
                     </div>
                 </template>
                 <template #list-item="{ item: scheduleRow }">
                     <ListCard
                         clickable
                         :chevron="false"
+                        :tone="isClosingSoon(scheduleRow) ? 'warning' : 'default'"
                         :actions="scheduleActions(scheduleRow)"
                         @click="navigateTo(`/admin/schedules/${scheduleRow.uuid}`)"
                     >
@@ -105,6 +103,9 @@
                         </template>
                         <template #meta>
                             <span class="text-muted">{{ scheduleRow.pasabuy_schedule_date ? formatDate(scheduleRow.pasabuy_schedule_date) : '-' }}</span>
+                            <span v-if="isClosingSoon(scheduleRow)" class="inline-flex items-center gap-1 text-xs font-medium text-warning">
+                                <UIcon name="i-lucide-clock" class="size-3.5" /> closing soon
+                            </span>
                         </template>
                         <template #status>
                             <BaseStatusBadge :color="scheduleStatusColor[scheduleRow.status]" :label="scheduleRow.status" />
@@ -116,7 +117,7 @@
                         icon="i-lucide-calendar-search"
                         message="No schedules found."
                         action-label="Create your first schedule"
-                        @action="openCreateModal"
+                        @action="isCreateModalOpen = true"
                     />
                 </template>
             </BaseTable>
@@ -126,26 +127,7 @@
             <UPagination v-model:page="page" :total="total" :items-per-page="perPage" />
         </div>
 
-        <BaseModal
-            v-model:open="isModalOpen"
-            title="New Pasabuy Schedule"
-            show-default-footer
-            form-id="schedule-create-form"
-            confirm-label="Create"
-            :loading="saving"
-        >
-            <form id="schedule-create-form" class="space-y-4" @submit.prevent="onCreate">
-                <UFormField label="Title" required>
-                    <UInput v-model="form.title" placeholder="July grocery run" class="w-full" />
-                </UFormField>
-                <UFormField label="Description">
-                    <UTextarea v-model="form.description" placeholder="Optional notes for this pasabuy" class="w-full" />
-                </UFormField>
-                <UFormField label="Pasabuy date" hint="The date you'll go to the store" required>
-                    <UInput v-model="form.pasabuy_schedule_date" type="date" required class="w-full" />
-                </UFormField>
-            </form>
-        </BaseModal>
+        <ScheduleCreateModal v-model:open="isCreateModalOpen" @created="onScheduleCreated" />
 
         <BaseConfirmModal
             v-model:open="confirmDialog.open"
@@ -162,22 +144,15 @@
 <script setup lang="ts">
 import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
 import APIError from '@/components/api/user/APIError'
+import type { Schedule } from '@/types/Schedule'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
 useHead({ title: 'Schedules' })
 
-interface Schedule {
-    uuid: string
-    title: string
-    status: string
-    is_open: boolean
-    pasabuy_schedule_date: string | null
-    created_at: string
-}
-
 const toast = useToast()
+const { isClosingSoon } = useScheduleClosingSoon()
 const schedules = ref<Schedule[]>([])
 const loading = ref(false)
 const page = ref(1)
@@ -186,13 +161,15 @@ const total = ref(0)
 const search = ref('')
 const monthFilter = ref<number | null>(null)
 const yearFilter = ref<number | null>(null)
+const statusFilter = ref<string | null>(null)
 const isFiltersOpen = ref(false)
 
-const activeFilterCount = computed(() => [monthFilter.value, yearFilter.value].filter((value) => value !== null).length)
+const activeFilterCount = computed(() => [monthFilter.value, yearFilter.value, statusFilter.value].filter((value) => value !== null).length)
 
 function clearFilters() {
     monthFilter.value = null
     yearFilter.value = null
+    statusFilter.value = null
 }
 
 const monthFilterOptions = [
@@ -217,6 +194,13 @@ const yearFilterOptions = [
     ...Array.from({ length: 5 }, (_, index) => currentYear - index).map((year) => ({ label: String(year), value: year }))
 ]
 
+const statusFilterOptions = [
+    { label: 'All statuses', value: null },
+    { label: 'Open', value: 'open' },
+    { label: 'Closed', value: 'closed' },
+    { label: 'Finished', value: 'finished' }
+]
+
 const columns: TableColumn<Schedule>[] = [
     { accessorKey: 'title', header: 'Title' },
     { accessorKey: 'status', header: 'Status' },
@@ -232,7 +216,8 @@ async function loadSchedules() {
             per_page: perPage,
             search: search.value || undefined,
             month: monthFilter.value || undefined,
-            year: yearFilter.value || undefined
+            year: yearFilter.value || undefined,
+            status: statusFilter.value || undefined
         })
         schedules.value = response.data.items
         total.value = response.data.total
@@ -245,7 +230,7 @@ async function loadSchedules() {
 
 watch(page, loadSchedules)
 
-watch([monthFilter, yearFilter], () => {
+watch([monthFilter, yearFilter, statusFilter], () => {
     page.value = 1
     loadSchedules()
 })
@@ -255,37 +240,10 @@ useSearchDebounce(search, () => {
     loadSchedules()
 })
 
-const isModalOpen = ref(false)
-const form = reactive({ title: '', description: '', pasabuy_schedule_date: '' })
-const saving = ref(false)
+const isCreateModalOpen = ref(false)
 
-function openCreateModal() {
-    form.title = ''
-    form.description = ''
-    form.pasabuy_schedule_date = ''
-    isModalOpen.value = true
-}
-
-async function onCreate() {
-    if (!form.pasabuy_schedule_date) {
-        toast.add({ title: 'Pasabuy date is required', color: 'error' })
-        return
-    }
-
-    saving.value = true
-    try {
-        const response = await pasabuyScheduleService.createSchedule({
-            title: form.title,
-            description: form.description,
-            pasabuy_schedule_date: form.pasabuy_schedule_date
-        })
-        isModalOpen.value = false
-        await navigateTo(`/admin/schedules/${response.data.uuid}`)
-    } catch (error) {
-        toast.add({ title: 'Create failed', description: (error as APIError).message, color: 'error' })
-    } finally {
-        saving.value = false
-    }
+function onScheduleCreated(schedule: Schedule) {
+    navigateTo(`/admin/schedules/${schedule.uuid}`)
 }
 
 const closingUuid = ref<string | null>(null)

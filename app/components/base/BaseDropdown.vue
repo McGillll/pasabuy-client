@@ -4,6 +4,7 @@
         :items="items"
         :value-key="valueKey"
         :placeholder="placeholder"
+        :icon="icon"
         :size="size"
         :class="class"
         :ui="ui"
@@ -17,6 +18,7 @@ withDefaults(defineProps<{
     items: SelectItem[]
     valueKey?: string
     placeholder?: string
+    icon?: string
     size?: SelectProps['size']
     class?: string
     ui?: SelectProps['ui']

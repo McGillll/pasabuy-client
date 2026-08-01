@@ -48,3 +48,11 @@ body {
     background-color: var(--ui-bg);
     overscroll-behavior-y: none;
 }
+
+/* Some mobile browsers auto-inflate font sizes on text-heavy layouts
+   (mobile Safari's "text autosizing"), which blows up rem-based spacing
+   and wraps text far more aggressively than the CSS actually specifies. */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}

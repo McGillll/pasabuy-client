@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="flex flex-wrap gap-2">
+        <div ref="containerRef" class="flex flex-nowrap items-center gap-2 overflow-hidden">
             <button
                 v-for="item in visibleItems"
                 :key="item.value"
@@ -19,6 +19,20 @@
                 @click="isSheetOpen = true"
             >
                 More ({{ overflowItems.length }})
+            </button>
+        </div>
+
+        <div ref="measureRef" class="pointer-events-none absolute left-0 top-0 w-0 h-0 overflow-hidden opacity-0" style="visibility: hidden; z-index: -1;">
+            <button
+                v-for="item in items"
+                :key="item.value"
+                type="button"
+                class="min-h-11 shrink-0 rounded-full px-4 text-sm font-medium"
+            >
+                {{ item.label }}
+            </button>
+            <button type="button" class="min-h-11 shrink-0 rounded-full px-4 text-sm font-medium">
+                More ({{ items.length }})
             </button>
         </div>
 
@@ -54,11 +68,9 @@ interface ChipOverflowItem {
 const props = withDefaults(defineProps<{
     items: ChipOverflowItem[]
     modelValue: string
-    visibleCount?: number
     title?: string
     searchPlaceholder?: string
 }>(), {
-    visibleCount: 6,
     title: 'All options',
     searchPlaceholder: 'Search…'
 })
@@ -70,8 +82,51 @@ const emit = defineEmits<{
 const isSheetOpen = ref(false)
 const sheetSearch = ref('')
 
-const visibleItems = computed(() => props.items.slice(0, props.visibleCount))
-const overflowItems = computed(() => props.items.slice(props.visibleCount))
+const containerRef = ref<HTMLElement | null>(null)
+const measureRef = ref<HTMLElement | null>(null)
+const visibleCount = ref(0)
+
+const GAP = 8
+// Generous on purpose: it's far better to show one fewer chip than to clip
+// the "More" chip against the container's overflow-hidden edge.
+const SAFETY_MARGIN = 32
+
+function recalculate() {
+    const container = containerRef.value
+    const measure = measureRef.value
+    if (!container || !measure) return
+
+    const containerWidth = container.getBoundingClientRect().width - SAFETY_MARGIN
+    const children = Array.from(measure.children) as HTMLElement[]
+    const itemEls = children.slice(0, props.items.length)
+    const moreEl = children[children.length - 1]
+    if (!moreEl) return
+
+    const moreWidth = Math.ceil(moreEl.getBoundingClientRect().width)
+
+    let usedWidth = 0
+    let count = 0
+
+    for (let i = 0; i < itemEls.length; i++) {
+        const itemWidth = Math.ceil(itemEls[i]!.getBoundingClientRect().width)
+        const isLast = i === itemEls.length - 1
+        const widthWithThisItem = usedWidth + (count > 0 ? GAP : 0) + itemWidth
+        const reserveForMore = isLast ? 0 : GAP + moreWidth
+        const fits = widthWithThisItem + reserveForMore <= containerWidth
+
+        if (fits || (isLast && widthWithThisItem <= containerWidth)) {
+            usedWidth = widthWithThisItem
+            count++
+        } else {
+            break
+        }
+    }
+
+    visibleCount.value = count
+}
+
+const visibleItems = computed(() => props.items.slice(0, visibleCount.value))
+const overflowItems = computed(() => props.items.slice(visibleCount.value))
 
 const filteredItems = computed(() => {
     const query = sheetSearch.value.trim().toLowerCase()
@@ -83,4 +138,24 @@ function select(value: string) {
     emit('update:modelValue', value)
     isSheetOpen.value = false
 }
+
+let resizeObserver: ResizeObserver | null = null
+
+onMounted(async () => {
+    await nextTick()
+    recalculate()
+    resizeObserver = new ResizeObserver(() => recalculate())
+    if (containerRef.value) resizeObserver.observe(containerRef.value)
+
+    document.fonts?.ready.then(() => recalculate())
+})
+
+onBeforeUnmount(() => {
+    resizeObserver?.disconnect()
+})
+
+watch(() => props.items, async () => {
+    await nextTick()
+    recalculate()
+})
 </script>

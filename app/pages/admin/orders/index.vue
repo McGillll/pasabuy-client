@@ -142,78 +142,11 @@
             <UPagination v-model:page="page" :total="total" :items-per-page="perPage" />
         </div>
 
-        <BaseModal
+        <OrderPaymentsModal
             v-model:open="isPaymentsModalOpen"
-            :title="selectedOrder ? `${selectedOrder.customer_name}'s payments` : 'Payments'"
-            :description="selectedOrder?.order_no"
-            view-only
-        >
-            <div v-if="selectedOrder" class="space-y-4">
-                <div v-if="invoiceLoading" class="space-y-2">
-                    <USkeleton class="h-5 w-full" />
-                    <USkeleton class="h-5 w-full" />
-                    <USkeleton class="h-5 w-full" />
-                </div>
-                <InvoiceBreakdown v-else-if="invoice" :invoice="invoice" :order-items="selectedOrder.items" />
-
-                <BaseTable :data="payments" :columns="paymentColumns" :loading="paymentsLoading">
-                    <template #method-cell="{ row }">
-                        <span class="capitalize">{{ row.original.method.replace('_', ' ') }}</span>
-                    </template>
-                    <template #paid_at-cell="{ row }">
-                        {{ formatDate(row.original.paid_at) }}
-                    </template>
-                    <template #actions-cell="{ row }">
-                        <BaseButton
-                            icon="i-lucide-trash-2"
-                            size="xs"
-                            color="error"
-                            variant="ghost"
-                            aria-label="Delete payment"
-                            @click="deletePayment(row.original)"
-                        />
-                    </template>
-                    <template #list-item="{ item: payment }">
-                        <ListCard :actions="paymentActions(payment)">
-                            <template #title>
-                                <p class="font-medium text-highlighted">₱{{ payment.amount }}</p>
-                            </template>
-                            <template #subtitle>
-                                <span class="capitalize">{{ payment.method.replace('_', ' ') }}</span> · {{ formatDate(payment.paid_at) }}
-                            </template>
-                        </ListCard>
-                    </template>
-                    <template #empty>
-                        <BaseEmptyState icon="i-lucide-wallet" message="No payments recorded yet." padding="py-6" />
-                    </template>
-                </BaseTable>
-
-                <form class="space-y-3 border-t border-default pt-4" @submit.prevent="submitPayment">
-                    <div class="grid grid-cols-2 gap-3">
-                        <UFormField label="Amount" required>
-                            <UInput v-model.number="paymentForm.amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" class="w-full">
-                                <template #leading>
-                                    <span class="text-sm text-dimmed">₱</span>
-                                </template>
-                            </UInput>
-                        </UFormField>
-                        <UFormField label="Method" required>
-                            <USelect v-model="paymentForm.method" :items="paymentMethodOptions" value-key="value" class="w-full" />
-                        </UFormField>
-                    </div>
-                    <UFormField label="Paid on" required>
-                        <UInput v-model="paymentForm.paid_at" type="date" required class="w-full" />
-                    </UFormField>
-                    <UFormField label="Reference number">
-                        <UInput v-model="paymentForm.reference_number" placeholder="e.g. GCash reference no." class="w-full" />
-                    </UFormField>
-                    <UFormField label="Notes">
-                        <UTextarea v-model="paymentForm.notes" placeholder="Optional notes about this payment" class="w-full" />
-                    </UFormField>
-                    <BaseButton type="submit" block :loading="recordingPayment">Record payment</BaseButton>
-                </form>
-            </div>
-        </BaseModal>
+            :order="selectedOrderForPayments"
+            @updated="loadOrders"
+        />
 
         <BaseConfirmModal
             v-model:open="confirmDialog.open"
@@ -231,9 +164,7 @@
 import { orderService } from '@/components/api/admin/OrderService'
 import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
 import APIError from '@/components/api/user/APIError'
-import type { Invoice } from '@/types/Invoice'
 import type { Order } from '@/types/Order'
-import type { OrderPayment } from '@/types/OrderPayment'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
@@ -387,130 +318,11 @@ function orderActions(order: Order): DropdownMenuItem[] {
 }
 
 const isPaymentsModalOpen = ref(false)
-const selectedOrder = ref<Order | null>(null)
-const payments = ref<OrderPayment[]>([])
-const paymentsLoading = ref(false)
-const recordingPayment = ref(false)
-const invoice = ref<Invoice | null>(null)
-const invoiceLoading = ref(false)
+const selectedOrderForPayments = ref<Order | null>(null)
 
-const paymentMethodOptions = [
-    { label: 'Cash', value: 'cash' },
-    { label: 'GCash', value: 'gcash' },
-    { label: 'Bank transfer', value: 'bank_transfer' },
-    { label: 'Maya', value: 'maya' },
-    { label: 'Other', value: 'other' }
-]
-
-const paymentColumns: TableColumn<OrderPayment>[] = [
-    { accessorKey: 'amount', header: 'Amount' },
-    { id: 'method', header: 'Method' },
-    { id: 'paid_at', header: 'Paid on' },
-    { accessorKey: 'reference_number', header: 'Reference' },
-    { id: 'actions', header: '' }
-]
-
-const paymentForm = reactive({
-    amount: null as number | null,
-    method: 'cash' as 'cash' | 'gcash' | 'bank_transfer' | 'maya' | 'other',
-    reference_number: '',
-    notes: '',
-    paid_at: ''
-})
-
-function resetPaymentForm() {
-    paymentForm.amount = null
-    paymentForm.method = 'cash'
-    paymentForm.reference_number = ''
-    paymentForm.notes = ''
-    paymentForm.paid_at = new Date().toISOString().slice(0, 10)
-}
-
-const paymentsEtags = ref<Record<string, string | null>>({})
-
-async function loadPayments(orderUuid: string) {
-    paymentsLoading.value = true
-    try {
-        const result = await orderService.fetchPaymentsCacheable(orderUuid, paymentsEtags.value[orderUuid] ?? null)
-        if (result === 'not-modified') return
-        payments.value = result.data
-        paymentsEtags.value[orderUuid] = result.etag
-    } catch (error) {
-        toast.add({ title: 'Failed to load payments', description: (error as APIError).message, color: 'error' })
-    } finally {
-        paymentsLoading.value = false
-    }
-}
-
-async function loadInvoice(orderUuid: string) {
-    invoiceLoading.value = true
-    try {
-        const response = await orderService.fetchInvoice(orderUuid)
-        invoice.value = response.data
-    } catch (error) {
-        toast.add({ title: 'Failed to load invoice', description: (error as APIError).message, color: 'error' })
-    } finally {
-        invoiceLoading.value = false
-    }
-}
-
-async function openPaymentsModal(order: Order) {
-    selectedOrder.value = order
-    resetPaymentForm()
+function openPaymentsModal(order: Order) {
+    selectedOrderForPayments.value = order
     isPaymentsModalOpen.value = true
-    await Promise.all([loadPayments(order.uuid), loadInvoice(order.uuid)])
-}
-
-async function submitPayment() {
-    if (!selectedOrder.value || !paymentForm.amount || !paymentForm.paid_at) {
-        toast.add({ title: 'Amount and paid date are required', color: 'error' })
-        return
-    }
-
-    recordingPayment.value = true
-    try {
-        await orderService.recordPayment(selectedOrder.value.uuid, {
-            amount: paymentForm.amount,
-            method: paymentForm.method,
-            reference_number: paymentForm.reference_number || undefined,
-            notes: paymentForm.notes || undefined,
-            paid_at: paymentForm.paid_at
-        })
-        resetPaymentForm()
-        toast.add({ title: 'Payment recorded', color: 'success' })
-        await Promise.all([loadPayments(selectedOrder.value.uuid), loadInvoice(selectedOrder.value.uuid), loadOrders()])
-    } catch (error) {
-        toast.add({ title: 'Failed to record payment', description: (error as APIError).message, color: 'error' })
-    } finally {
-        recordingPayment.value = false
-    }
-}
-
-function deletePayment(payment: OrderPayment) {
-    if (!selectedOrder.value) return
-    const order = selectedOrder.value
-
-    askConfirm({
-        title: 'Remove payment?',
-        description: `Remove the ₱${payment.amount} payment recorded on ${formatDate(payment.paid_at)}?`,
-        confirmLabel: 'Remove',
-        color: 'error',
-        action: async () => {
-            try {
-                await orderService.deletePayment(order.uuid, payment.uuid)
-                toast.add({ title: 'Payment removed', color: 'success' })
-                await Promise.all([loadPayments(order.uuid), loadInvoice(order.uuid), loadOrders()])
-            } catch (error) {
-                toast.add({ title: 'Failed to remove payment', description: (error as APIError).message, color: 'error' })
-            }
-        }
-    })
-}
-
-function paymentActions(payment: OrderPayment): DropdownMenuItem[] {
-    return [
-        { label: 'Delete payment', icon: 'i-lucide-trash-2', color: 'error', onSelect: () => deletePayment(payment) }
-    ]
 }
 
 onMounted(() => {

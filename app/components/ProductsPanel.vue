@@ -11,7 +11,6 @@
                 <ChipOverflowFilter
                     v-model="categoryFilter"
                     :items="categoryFilterTabs"
-                    :visible-count="6"
                     title="All categories"
                     search-placeholder="Search categories…"
                 />

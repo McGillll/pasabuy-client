@@ -4,6 +4,7 @@
             <div class="min-w-0 flex-1">
                 <BaseSearchInput v-model="search" :placeholder="placeholder" class="w-full" />
             </div>
+            <slot name="inline" />
             <BaseButton
                 v-if="showFilterButton"
                 class="sm:hidden shrink-0"

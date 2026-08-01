@@ -59,8 +59,8 @@ class PasabuyScheduleService extends BaseAPIService {
         return await this.request(`/admin/pasabuy-schedules/${uuid}/reopen`, 'POST')
     }
 
-    async finishSchedule(uuid: string): Promise<any> {
-        return await this.request(`/admin/pasabuy-schedules/${uuid}/finish`, 'POST')
+    async finishSchedule(uuid: string, payload: { due_date: string }): Promise<any> {
+        return await this.request(`/admin/pasabuy-schedules/${uuid}/finish`, 'POST', payload)
     }
 
     async confirmProductPrice(uuid: string, scheduleProductUuid: string, payload: ConfirmPricePayload): Promise<any> {
