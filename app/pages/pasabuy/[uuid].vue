@@ -81,22 +81,11 @@
                 </UCard>
 
                 <template v-if="!myOrder || editingOrder">
-                    <div v-if="catalogItems.length > 5 || categoryTabs.length > 2 || brandTabs.length > 2" class="sticky top-0 z-10 -mx-4 space-y-2 bg-default/95 px-4 py-2 backdrop-blur-sm">
+                    <div v-if="catalogItems.length > 5 || categoryTabs.length > 2" class="sticky top-0 z-10 -mx-4 space-y-2 bg-default/95 px-4 py-2 backdrop-blur-sm">
                         <div v-if="categoryTabs.length > 2">
                             <UTabs
                                 v-model="selectedCategory"
                                 :items="categoryTabs"
-                                variant="pill"
-                                size="md"
-                                class="w-full"
-                                :ui="{ list: 'flex-nowrap overflow-x-auto', trigger: 'grow-0 shrink-0 min-w-20 justify-center py-2.5' }"
-                            />
-                        </div>
-
-                        <div v-if="brandTabs.length > 2">
-                            <UTabs
-                                v-model="selectedBrand"
-                                :items="brandTabs"
                                 variant="pill"
                                 size="md"
                                 class="w-full"
@@ -506,7 +495,6 @@ useSearchDebounce(productSearch, () => {
 
 const quantities = ref<Record<string, number>>({})
 const selectedCategory = ref('all')
-const selectedBrand = ref('all')
 const statusFilter = ref('all')
 const sortByPrice = ref('none')
 const priceMin = ref<number | null>(null)
@@ -612,21 +600,10 @@ const categoryTabs = computed(() => {
     return [{ label: 'All', value: 'all' }, ...sorted]
 })
 
-const brandTabs = computed(() => {
-    const seen = new Map<string, string>()
-    for (const product of catalogItems.value) {
-        if (product.brand) seen.set(product.brand.uuid, product.brand.name)
-    }
-    const sorted = Array.from(seen, ([value, label]) => ({ label, value }))
-        .sort((a, b) => a.label.localeCompare(b.label))
-    return [{ label: 'All brands', value: 'all' }, ...sorted]
-})
-
 function matchesSearchAndNav(product: Product): boolean {
     const query = debouncedProductSearch.value.trim().toLowerCase()
     if (query && !displayName(product).toLowerCase().includes(query)) return false
     if (selectedCategory.value !== 'all' && product.category?.uuid !== selectedCategory.value) return false
-    if (selectedBrand.value !== 'all' && product.brand?.uuid !== selectedBrand.value) return false
     return true
 }
 
@@ -668,7 +645,7 @@ function loadMoreProducts() {
     visibleCount.value += initialBatchSize.value
 }
 
-watch([selectedCategory, selectedBrand, statusFilter, sortByPrice, priceMin, priceMax, debouncedProductSearch, isDesktop], () => {
+watch([selectedCategory, statusFilter, sortByPrice, priceMin, priceMax, debouncedProductSearch, isDesktop], () => {
     visibleCount.value = initialBatchSize.value
 })
 

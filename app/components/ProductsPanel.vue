@@ -16,8 +16,7 @@
                 />
             </div>
 
-            <div class="hidden sm:grid gap-2" :class="brandFilterOptions.length > 2 ? 'grid-cols-5' : 'grid-cols-4'">
-                <BaseSelect v-if="brandFilterOptions.length > 2" v-model="brandFilter" :items="brandFilterOptions" placeholder="Brand" />
+            <div class="hidden sm:grid grid-cols-4 gap-2">
                 <BaseSelect v-model="statusFilter" :items="statusFilterOptions" placeholder="Status" />
                 <BaseSelect v-model="sortByPrice" :items="sortByPriceOptions" placeholder="Sort by price" />
                 <BaseInput v-model.number="priceMin" type="number" min="0" step="0.01" placeholder="0" />
@@ -28,9 +27,6 @@
         <USlideover v-model:open="isMobileFiltersOpen" side="bottom" title="Filters">
             <template #body>
                 <div class="space-y-4">
-                    <BaseFormField v-if="brandFilterOptions.length > 2" label="Brand">
-                        <BaseSelect v-model="brandFilter" :items="brandFilterOptions" />
-                    </BaseFormField>
                     <BaseFormField label="Status">
                         <BaseSelect v-model="statusFilter" :items="statusFilterOptions" />
                     </BaseFormField>
@@ -87,9 +83,6 @@
                     </template>
                     <template #category-cell="{ row }">
                         <span class="text-sm text-muted">{{ row.original.category?.name ?? '—' }}</span>
-                    </template>
-                    <template #brand-cell="{ row }">
-                        <span class="text-sm text-muted">{{ row.original.brand?.name ?? '—' }}</span>
                     </template>
                     <template #default_price-cell="{ row }">
                         <span class="font-medium text-highlighted">₱{{ row.original.default_price }}</span>
@@ -177,9 +170,6 @@
                         <BaseFormField label="Category">
                             <BaseSelect v-model="form.category_id" :items="categoryOptions" />
                         </BaseFormField>
-                        <BaseFormField label="Brand">
-                            <BaseSelect v-model="form.brand_id" :items="brandOptions" />
-                        </BaseFormField>
                         <BaseFormField label="Default product status">
                             <BaseSelect v-model="form.default_product_status" :items="productStatusOptions" />
                         </BaseFormField>
@@ -208,12 +198,10 @@ import { productService } from '@/components/api/admin/ProductService'
 import APIError from '@/components/api/user/APIError'
 import type { Product } from '@/types/Product'
 import type { Category } from '@/types/Category'
-import type { Brand } from '@/types/Brand'
 import type { TableColumn } from '@nuxt/ui'
 
 const props = defineProps<{
     allCategories: Category[] | null
-    allBrands: Brand[] | null
     focusCategoryUuid?: string | null
 }>()
 
@@ -227,7 +215,6 @@ const page = ref(1)
 const total = ref(0)
 const search = ref('')
 const categoryFilter = ref('all')
-const brandFilter = ref('all')
 const statusFilter = ref('all')
 const sortByPrice = ref('none')
 const priceMin = ref<number | null>(null)
@@ -239,12 +226,11 @@ watch(() => props.focusCategoryUuid, (uuid) => {
 })
 
 const activeFilterCount = computed(() =>
-    [brandFilter.value !== 'all', statusFilter.value !== 'all', sortByPrice.value !== 'none', priceMin.value !== null, priceMax.value !== null]
+    [statusFilter.value !== 'all', sortByPrice.value !== 'none', priceMin.value !== null, priceMax.value !== null]
         .filter(Boolean).length
 )
 
 function clearFilters() {
-    brandFilter.value = 'all'
     statusFilter.value = 'all'
     sortByPrice.value = 'none'
     priceMin.value = null
@@ -280,21 +266,10 @@ const categoryFilterTabs = computed(() => [
     ...(props.allCategories ?? []).map((category) => ({ label: category.name, value: category.uuid }))
 ])
 
-const brandOptions = computed(() => [
-    { label: 'No brand', value: null },
-    ...(props.allBrands ?? []).map((brand) => ({ label: brand.name, value: brand.uuid }))
-])
-
-const brandFilterOptions = computed(() => [
-    { label: 'All brands', value: 'all' },
-    ...(props.allBrands ?? []).map((brand) => ({ label: brand.name, value: brand.uuid }))
-])
-
 const columns: TableColumn<Product>[] = [
     { id: 'image', header: '' },
     { id: 'product', header: 'Product' },
     { id: 'category', header: 'Category' },
-    { id: 'brand', header: 'Brand' },
     { id: 'default_price', header: 'Price' },
     { id: 'status', header: 'Status' },
     { id: 'actions', header: '' }
@@ -331,7 +306,6 @@ async function loadProducts() {
             per_page: perPage,
             search: search.value || undefined,
             category_uuid: categoryFilter.value !== 'all' ? categoryFilter.value : undefined,
-            brand_uuid: brandFilter.value !== 'all' ? brandFilter.value : undefined,
             status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
             sort_by_price: sortByPrice.value !== 'none' ? sortByPrice.value : undefined,
             price_min: priceMin.value ?? undefined,
@@ -349,7 +323,7 @@ async function loadProducts() {
 
 watch(page, loadProducts)
 
-watch([categoryFilter, brandFilter, statusFilter, sortByPrice], () => {
+watch([categoryFilter, statusFilter, sortByPrice], () => {
     page.value = 1
     loadProducts()
 })
@@ -377,7 +351,6 @@ const form = reactive({
     default_price: null as number | null,
     default_product_status: 'none' as 'none' | 'b1t1' | 'out_of_stock',
     category_id: null as string | null,
-    brand_id: null as string | null,
     image: null as File | null
 })
 const saving = ref(false)
@@ -406,7 +379,6 @@ function openCreateModal() {
     form.default_price = null
     form.default_product_status = 'none'
     form.category_id = null
-    form.brand_id = null
     form.image = null
     isModalOpen.value = true
 }
@@ -419,7 +391,6 @@ function openEditModal(product: Product) {
     form.default_price = Number(product.default_price)
     form.default_product_status = product.default_product_status
     form.category_id = product.category?.uuid ?? null
-    form.brand_id = product.brand?.uuid ?? null
     form.image = null
     isModalOpen.value = true
 }
@@ -434,7 +405,6 @@ async function onSave() {
             default_price: form.default_price ?? 0,
             default_product_status: form.default_product_status,
             category_uuid: form.category_id,
-            brand_uuid: form.brand_id,
             image: form.image
         }
         if (editing.value) {

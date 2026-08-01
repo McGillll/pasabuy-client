@@ -46,7 +46,6 @@ const emit = defineEmits<{
 
 function metaFor(product: Product) {
     const parts: string[] = []
-    if (product.brand) parts.push(product.brand.name)
     const categoryIsActiveFilter = props.activeCategoryUuid !== 'all' && product.category?.uuid === props.activeCategoryUuid
     if (product.category && !categoryIsActiveFilter) parts.push(product.category.name)
     return parts.join(' · ')
