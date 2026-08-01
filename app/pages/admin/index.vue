@@ -13,9 +13,7 @@
 
         <DailyVerseCard />
 
-        <KpiStrip :items="kpiItems" />
-
-        <p class="text-xs font-bold uppercase tracking-wide text-dimmed">Today</p>
+        <KpiStrip :items="kpiItems" :loading="loading" />
 
         <div class="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-6">
             <div class="space-y-6">
@@ -37,7 +35,7 @@
             </div>
 
             <div class="space-y-6">
-                <PipelineBar title="Order pipeline" :stages="pipelineStages" />
+                <PipelineBar title="Order pipeline" :stages="pipelineStages" :loading="loading" />
 
                 <RankedList
                     :title="rankingTabs.find((tab) => tab.value === rankingTab)?.label ?? 'Rankings'"

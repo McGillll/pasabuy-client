@@ -36,8 +36,18 @@
             @update:model-value="(value) => emit('update:activeTab', value)"
         />
 
+        <div v-if="loading" class="space-y-3">
+            <div v-for="n in 5" :key="n" class="flex items-center gap-3 py-1">
+                <USkeleton class="h-3 w-4" />
+                <div class="flex-1 space-y-1.5">
+                    <USkeleton class="h-3.5 w-2/3" />
+                    <USkeleton class="h-1.5 w-full rounded-full" />
+                </div>
+                <USkeleton class="h-3.5 w-10 shrink-0" />
+            </div>
+        </div>
         <BaseEmptyState
-            v-if="!loading && items.length === 0"
+            v-else-if="items.length === 0"
             :icon="emptyIcon"
             :message="emptyMessage"
             :description="emptyDescription"

@@ -4,7 +4,16 @@
             <p class="text-sm font-medium text-highlighted">{{ title }}</p>
         </template>
 
-        <p v-if="total === 0" class="text-sm text-muted">
+        <div v-if="loading" class="space-y-4">
+            <USkeleton class="h-2 w-full rounded-full" />
+            <div class="grid grid-cols-3 gap-2">
+                <div v-for="n in 3" :key="n" class="space-y-1.5">
+                    <USkeleton class="h-3 w-3/4" />
+                    <USkeleton class="h-4 w-1/2" />
+                </div>
+            </div>
+        </div>
+        <p v-else-if="total === 0" class="text-sm text-muted">
             No order data yet
         </p>
         <div v-else>
@@ -35,10 +44,13 @@ export type PipelineStage = {
     color?: string
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     title: string
     stages: PipelineStage[]
-}>()
+    loading?: boolean
+}>(), {
+    loading: false
+})
 
 const total = computed(() => props.stages.reduce((sum, stage) => sum + stage.count, 0))
 

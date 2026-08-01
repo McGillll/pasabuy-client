@@ -2,7 +2,7 @@
     <NuxtLink
         :to="href"
         class="flex flex-col gap-1.5 py-3 border-b border-default last:border-b-0 hover:text-highlighted"
-        :class="closingSoon ? 'border-l-2 border-l-warning bg-warning/5 pl-2.5 -ml-2.5 pr-2' : ''"
+        :class="closingSoon ? 'bg-warning/5 -mx-3 px-3' : ''"
     >
         <div class="flex items-center justify-between gap-3">
             <div class="flex min-w-0 items-center gap-2">

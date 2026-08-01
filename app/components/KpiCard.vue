@@ -1,6 +1,13 @@
 <template>
     <BaseCard>
-        <div class="flex items-center gap-3">
+        <div v-if="loading" class="flex items-center gap-3">
+            <USkeleton class="size-10 shrink-0 rounded-lg" />
+            <div class="flex-1 space-y-1.5">
+                <USkeleton class="h-3 w-2/3" />
+                <USkeleton class="h-6 w-1/2" />
+            </div>
+        </div>
+        <div v-else class="flex items-center gap-3">
             <div class="flex items-center justify-center size-10 rounded-lg" :class="colorClasses">
                 <UIcon :name="icon" class="size-5" />
             </div>
@@ -22,8 +29,10 @@ const props = withDefaults(defineProps<{
     label: string
     value: string | number
     delta?: string
+    loading?: boolean
 }>(), {
-    color: 'primary'
+    color: 'primary',
+    loading: false
 })
 
 const colorClassMap: Record<KpiCardColor, string> = {

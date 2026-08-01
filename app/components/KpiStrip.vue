@@ -1,6 +1,6 @@
 <template>
     <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-        <KpiCard v-for="item in items" :key="item.label" v-bind="item" />
+        <KpiCard v-for="item in items" :key="item.label" v-bind="item" :loading="loading" />
     </div>
 </template>
 
@@ -15,7 +15,10 @@ export interface KpiStripItem {
     delta?: string
 }
 
-defineProps<{
+withDefaults(defineProps<{
     items: KpiStripItem[]
-}>()
+    loading?: boolean
+}>(), {
+    loading: false
+})
 </script>

@@ -12,8 +12,18 @@
             </div>
         </template>
 
+        <div v-if="loading" class="divide-y divide-default">
+            <div v-for="n in 3" :key="n" class="flex items-center gap-3 py-3">
+                <USkeleton class="size-9 shrink-0 rounded-full" />
+                <div class="flex-1 space-y-1.5">
+                    <USkeleton class="h-3.5 w-1/3" />
+                    <USkeleton class="h-3 w-1/2" />
+                </div>
+                <USkeleton class="h-3.5 w-12 shrink-0" />
+            </div>
+        </div>
         <BaseEmptyState
-            v-if="!loading && items.length === 0"
+            v-else-if="items.length === 0"
             icon="i-lucide-inbox"
             :message="emptyMessage"
         />
