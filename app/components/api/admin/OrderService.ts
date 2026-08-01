@@ -13,12 +13,6 @@ class OrderService extends BaseAPIService {
         return await this.request('/admin/orders', 'GET', params)
     }
 
-    async fetchOrdersCacheable(params: object, etag: string | null): Promise<{ data: any; etag: string | null } | 'not-modified'> {
-        const result = await this.requestCacheable<any>('/admin/orders', params, etag)
-        if (result === 'not-modified') return result
-        return { data: result.data, etag: result.etag }
-    }
-
     async updateDeliveryStatus(uuid: string, deliveryStatus: 'not_delivered' | 'delivered'): Promise<any> {
         return await this.request(`/admin/orders/${uuid}/delivery-status`, 'PATCH', { delivery_status: deliveryStatus })
     }

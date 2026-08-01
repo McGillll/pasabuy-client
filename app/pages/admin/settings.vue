@@ -1,17 +1,37 @@
 <template>
-    <div class="min-h-full max-w-3xl space-y-6" @touchstart="onTabsTouchStart" @touchmove="onTabsTouchMove" @touchend="onTabsTouchEnd">
+    <div class="min-h-full max-w-3xl space-y-6">
         <div>
             <h1 class="text-xl font-semibold text-highlighted">Settings</h1>
             <p class="mt-1 text-sm text-muted">Manage your business information and invoice rules.</p>
         </div>
 
+        <nav class="sticky top-0 z-10 -mx-6 flex gap-2 overflow-x-auto bg-default/90 px-6 py-2 backdrop-blur">
+            <button
+                v-for="section in sections"
+                :key="section.id"
+                type="button"
+                class="shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                :class="activeSection === section.id
+                    ? 'border-primary bg-primary text-inverted'
+                    : 'border-default bg-elevated text-muted hover:text-highlighted'"
+                @click="scrollToSection(section.id)"
+            >
+                {{ section.label }}
+            </button>
+        </nav>
+
         <ClientOnly>
-            <UTabs v-model="activeTab" :items="tabs">
-                <template #business>
-                <div class="overflow-hidden">
-                <div ref="panelEl">
-                    <UCard class="mt-4">
+            <div class="space-y-6">
+                <section :id="sections[0]!.id" class="scroll-mt-16">
+                    <UCard>
                         <BaseForm :state="businessState" :validate="validateBusiness" class="space-y-4" @submit="onSubmitBusiness">
+                            <div class="flex items-center gap-3">
+                                <div class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <UIcon name="i-lucide-store" class="size-4" />
+                                </div>
+                                <h2 class="text-sm font-semibold text-highlighted">Business</h2>
+                            </div>
+
                             <BaseFormField label="Business name" name="business_name" required>
                                 <BaseInput v-model="businessState.business_name" placeholder="My Pasabuy Shop" :disabled="businessLoading" />
                             </BaseFormField>
@@ -27,87 +47,91 @@
                             <BaseButton type="submit" :loading="savingBusiness" :disabled="businessLoading">Save changes</BaseButton>
                         </BaseForm>
                     </UCard>
-                </div>
-                </div>
-                </template>
+                </section>
 
-                <template #invoice>
-                <div class="overflow-hidden">
-                <div ref="panelEl">
-                    <UCard class="mt-4">
-                        <BaseForm :state="invoiceState" :validate="validateInvoice" class="space-y-6" @submit="onSubmitInvoice">
-                            <div>
-                                <h2 class="text-sm font-medium text-highlighted">Markup</h2>
-                                <p class="mt-1 text-sm text-muted">
-                                    Orders above the threshold are charged a percentage markup; orders at or below it are charged a flat fee.
-                                </p>
-                                <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                                    <BaseFormField label="Threshold amount" name="markup_threshold_amount" description="Splits fixed vs percentage markup" required>
-                                        <BaseInput v-model.number="invoiceState.markup_threshold_amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
-                                            <template #leading>
-                                                <span class="text-sm text-dimmed">₱</span>
-                                            </template>
-                                        </BaseInput>
-                                    </BaseFormField>
-                                    <BaseFormField label="Markup percentage" name="markup_percentage" description="Applied above the threshold" required>
-                                        <BaseInput v-model.number="invoiceState.markup_percentage" type="number" inputmode="decimal" min="0" max="100" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
-                                            <template #trailing>
-                                                <span class="text-sm text-dimmed">%</span>
-                                            </template>
-                                        </BaseInput>
-                                    </BaseFormField>
-                                    <BaseFormField label="Fixed markup" name="markup_fixed_amount" description="Applied at or below threshold" required>
-                                        <BaseInput v-model.number="invoiceState.markup_fixed_amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
-                                            <template #leading>
-                                                <span class="text-sm text-dimmed">₱</span>
-                                            </template>
-                                        </BaseInput>
-                                    </BaseFormField>
-                                    <BaseFormField label="Handling fee" name="handling_fee" description="Flat fee added on every order, on top of markup" required>
-                                        <BaseInput v-model.number="invoiceState.handling_fee" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
-                                            <template #leading>
-                                                <span class="text-sm text-dimmed">₱</span>
-                                            </template>
-                                        </BaseInput>
-                                    </BaseFormField>
+                <BaseForm :state="invoiceState" :validate="validateInvoice" class="space-y-6" @submit="onSubmitInvoice">
+                    <section :id="sections[1]!.id" class="scroll-mt-16">
+                        <UCard>
+                            <div class="flex items-center gap-3">
+                                <div class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <UIcon name="i-lucide-percent" class="size-4" />
                                 </div>
+                                <h2 class="text-sm font-semibold text-highlighted">Markup</h2>
                             </div>
+                            <p class="mt-1 text-sm text-muted">
+                                Orders above the threshold are charged a percentage markup; orders at or below it are charged a flat fee.
+                            </p>
+                            <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                <BaseFormField label="Threshold amount" name="markup_threshold_amount" description="Splits fixed vs percentage markup" required>
+                                    <BaseInput v-model.number="invoiceState.markup_threshold_amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
+                                        <template #leading>
+                                            <span class="text-sm text-dimmed">₱</span>
+                                        </template>
+                                    </BaseInput>
+                                </BaseFormField>
+                                <BaseFormField label="Markup percentage" name="markup_percentage" description="Applied above the threshold" required>
+                                    <BaseInput v-model.number="invoiceState.markup_percentage" type="number" inputmode="decimal" min="0" max="100" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
+                                        <template #trailing>
+                                            <span class="text-sm text-dimmed">%</span>
+                                        </template>
+                                    </BaseInput>
+                                </BaseFormField>
+                                <BaseFormField label="Fixed markup" name="markup_fixed_amount" description="Applied at or below threshold" required>
+                                    <BaseInput v-model.number="invoiceState.markup_fixed_amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
+                                        <template #leading>
+                                            <span class="text-sm text-dimmed">₱</span>
+                                        </template>
+                                    </BaseInput>
+                                </BaseFormField>
+                                <BaseFormField label="Handling fee" name="handling_fee" description="Flat fee added on every order, on top of markup" required>
+                                    <BaseInput v-model.number="invoiceState.handling_fee" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
+                                        <template #leading>
+                                            <span class="text-sm text-dimmed">₱</span>
+                                        </template>
+                                    </BaseInput>
+                                </BaseFormField>
+                            </div>
+                        </UCard>
+                    </section>
 
-                            <div class="border-t border-default pt-6">
-                                <div class="flex items-start justify-between gap-4">
+                    <section :id="sections[2]!.id" class="scroll-mt-16">
+                        <UCard :ui="{ root: invoiceState.is_active ? 'ring-1 ring-warning/50 bg-warning/5' : '' }">
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
+                                        <UIcon name="i-lucide-alarm-clock" class="size-4" />
+                                    </div>
                                     <div>
-                                        <h2 class="text-sm font-medium text-highlighted">Overdue interest</h2>
+                                        <h2 class="text-sm font-semibold text-highlighted">Overdue interest</h2>
                                         <p class="mt-1 text-sm text-muted">
                                             Once the due date passes, unpaid balances accrue compounding interest each period.
                                         </p>
                                     </div>
-                                    <BaseSwitch v-model="invoiceState.is_active" label="Apply" class="mt-0.5 shrink-0" :disabled="invoiceLoading" />
                                 </div>
-
-                                <div v-if="invoiceState.is_active" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                                    <BaseFormField label="Interest rate" name="interest_rate" description="Percent compounded per period" required>
-                                        <BaseInput v-model.number="invoiceState.interest_rate" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
-                                            <template #trailing>
-                                                <span class="text-sm text-dimmed">%</span>
-                                            </template>
-                                        </BaseInput>
-                                    </BaseFormField>
-                                    <BaseFormField label="Compounding period" name="interest_period" description="How often interest compounds" required>
-                                        <BaseSelect v-model="invoiceState.interest_period" :items="interestPeriodOptions" value-key="value" :disabled="invoiceLoading" />
-                                    </BaseFormField>
-                                    <BaseFormField label="Interest applies to" name="interest_base" description="What the interest is based on" required>
-                                        <BaseSelect v-model="invoiceState.interest_base" :items="interestBaseOptions" value-key="value" :disabled="invoiceLoading" />
-                                    </BaseFormField>
-                                </div>
+                                <BaseSwitch v-model="invoiceState.is_active" label="Apply" class="mt-0.5 shrink-0" :disabled="invoiceLoading" />
                             </div>
 
-                            <BaseButton type="submit" :loading="savingInvoice" :disabled="invoiceLoading">Save changes</BaseButton>
-                        </BaseForm>
-                    </UCard>
-                </div>
-                </div>
-                </template>
-            </UTabs>
+                            <div v-if="invoiceState.is_active" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                <BaseFormField label="Interest rate" name="interest_rate" description="Percent compounded per period" required>
+                                    <BaseInput v-model.number="invoiceState.interest_rate" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
+                                        <template #trailing>
+                                            <span class="text-sm text-dimmed">%</span>
+                                        </template>
+                                    </BaseInput>
+                                </BaseFormField>
+                                <BaseFormField label="Compounding period" name="interest_period" description="How often interest compounds" required>
+                                    <BaseSelect v-model="invoiceState.interest_period" :items="interestPeriodOptions" value-key="value" :disabled="invoiceLoading" />
+                                </BaseFormField>
+                                <BaseFormField label="Interest applies to" name="interest_base" description="What the interest is based on" required>
+                                    <BaseSelect v-model="invoiceState.interest_base" :items="interestBaseOptions" value-key="value" :disabled="invoiceLoading" />
+                                </BaseFormField>
+                            </div>
+                        </UCard>
+                    </section>
+
+                    <BaseButton type="submit" :loading="savingInvoice" :disabled="invoiceLoading">Save invoice rules</BaseButton>
+                </BaseForm>
+            </div>
 
             <template #fallback>
                 <div class="mt-4 space-y-4">
@@ -120,7 +144,7 @@
 </template>
 
 <script setup lang="ts">
-import type { FormError, FormSubmitEvent, TabsItem } from '@nuxt/ui'
+import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import { settingsService } from '@/components/api/settings/SettingsService'
 import { invoiceSettingService } from '@/components/api/settings/InvoiceSettingService'
 import APIError from '@/components/api/user/APIError'
@@ -131,16 +155,45 @@ useHead({ title: 'Settings' })
 
 const toast = useToast()
 
-const activeTab = ref<'business' | 'invoice'>('business')
-const tabs: TabsItem[] = [
-    { label: 'Business', icon: 'i-lucide-store', value: 'business', slot: 'business' },
-    { label: 'Invoice', icon: 'i-lucide-receipt-text', value: 'invoice', slot: 'invoice' }
+const sections = [
+    { id: 'section-business', label: 'Business' },
+    { id: 'section-markup', label: 'Markup' },
+    { id: 'section-interest', label: 'Overdue interest' }
 ]
+const activeSection = ref(sections[0]!.id)
 
-const { onTouchStart: onTabsTouchStart, onTouchMove: onTabsTouchMove, onTouchEnd: onTabsTouchEnd, panelEl } = useSwipeTabs(
-    activeTab,
-    computed(() => tabs.map((tab) => tab.value as 'business' | 'invoice'))
-)
+function scrollToSection(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+let sectionObserver: IntersectionObserver | null = null
+const intersecting = new Map<string, boolean>()
+
+function attachSectionObserver() {
+    const els = sections.map((section) => document.getElementById(section.id)).filter(Boolean) as HTMLElement[]
+    if (els.length < sections.length) {
+        requestAnimationFrame(attachSectionObserver)
+        return
+    }
+
+    sectionObserver = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => intersecting.set(entry.target.id, entry.isIntersecting))
+            const visibleIds = sections.map((section) => section.id).filter((id) => intersecting.get(id))
+            if (visibleIds.length) activeSection.value = visibleIds[visibleIds.length - 1]!
+        },
+        { rootMargin: '-80px 0px -60% 0px', threshold: 0 }
+    )
+    els.forEach((el) => sectionObserver!.observe(el))
+}
+
+onMounted(() => {
+    attachSectionObserver()
+})
+
+onBeforeUnmount(() => {
+    sectionObserver?.disconnect()
+})
 
 // ---- Business info ----
 

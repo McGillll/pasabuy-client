@@ -22,7 +22,7 @@
                     hint="Orders waiting on confirm or cancel"
                     :count="pendingOrders.length"
                     :items="attentionQueueItems"
-                    view-all-href="/admin/orders"
+                    view-all-href="/admin/schedules"
                     :loading="loading"
                 />
 

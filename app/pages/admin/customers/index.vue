@@ -29,7 +29,7 @@
                                         size="sm"
                                         color="neutral"
                                         variant="ghost"
-                                        trailing-icon="i-lucide-arrow-right"
+                                        trailing-icon="i-lucide-eye"
                                         @click="viewOrders(row.original)"
                                     >
                                         View orders
@@ -46,17 +46,59 @@
                                 </div>
                             </template>
                             <template #list-item="{ item: customer }">
-                                <ListCard :actions="approvedCustomerActions(customer)">
-                                    <template #title>
-                                        <p class="font-medium text-highlighted">{{ customer.first_name }} {{ customer.last_name }}</p>
-                                    </template>
-                                    <template #subtitle>
-                                        {{ customer.email }}
-                                    </template>
-                                    <template #meta>
-                                        <span class="text-muted">{{ customer.contact_number ?? '-' }}</span>
-                                    </template>
-                                </ListCard>
+                                <div>
+                                    <ListCard>
+                                        <template #title>
+                                            <p class="font-medium text-highlighted">{{ customer.first_name }} {{ customer.last_name }}</p>
+                                        </template>
+                                        <template #subtitle>
+                                            {{ customer.email }}
+                                        </template>
+                                        <template #meta>
+                                            <span class="text-muted">{{ customer.contact_number ?? '-' }}</span>
+                                        </template>
+                                        <template #trailing>
+                                            <ListCardButton
+                                                icon="i-lucide-ellipsis-vertical"
+                                                aria-label="Customer actions"
+                                                @click.stop="toggleExpanded(customer.uuid)"
+                                            />
+                                        </template>
+                                    </ListCard>
+
+                                    <Transition
+                                        enter-active-class="transition-all duration-200 ease-out"
+                                        enter-from-class="max-h-0 opacity-0"
+                                        enter-to-class="max-h-32 opacity-100"
+                                        leave-active-class="transition-all duration-150 ease-in"
+                                        leave-from-class="max-h-32 opacity-100"
+                                        leave-to-class="max-h-0 opacity-0"
+                                    >
+                                        <div v-if="expandedCustomerUuid === customer.uuid" class="overflow-hidden">
+                                            <div class="mt-2 flex items-center gap-2 rounded-lg bg-elevated p-2 ring-1 ring-default">
+                                                <BaseButton
+                                                    class="flex-1"
+                                                    color="neutral"
+                                                    variant="soft"
+                                                    icon="i-lucide-eye"
+                                                    @click="viewOrders(customer); expandedCustomerUuid = null"
+                                                >
+                                                    View orders
+                                                </BaseButton>
+                                                <BaseButton
+                                                    class="flex-1"
+                                                    color="error"
+                                                    variant="outline"
+                                                    icon="i-lucide-user-x"
+                                                    :loading="actingOn === customer.uuid"
+                                                    @click="revokeCustomer(customer); expandedCustomerUuid = null"
+                                                >
+                                                    Revoke
+                                                </BaseButton>
+                                            </div>
+                                        </div>
+                                    </Transition>
+                                </div>
                             </template>
                             <template #empty>
                                 <BaseEmptyState icon="i-lucide-users" message="No approved customers found." />
@@ -102,7 +144,7 @@
                                 </div>
                             </template>
                             <template #list-item="{ item: customer }">
-                                <ListCard :actions="pendingCustomerActions(customer)">
+                                <ListCard>
                                     <template #title>
                                         <p class="font-medium text-highlighted">{{ customer.first_name }} {{ customer.last_name }}</p>
                                     </template>
@@ -112,6 +154,17 @@
                                     <template #meta>
                                         <span class="text-muted">{{ customer.contact_number ?? '-' }}</span>
                                         <span class="text-muted">{{ formatDate(customer.created_at) }}</span>
+                                    </template>
+                                    <template #trailing>
+                                        <BaseButton
+                                            size="sm"
+                                            color="success"
+                                            variant="soft"
+                                            :loading="actingOn === customer.uuid"
+                                            @click.stop="approveCustomer(customer)"
+                                        >
+                                            Approve
+                                        </BaseButton>
                                     </template>
                                 </ListCard>
                             </template>
@@ -188,7 +241,7 @@
 <script setup lang="ts">
 import { customerService } from '@/components/api/admin/CustomerService'
 import APIError from '@/components/api/user/APIError'
-import type { DropdownMenuItem, TableColumn, TabsItem } from '@nuxt/ui'
+import type { TableColumn, TabsItem } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
@@ -381,17 +434,10 @@ function revokeCustomer(customer: Customer) {
     })
 }
 
-function approvedCustomerActions(customer: Customer): DropdownMenuItem[] {
-    return [
-        { label: 'View orders', icon: 'i-lucide-arrow-right', onSelect: () => viewOrders(customer) },
-        { label: 'Revoke', icon: 'i-lucide-user-x', color: 'error', onSelect: () => revokeCustomer(customer) }
-    ]
-}
+const expandedCustomerUuid = ref<string | null>(null)
 
-function pendingCustomerActions(customer: Customer): DropdownMenuItem[] {
-    return [
-        { label: 'Approve', icon: 'i-lucide-check', color: 'success', onSelect: () => approveCustomer(customer) }
-    ]
+function toggleExpanded(uuid: string) {
+    expandedCustomerUuid.value = expandedCustomerUuid.value === uuid ? null : uuid
 }
 
 onMounted(() => {
