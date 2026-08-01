@@ -9,21 +9,21 @@
         >
             <template #inline>
                 <div class="hidden sm:flex items-center gap-2">
-                    <BaseDropdown
+                    <BaseSelect
                         v-model="workspace.orderStatusFilter"
                         :items="orderStatusChipOptions"
                         icon="i-lucide-list-filter"
                         class="w-36"
                         :ui="{ base: 'h-11' }"
                     />
-                    <BaseDropdown
+                    <BaseSelect
                         v-model="workspace.orderPaymentStatusFilter"
                         :items="orderPaymentStatusChipOptions"
                         icon="i-lucide-wallet"
                         class="w-40"
                         :ui="{ base: 'h-11' }"
                     />
-                    <BaseDropdown
+                    <BaseSelect
                         v-model="workspace.orderDeliveryStatusFilter"
                         :items="orderDeliveryStatusChipOptions"
                         icon="i-lucide-truck"
@@ -37,15 +37,15 @@
         <USlideover v-model:open="isOrderFiltersOpen" side="bottom" title="Filters">
             <template #body>
                 <div class="space-y-4">
-                    <UFormField label="Status">
+                    <BaseFormField label="Status">
                         <BaseChipGroup v-model="workspace.orderStatusFilter" :items="orderStatusChipOptions" />
-                    </UFormField>
-                    <UFormField label="Payment status">
+                    </BaseFormField>
+                    <BaseFormField label="Payment status">
                         <BaseChipGroup v-model="workspace.orderPaymentStatusFilter" :items="orderPaymentStatusChipOptions" />
-                    </UFormField>
-                    <UFormField label="Delivery status">
+                    </BaseFormField>
+                    <BaseFormField label="Delivery status">
                         <BaseChipGroup v-model="workspace.orderDeliveryStatusFilter" :items="orderDeliveryStatusChipOptions" />
-                    </UFormField>
+                    </BaseFormField>
                 </div>
             </template>
             <template #footer>

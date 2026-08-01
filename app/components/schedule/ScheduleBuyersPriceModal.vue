@@ -37,8 +37,8 @@
                 </div>
                 <div class="space-y-3">
                     <div class="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-                        <UFormField label="Actual price">
-                            <UInput
+                        <BaseFormField label="Actual price">
+                            <BaseInput
                                 v-model.number="workspace.confirmForm.actual_price"
                                 type="number"
                                 inputmode="decimal"
@@ -46,21 +46,19 @@
                                 step="0.01"
                                 placeholder="0.00"
                                 :disabled="workspace.confirmForm.product_status === 'out_of_stock'"
-                                class="w-full"
                             >
                                 <template #leading>
                                     <span class="text-sm text-dimmed">₱</span>
                                 </template>
-                            </UInput>
-                        </UFormField>
-                        <UFormField label="Product status">
-                            <USelect
+                            </BaseInput>
+                        </BaseFormField>
+                        <BaseFormField label="Product status">
+                            <BaseSelect
                                 v-model="workspace.confirmForm.product_status"
                                 :items="productStatusOptions"
                                 value-key="value"
-                                class="w-full"
                             />
-                        </UFormField>
+                        </BaseFormField>
                         <BaseButton size="sm" class="hidden sm:inline-flex" :loading="workspace.confirmForm.saving" @click="workspace.confirmSelectedPrice">
                             Confirm
                         </BaseButton>

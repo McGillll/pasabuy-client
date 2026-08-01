@@ -105,12 +105,11 @@
                         </div>
 
                         <div class="flex items-center gap-2">
-                            <UInput
+                            <BaseInput
                                 v-model="productSearch"
                                 icon="i-lucide-search"
                                 placeholder="Search items…"
                                 class="flex-1"
-                                :ui="{ base: 'h-11' }"
                             />
                             <BaseButton
                                 class="sm:hidden shrink-0"
@@ -127,56 +126,50 @@
                             {{ filteredProducts.length }} item{{ filteredProducts.length === 1 ? '' : 's' }} match
                         </p>
                         <div class="hidden sm:grid grid-cols-4 gap-2">
-                            <USelect
+                            <BaseSelect
                                 v-model="statusFilter"
                                 :items="statusFilterOptions"
                                 value-key="value"
                                 placeholder="Status"
-                                class="w-full h-11"
                             />
-                            <USelect
+                            <BaseSelect
                                 v-model="sortByPrice"
                                 :items="sortByPriceOptions"
                                 value-key="value"
                                 placeholder="Sort by price"
-                                class="w-full h-11"
                             />
-                            <UInput
+                            <BaseInput
                                 v-model.number="priceMin"
                                 type="number"
                                 min="0"
                                 step="0.01"
                                 placeholder="Min price"
-                                class="w-full"
-                                :ui="{ base: 'h-11' }"
                             />
-                            <UInput
+                            <BaseInput
                                 v-model.number="priceMax"
                                 type="number"
                                 min="0"
                                 step="0.01"
                                 placeholder="Max price"
-                                class="w-full"
-                                :ui="{ base: 'h-11' }"
                             />
                         </div>
 
                         <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
                             <template #body>
                                 <div class="space-y-4">
-                                    <UFormField label="Status">
-                                        <USelect v-model="draftStatusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
-                                    </UFormField>
-                                    <UFormField label="Sort by price">
-                                        <USelect v-model="draftSortByPrice" :items="sortByPriceOptions" value-key="value" class="w-full h-11" />
-                                    </UFormField>
+                                    <BaseFormField label="Status">
+                                        <BaseSelect v-model="draftStatusFilter" :items="statusFilterOptions" value-key="value" />
+                                    </BaseFormField>
+                                    <BaseFormField label="Sort by price">
+                                        <BaseSelect v-model="draftSortByPrice" :items="sortByPriceOptions" value-key="value" />
+                                    </BaseFormField>
                                     <div class="grid grid-cols-2 gap-4">
-                                        <UFormField label="Min price">
-                                            <UInput v-model.number="draftPriceMin" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" :ui="{ base: 'h-11' }" />
-                                        </UFormField>
-                                        <UFormField label="Max price">
-                                            <UInput v-model.number="draftPriceMax" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" :ui="{ base: 'h-11' }" />
-                                        </UFormField>
+                                        <BaseFormField label="Min price">
+                                            <BaseInput v-model.number="draftPriceMin" type="number" min="0" step="0.01" placeholder="0.00" />
+                                        </BaseFormField>
+                                        <BaseFormField label="Max price">
+                                            <BaseInput v-model.number="draftPriceMax" type="number" min="0" step="0.01" placeholder="0.00" />
+                                        </BaseFormField>
                                     </div>
                                 </div>
                             </template>

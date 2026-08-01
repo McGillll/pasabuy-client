@@ -20,21 +20,21 @@
                 class="mb-4"
             />
 
-            <UForm
+            <BaseForm
                 :state="state"
                 :validate="validate"
                 class="flex flex-col gap-5"
                 @submit="onSubmit"
             >
-                <UFormField label="New password" name="password" required>
+                <BaseFormField label="New password" name="password" required>
                     <PasswordInput v-model="state.password" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" />
-                </UFormField>
+                </BaseFormField>
 
-                <UFormField label="Confirm password" name="passwordConfirmation" required>
+                <BaseFormField label="Confirm password" name="passwordConfirmation" required>
                     <PasswordInput v-model="state.passwordConfirmation" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" />
-                </UFormField>
+                </BaseFormField>
 
-                <UCheckbox v-model="passwordsVisible" label="Show passwords" size="sm" />
+                <BaseCheckbox v-model="passwordsVisible" label="Show passwords" size="sm" />
 
                 <BaseButton
                     type="submit"
@@ -44,7 +44,7 @@
                 >
                     Reset password
                 </BaseButton>
-            </UForm>
+            </BaseForm>
         </template>
 
         <template #footer>

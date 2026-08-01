@@ -39,12 +39,11 @@
 
         <div class="space-y-3">
             <div class="flex items-center gap-2">
-                <UInput
+                <BaseInput
                     v-model="search"
                     icon="i-lucide-search"
                     placeholder="Search by pasabuy title…"
                     class="flex-1 sm:w-72 sm:flex-none"
-                    :ui="{ base: 'h-11' }"
                 />
                 <BaseButton
                     class="sm:hidden shrink-0"
@@ -59,33 +58,33 @@
             </div>
 
             <div class="hidden sm:grid grid-cols-2 gap-2 lg:grid-cols-5">
-                <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
-                <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full h-11" />
-                <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full h-11" />
-                <UInput v-model="dateFrom" type="date" placeholder="From" class="w-full" :ui="{ base: 'h-11' }" />
-                <UInput v-model="dateTo" type="date" placeholder="To" class="w-full" :ui="{ base: 'h-11' }" />
+                <BaseSelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" />
+                <BaseSelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" />
+                <BaseSelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" />
+                <BaseInput v-model="dateFrom" type="date" placeholder="From" />
+                <BaseInput v-model="dateTo" type="date" placeholder="To" />
             </div>
         </div>
 
         <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
             <template #body>
                 <div class="space-y-4">
-                    <UFormField label="Status">
-                        <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
-                    </UFormField>
-                    <UFormField label="Payment status">
-                        <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full h-11" />
-                    </UFormField>
-                    <UFormField label="Delivery status">
-                        <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full h-11" />
-                    </UFormField>
+                    <BaseFormField label="Status">
+                        <BaseSelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" />
+                    </BaseFormField>
+                    <BaseFormField label="Payment status">
+                        <BaseSelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" />
+                    </BaseFormField>
+                    <BaseFormField label="Delivery status">
+                        <BaseSelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" />
+                    </BaseFormField>
                     <div class="grid grid-cols-2 gap-4">
-                        <UFormField label="From date">
-                            <UInput v-model="dateFrom" type="date" class="w-full" :ui="{ base: 'h-11' }" />
-                        </UFormField>
-                        <UFormField label="To date">
-                            <UInput v-model="dateTo" type="date" class="w-full" :ui="{ base: 'h-11' }" />
-                        </UFormField>
+                        <BaseFormField label="From date">
+                            <BaseInput v-model="dateFrom" type="date" />
+                        </BaseFormField>
+                        <BaseFormField label="To date">
+                            <BaseInput v-model="dateTo" type="date" />
+                        </BaseFormField>
                     </div>
                 </div>
             </template>

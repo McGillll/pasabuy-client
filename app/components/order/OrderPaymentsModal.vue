@@ -47,26 +47,26 @@
 
             <form class="space-y-3 border-t border-default pt-4" @submit.prevent="submitPayment">
                 <div class="grid grid-cols-2 gap-3">
-                    <UFormField label="Amount" required>
-                        <UInput v-model.number="paymentForm.amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" class="w-full">
+                    <BaseFormField label="Amount" required>
+                        <BaseInput v-model.number="paymentForm.amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00">
                             <template #leading>
                                 <span class="text-sm text-dimmed">₱</span>
                             </template>
-                        </UInput>
-                    </UFormField>
-                    <UFormField label="Method" required>
-                        <USelect v-model="paymentForm.method" :items="paymentMethodOptions" value-key="value" class="w-full" />
-                    </UFormField>
+                        </BaseInput>
+                    </BaseFormField>
+                    <BaseFormField label="Method" required>
+                        <BaseSelect v-model="paymentForm.method" :items="paymentMethodOptions" value-key="value" />
+                    </BaseFormField>
                 </div>
-                <UFormField label="Paid on" required>
-                    <UInput v-model="paymentForm.paid_at" type="date" required class="w-full" />
-                </UFormField>
-                <UFormField label="Reference number">
-                    <UInput v-model="paymentForm.reference_number" placeholder="e.g. GCash reference no." class="w-full" />
-                </UFormField>
-                <UFormField label="Notes">
-                    <UTextarea v-model="paymentForm.notes" placeholder="Optional notes about this payment" class="w-full" />
-                </UFormField>
+                <BaseFormField label="Paid on" required>
+                    <BaseInput v-model="paymentForm.paid_at" type="date" required />
+                </BaseFormField>
+                <BaseFormField label="Reference number">
+                    <BaseInput v-model="paymentForm.reference_number" placeholder="e.g. GCash reference no." />
+                </BaseFormField>
+                <BaseFormField label="Notes">
+                    <BaseTextarea v-model="paymentForm.notes" placeholder="Optional notes about this payment" />
+                </BaseFormField>
                 <BaseButton type="submit" block :loading="recordingPayment">Record payment</BaseButton>
             </form>
         </div>

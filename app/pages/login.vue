@@ -9,30 +9,30 @@
             class="mb-4"
         />
 
-        <UForm
+        <BaseForm
             :state="state"
             :validate="validate"
             class="flex flex-col gap-5"
             @submit="onSubmit"
         >
-            <UFormField label="Email" name="email" :error="emailError" required>
-                <UInput
+            <BaseFormField label="Email" name="email" :error="emailError" required>
+                <BaseInput
                     v-model="state.email"
                     type="email"
                     placeholder="you@example.com"
                     icon="i-lucide-mail"
                     autocomplete="email"
                     size="xl"
-                    class="w-full"
+                   
                 />
-            </UFormField>
+            </BaseFormField>
 
-            <UFormField label="Password" name="password" :error="passwordError" required>
+            <BaseFormField label="Password" name="password" :error="passwordError" required>
                 <PasswordInput v-model="state.password" autocomplete="current-password" />
-            </UFormField>
+            </BaseFormField>
 
             <div class="flex items-center justify-between">
-                <UCheckbox v-model="state.rememberMe" label="Remember me" size="lg" />
+                <BaseCheckbox v-model="state.rememberMe" label="Remember me" size="lg" />
                 <NuxtLink to="/forgot-password" class="text-sm text-primary hover:underline">Forgot password?</NuxtLink>
             </div>
 
@@ -44,7 +44,7 @@
             >
                 Sign in
             </BaseButton>
-        </UForm>
+        </BaseForm>
 
         <template #footer>
             <p class="mt-6 text-center text-sm text-dimmed">

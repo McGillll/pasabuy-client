@@ -17,33 +17,33 @@
             </div>
 
             <div class="hidden sm:grid gap-2" :class="brandFilterOptions.length > 2 ? 'grid-cols-5' : 'grid-cols-4'">
-                <BaseDropdown v-if="brandFilterOptions.length > 2" v-model="brandFilter" :items="brandFilterOptions" placeholder="Brand" />
-                <BaseDropdown v-model="statusFilter" :items="statusFilterOptions" placeholder="Status" />
-                <BaseDropdown v-model="sortByPrice" :items="sortByPriceOptions" placeholder="Sort by price" />
-                <UInput v-model.number="priceMin" type="number" min="0" step="0.01" placeholder="Min price" class="w-full" :ui="{ base: 'h-11' }" />
-                <UInput v-model.number="priceMax" type="number" min="0" step="0.01" placeholder="Max price" class="w-full" :ui="{ base: 'h-11' }" />
+                <BaseSelect v-if="brandFilterOptions.length > 2" v-model="brandFilter" :items="brandFilterOptions" placeholder="Brand" />
+                <BaseSelect v-model="statusFilter" :items="statusFilterOptions" placeholder="Status" />
+                <BaseSelect v-model="sortByPrice" :items="sortByPriceOptions" placeholder="Sort by price" />
+                <BaseInput v-model.number="priceMin" type="number" min="0" step="0.01" placeholder="0" />
+                <BaseInput v-model.number="priceMax" type="number" min="0" step="0.01" placeholder="1000" />
             </div>
         </EntityFilterBar>
 
         <USlideover v-model:open="isMobileFiltersOpen" side="bottom" title="Filters">
             <template #body>
                 <div class="space-y-4">
-                    <UFormField v-if="brandFilterOptions.length > 2" label="Brand">
-                        <BaseDropdown v-model="brandFilter" :items="brandFilterOptions" />
-                    </UFormField>
-                    <UFormField label="Status">
-                        <BaseDropdown v-model="statusFilter" :items="statusFilterOptions" />
-                    </UFormField>
-                    <UFormField label="Sort by price">
-                        <BaseDropdown v-model="sortByPrice" :items="sortByPriceOptions" />
-                    </UFormField>
+                    <BaseFormField v-if="brandFilterOptions.length > 2" label="Brand">
+                        <BaseSelect v-model="brandFilter" :items="brandFilterOptions" />
+                    </BaseFormField>
+                    <BaseFormField label="Status">
+                        <BaseSelect v-model="statusFilter" :items="statusFilterOptions" />
+                    </BaseFormField>
+                    <BaseFormField label="Sort by price">
+                        <BaseSelect v-model="sortByPrice" :items="sortByPriceOptions" />
+                    </BaseFormField>
                     <div class="grid grid-cols-2 gap-4">
-                        <UFormField label="Min price">
-                            <UInput v-model.number="priceMin" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" :ui="{ base: 'h-11' }" />
-                        </UFormField>
-                        <UFormField label="Max price">
-                            <UInput v-model.number="priceMax" type="number" min="0" step="0.01" placeholder="0.00" class="w-full" :ui="{ base: 'h-11' }" />
-                        </UFormField>
+                        <BaseFormField label="Min price">
+                            <BaseInput v-model.number="priceMin" type="number" min="0" step="0.01" placeholder="0.00" />
+                        </BaseFormField>
+                        <BaseFormField label="Max price">
+                            <BaseInput v-model.number="priceMax" type="number" min="0" step="0.01" placeholder="0.00" />
+                        </BaseFormField>
                     </div>
                 </div>
             </template>
@@ -134,8 +134,8 @@
             <form id="product-form" class="space-y-6" @submit.prevent="onSave">
                 <div class="flex flex-col sm:flex-row gap-6">
                     <div class="sm:w-48 shrink-0 space-y-4">
-                        <UFormField label="Image">
-                            <UFileUpload v-model="form.image" accept="image/*">
+                        <BaseFormField label="Image">
+                            <BaseFileUpload v-model="form.image" accept="image/*">
                                 <template #default="{ open }">
                                     <div class="flex items-center gap-3 sm:flex-col sm:items-stretch">
                                         <div class="relative shrink-0 size-24 sm:size-auto sm:w-full sm:aspect-square rounded-lg overflow-hidden ring-1 ring-default bg-elevated cursor-pointer" @click="open()">
@@ -157,35 +157,35 @@
                                         <BaseButton :label="imagePreviewUrl ? 'Change photo' : 'Add photo'" color="neutral" variant="outline" size="sm" @click="open()" />
                                     </div>
                                 </template>
-                            </UFileUpload>
-                        </UFormField>
-                        <UFormField label="Active">
-                            <USwitch v-model="form.is_active" label="Product is active" />
-                        </UFormField>
+                            </BaseFileUpload>
+                        </BaseFormField>
+                        <BaseFormField label="Active">
+                            <BaseSwitch v-model="form.is_active" label="Product is active" />
+                        </BaseFormField>
                     </div>
                     <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <UFormField label="Name" required>
-                            <UInput v-model="form.name" placeholder="Turbo 9inch fan" class="w-full" />
-                        </UFormField>
-                        <UFormField label="Default price" required>
-                            <UInput v-model.number="form.default_price" type="number" min="0" step="0.01" placeholder="0.00" class="w-full">
+                        <BaseFormField label="Name" required>
+                            <BaseInput v-model="form.name" placeholder="Turbo 9inch fan" />
+                        </BaseFormField>
+                        <BaseFormField label="Default price" required>
+                            <BaseInput v-model.number="form.default_price" type="number" min="0" step="0.01" placeholder="0.00">
                                 <template #leading>
                                     <span class="text-sm text-dimmed">₱</span>
                                 </template>
-                            </UInput>
-                        </UFormField>
-                        <UFormField label="Category">
-                            <BaseDropdown v-model="form.category_id" :items="categoryOptions" />
-                        </UFormField>
-                        <UFormField label="Brand">
-                            <BaseDropdown v-model="form.brand_id" :items="brandOptions" />
-                        </UFormField>
-                        <UFormField label="Default product status">
-                            <BaseDropdown v-model="form.default_product_status" :items="productStatusOptions" />
-                        </UFormField>
-                        <UFormField label="Description" class="sm:col-span-2">
-                            <UTextarea v-model="form.description" placeholder="Short product description" class="w-full" :rows="3" />
-                        </UFormField>
+                            </BaseInput>
+                        </BaseFormField>
+                        <BaseFormField label="Category">
+                            <BaseSelect v-model="form.category_id" :items="categoryOptions" />
+                        </BaseFormField>
+                        <BaseFormField label="Brand">
+                            <BaseSelect v-model="form.brand_id" :items="brandOptions" />
+                        </BaseFormField>
+                        <BaseFormField label="Default product status">
+                            <BaseSelect v-model="form.default_product_status" :items="productStatusOptions" />
+                        </BaseFormField>
+                        <BaseFormField label="Description" class="sm:col-span-2">
+                            <BaseTextarea v-model="form.description" placeholder="Short product description" />
+                        </BaseFormField>
                     </div>
                 </div>
             </form>

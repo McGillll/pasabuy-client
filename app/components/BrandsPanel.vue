@@ -62,16 +62,16 @@
                     <div v-else class="flex items-center justify-center size-14 shrink-0 rounded-lg bg-elevated text-dimmed">
                         <UIcon name="i-lucide-tag" class="size-5" />
                     </div>
-                    <UFormField label="Logo URL" class="flex-1" hint="Optional">
-                        <UInput v-model="form.logo_url" placeholder="https://example.com/logo.png" class="w-full" @change="logoPreviewFailed = false" />
-                    </UFormField>
+                    <BaseFormField label="Logo URL" class="flex-1" hint="Optional">
+                        <BaseInput v-model="form.logo_url" placeholder="https://example.com/logo.png" @change="logoPreviewFailed = false" />
+                    </BaseFormField>
                 </div>
-                <UFormField label="Name" required>
-                    <UInput v-model="form.name" placeholder="Nike" class="w-full" />
-                </UFormField>
-                <UFormField label="Active">
-                    <UCheckbox v-model="form.is_active" label="Brand is active" />
-                </UFormField>
+                <BaseFormField label="Name" required>
+                    <BaseInput v-model="form.name" placeholder="Nike" />
+                </BaseFormField>
+                <BaseFormField label="Active">
+                    <BaseCheckbox v-model="form.is_active" label="Brand is active" />
+                </BaseFormField>
             </form>
         </BaseModal>
 

@@ -19,23 +19,23 @@
                 class="mb-4"
             />
 
-            <UForm
+            <BaseForm
                 :state="state"
                 :validate="validate"
                 class="flex flex-col gap-5"
                 @submit="onSubmit"
             >
-                <UFormField label="Email" name="email" required>
-                    <UInput
+                <BaseFormField label="Email" name="email" required>
+                    <BaseInput
                         v-model="state.email"
                         type="email"
                         placeholder="you@example.com"
                         icon="i-lucide-mail"
                         autocomplete="email"
                         size="xl"
-                        class="w-full"
+                       
                     />
-                </UFormField>
+                </BaseFormField>
 
                 <BaseButton
                     type="submit"
@@ -45,7 +45,7 @@
                 >
                     Send reset link
                 </BaseButton>
-            </UForm>
+            </BaseForm>
         </template>
 
         <template #footer>

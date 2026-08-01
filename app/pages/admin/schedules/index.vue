@@ -15,9 +15,9 @@
             @filter-click="isFiltersOpen = true"
         >
             <div class="hidden sm:grid grid-cols-3 gap-2">
-                <BaseDropdown v-model="monthFilter" :items="monthFilterOptions" placeholder="All months" />
-                <BaseDropdown v-model="yearFilter" :items="yearFilterOptions" placeholder="All years" />
-                <BaseDropdown v-model="statusFilter" :items="statusFilterOptions" placeholder="All statuses" />
+                <BaseSelect v-model="monthFilter" :items="monthFilterOptions" placeholder="All months" />
+                <BaseSelect v-model="yearFilter" :items="yearFilterOptions" placeholder="All years" />
+                <BaseSelect v-model="statusFilter" :items="statusFilterOptions" placeholder="All statuses" />
             </div>
         </EntityFilterBar>
 
@@ -25,16 +25,16 @@
             <template #body>
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
-                        <UFormField label="Month">
-                            <USelect v-model="monthFilter" :items="monthFilterOptions" value-key="value" placeholder="All months" class="w-full h-11" />
-                        </UFormField>
-                        <UFormField label="Year">
-                            <USelect v-model="yearFilter" :items="yearFilterOptions" value-key="value" placeholder="All years" class="w-full h-11" />
-                        </UFormField>
+                        <BaseFormField label="Month">
+                            <BaseSelect v-model="monthFilter" :items="monthFilterOptions" value-key="value" placeholder="All months" />
+                        </BaseFormField>
+                        <BaseFormField label="Year">
+                            <BaseSelect v-model="yearFilter" :items="yearFilterOptions" value-key="value" placeholder="All years" />
+                        </BaseFormField>
                     </div>
-                    <UFormField label="Status">
-                        <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" placeholder="All statuses" class="w-full h-11" />
-                    </UFormField>
+                    <BaseFormField label="Status">
+                        <BaseSelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" placeholder="All statuses" />
+                    </BaseFormField>
                 </div>
             </template>
             <template #footer>

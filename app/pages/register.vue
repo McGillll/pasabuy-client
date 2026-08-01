@@ -43,36 +43,36 @@
                 class="mb-4"
             />
 
-            <UForm :state="state" :validate="validate" class="flex flex-col gap-5" @submit="onSubmit">
+            <BaseForm :state="state" :validate="validate" class="flex flex-col gap-5" @submit="onSubmit">
                 <div v-if="currentStep === 1" class="flex flex-col gap-5">
                     <div class="grid grid-cols-2 gap-3">
-                        <UFormField label="First name" name="first_name" required>
-                            <UInput v-model="state.first_name" placeholder="Jane" icon="i-lucide-user" size="xl" class="w-full" />
-                        </UFormField>
-                        <UFormField label="Last name" name="last_name" required>
-                            <UInput v-model="state.last_name" placeholder="Dela Cruz" icon="i-lucide-user" size="xl" class="w-full" />
-                        </UFormField>
+                        <BaseFormField label="First name" name="first_name" required>
+                            <BaseInput v-model="state.first_name" placeholder="Jane" icon="i-lucide-user" size="xl" />
+                        </BaseFormField>
+                        <BaseFormField label="Last name" name="last_name" required>
+                            <BaseInput v-model="state.last_name" placeholder="Dela Cruz" icon="i-lucide-user" size="xl" />
+                        </BaseFormField>
                     </div>
 
-                    <UFormField label="Email" name="email" required>
-                        <UInput
+                    <BaseFormField label="Email" name="email" required>
+                        <BaseInput
                             v-model="state.email"
                             type="email"
                             placeholder="you@example.com"
                             icon="i-lucide-mail"
                             autocomplete="email"
                             size="xl"
-                            class="w-full"
+                           
                         />
-                    </UFormField>
+                    </BaseFormField>
 
-                    <UFormField label="Contact number" name="contact_number">
-                        <UInput v-model="state.contact_number" placeholder="09171234567" icon="i-lucide-phone" size="xl" class="w-full" />
-                    </UFormField>
+                    <BaseFormField label="Contact number" name="contact_number">
+                        <BaseInput v-model="state.contact_number" placeholder="09171234567" icon="i-lucide-phone" size="xl" />
+                    </BaseFormField>
 
-                    <UFormField label="Messenger name" name="messenger_name">
-                        <UInput v-model="state.messenger_name" placeholder="Jane Dela Cruz" icon="i-lucide-message-circle" size="xl" class="w-full" />
-                    </UFormField>
+                    <BaseFormField label="Messenger name" name="messenger_name">
+                        <BaseInput v-model="state.messenger_name" placeholder="Jane Dela Cruz" icon="i-lucide-message-circle" size="xl" />
+                    </BaseFormField>
 
                     <BaseButton type="button" block size="xl" trailing-icon="i-lucide-arrow-right" @click="goNext">
                         Next
@@ -80,15 +80,15 @@
                 </div>
 
                 <div v-else-if="currentStep === 2" class="flex flex-col gap-5">
-                    <UFormField label="Password" name="password" required>
+                    <BaseFormField label="Password" name="password" required>
                         <PasswordInput v-model="state.password" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" />
-                    </UFormField>
+                    </BaseFormField>
 
-                    <UFormField label="Confirm password" name="password_confirmation" required>
+                    <BaseFormField label="Confirm password" name="password_confirmation" required>
                         <PasswordInput v-model="state.password_confirmation" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" />
-                    </UFormField>
+                    </BaseFormField>
 
-                    <UCheckbox v-model="passwordsVisible" label="Show passwords" size="sm" />
+                    <BaseCheckbox v-model="passwordsVisible" label="Show passwords" size="sm" />
 
                     <div class="flex gap-3">
                         <BaseButton type="button" color="neutral" variant="subtle" size="xl" leading-icon="i-lucide-arrow-left" class="flex-1" @click="goBackStep">
@@ -133,8 +133,8 @@
                         </BaseButton>
                     </div>
 
-                    <UFormField name="terms_accepted">
-                        <UCheckbox
+                    <BaseFormField name="terms_accepted">
+                        <BaseCheckbox
                             :model-value="state.terms_accepted"
                             size="sm"
                             @update:model-value="onTermsCheckboxChange"
@@ -147,8 +147,8 @@
                                     <NuxtLink :to="{ path: '/privacy', query: { from: 'register' } }" class="text-primary hover:underline" @click.stop>Privacy Policy</NuxtLink>
                                 </span>
                             </template>
-                        </UCheckbox>
-                    </UFormField>
+                        </BaseCheckbox>
+                    </BaseFormField>
 
                     <div class="flex gap-3">
                         <BaseButton type="button" color="neutral" variant="subtle" size="xl" leading-icon="i-lucide-arrow-left" class="flex-1" @click="goBackStep">
@@ -159,7 +159,7 @@
                         </BaseButton>
                     </div>
                 </div>
-            </UForm>
+            </BaseForm>
         </template>
 
         <template #footer>

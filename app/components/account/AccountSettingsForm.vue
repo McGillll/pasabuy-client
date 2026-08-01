@@ -5,20 +5,20 @@
                 <h2 class="font-medium text-highlighted">Profile</h2>
             </template>
 
-            <UForm :state="profileState" :validate="validateProfile" class="space-y-4" @submit="onSubmitProfile">
+            <BaseForm :state="profileState" :validate="validateProfile" class="space-y-4" @submit="onSubmitProfile">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <UFormField label="First name" name="first_name" required>
-                        <UInput v-model="profileState.first_name" placeholder="Jane" class="w-full" />
-                    </UFormField>
-                    <UFormField label="Last name" name="last_name" required>
-                        <UInput v-model="profileState.last_name" placeholder="Dela Cruz" class="w-full" />
-                    </UFormField>
+                    <BaseFormField label="First name" name="first_name" required>
+                        <BaseInput v-model="profileState.first_name" placeholder="Jane" />
+                    </BaseFormField>
+                    <BaseFormField label="Last name" name="last_name" required>
+                        <BaseInput v-model="profileState.last_name" placeholder="Dela Cruz" />
+                    </BaseFormField>
                 </div>
-                <UFormField label="Email" name="email" required>
-                    <UInput v-model="profileState.email" type="email" placeholder="you@example.com" icon="i-lucide-mail" class="w-full" />
-                </UFormField>
+                <BaseFormField label="Email" name="email" required>
+                    <BaseInput v-model="profileState.email" type="email" placeholder="you@example.com" icon="i-lucide-mail" />
+                </BaseFormField>
                 <BaseButton type="submit" :loading="savingProfile">Save changes</BaseButton>
-            </UForm>
+            </BaseForm>
         </UCard>
 
         <UCard>
@@ -26,18 +26,18 @@
                 <h2 class="font-medium text-highlighted">Change password</h2>
             </template>
 
-            <UForm :state="passwordState" :validate="validatePassword" class="space-y-4" @submit="onSubmitPassword">
-                <UFormField label="Current password" name="current_password" required>
+            <BaseForm :state="passwordState" :validate="validatePassword" class="space-y-4" @submit="onSubmitPassword">
+                <BaseFormField label="Current password" name="current_password" required>
                     <PasswordInput v-model="passwordState.current_password" autocomplete="current-password" />
-                </UFormField>
-                <UFormField label="New password" name="password" required>
+                </BaseFormField>
+                <BaseFormField label="New password" name="password" required>
                     <PasswordInput v-model="passwordState.password" autocomplete="new-password" />
-                </UFormField>
-                <UFormField label="Confirm new password" name="password_confirmation" required>
+                </BaseFormField>
+                <BaseFormField label="Confirm new password" name="password_confirmation" required>
                     <PasswordInput v-model="passwordState.password_confirmation" autocomplete="new-password" />
-                </UFormField>
+                </BaseFormField>
                 <BaseButton type="submit" :loading="savingPassword">Update password</BaseButton>
-            </UForm>
+            </BaseForm>
         </UCard>
     </div>
 </template>

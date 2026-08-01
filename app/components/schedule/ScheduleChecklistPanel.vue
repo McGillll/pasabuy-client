@@ -50,7 +50,7 @@
             @select="(_event: Event, row: { original: ChecklistItem }) => onRowClick(row.original)"
         >
             <template #is_checked-cell="{ row }">
-                <UCheckbox
+                <BaseCheckbox
                     :model-value="row.original.is_checked"
                     :disabled="!row.original.product_uuid || workspace.togglingUuid === row.original.product_uuid"
                 />
@@ -77,7 +77,7 @@
                     @click="onRowClick(item)"
                 >
                     <template #leading>
-                        <UCheckbox
+                        <BaseCheckbox
                             :model-value="item.is_checked"
                             :disabled="!item.product_uuid || workspace.togglingUuid === item.product_uuid"
                             class="pointer-events-none"
@@ -123,8 +123,8 @@
         description="Confirm price & stock before checking off"
     >
         <div class="space-y-4">
-            <UFormField label="Actual price">
-                <UInput
+            <BaseFormField label="Actual price">
+                <BaseInput
                     v-model.number="confirmForm.actual_price"
                     type="number"
                     inputmode="decimal"
@@ -132,13 +132,12 @@
                     step="0.01"
                     placeholder="0.00"
                     :disabled="confirmForm.product_status === 'out_of_stock'"
-                    class="w-full"
                 >
                     <template #leading>
                         <span class="text-sm text-dimmed">₱</span>
                     </template>
-                </UInput>
-            </UFormField>
+                </BaseInput>
+            </BaseFormField>
 
             <div class="grid grid-cols-3 gap-2">
                 <button

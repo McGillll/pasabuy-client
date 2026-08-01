@@ -98,7 +98,7 @@
             </div>
 
             <div v-if="workspace.canEditOrderItems" class="flex items-center gap-2">
-                <USelectMenu
+                <BaseSelectMenu
                     v-model="workspace.itemToAdd"
                     :items="workspace.addableProductOptions"
                     :loading="workspace.loadingAllProducts"

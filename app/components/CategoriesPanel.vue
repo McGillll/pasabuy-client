@@ -39,15 +39,15 @@
             :loading="saving"
         >
             <form id="category-form" class="space-y-4" @submit.prevent="onSave">
-                <UFormField label="Name" required>
-                    <UInput v-model="form.name" placeholder="Appliances" class="w-full" />
-                </UFormField>
-                <UFormField label="Description">
-                    <UTextarea v-model="form.description" placeholder="Short category description" class="w-full" />
-                </UFormField>
-                <UFormField label="Active">
-                    <UCheckbox v-model="form.is_active" label="Category is active" />
-                </UFormField>
+                <BaseFormField label="Name" required>
+                    <BaseInput v-model="form.name" placeholder="Appliances" />
+                </BaseFormField>
+                <BaseFormField label="Description">
+                    <BaseTextarea v-model="form.description" placeholder="Short category description" />
+                </BaseFormField>
+                <BaseFormField label="Active">
+                    <BaseCheckbox v-model="form.is_active" label="Category is active" />
+                </BaseFormField>
             </form>
         </BaseModal>
 

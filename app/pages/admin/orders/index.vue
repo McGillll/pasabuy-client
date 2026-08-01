@@ -22,28 +22,28 @@
             </div>
 
             <div class="hidden sm:grid grid-cols-4 gap-2">
-                <USelect v-model="scheduleFilter" :items="scheduleFilterOptions" value-key="value" class="w-full h-11" />
-                <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
-                <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full h-11" />
-                <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full h-11" />
+                <BaseSelect v-model="scheduleFilter" :items="scheduleFilterOptions" value-key="value" />
+                <BaseSelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" />
+                <BaseSelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" />
+                <BaseSelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" />
             </div>
         </div>
 
         <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
             <template #body>
                 <div class="space-y-4">
-                    <UFormField label="Schedule">
-                        <USelect v-model="scheduleFilter" :items="scheduleFilterOptions" value-key="value" class="w-full h-11" />
-                    </UFormField>
-                    <UFormField label="Status">
-                        <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
-                    </UFormField>
-                    <UFormField label="Payment status">
-                        <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full h-11" />
-                    </UFormField>
-                    <UFormField label="Delivery status">
-                        <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full h-11" />
-                    </UFormField>
+                    <BaseFormField label="Schedule">
+                        <BaseSelect v-model="scheduleFilter" :items="scheduleFilterOptions" value-key="value" />
+                    </BaseFormField>
+                    <BaseFormField label="Status">
+                        <BaseSelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" />
+                    </BaseFormField>
+                    <BaseFormField label="Payment status">
+                        <BaseSelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" />
+                    </BaseFormField>
+                    <BaseFormField label="Delivery status">
+                        <BaseSelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" />
+                    </BaseFormField>
                 </div>
             </template>
             <template #footer>

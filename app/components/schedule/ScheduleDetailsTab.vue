@@ -26,15 +26,15 @@
 
             <template v-if="!workspace.isLocked">
                 <form class="space-y-4" @submit.prevent="workspace.saveDetails">
-                    <UFormField label="Title" required>
-                        <UInput v-model="workspace.detailsForm.title" placeholder="July grocery run" class="w-full" />
-                    </UFormField>
-                    <UFormField label="Description">
-                        <UTextarea v-model="workspace.detailsForm.description" placeholder="Optional notes for this pasabuy" class="w-full" />
-                    </UFormField>
-                    <UFormField label="Pasabuy date" hint="The date you'll go to the store; ordering closes once this date arrives" required>
-                        <UInput v-model="workspace.detailsForm.pasabuyScheduleDate" type="date" required class="w-full" />
-                    </UFormField>
+                    <BaseFormField label="Title" required>
+                        <BaseInput v-model="workspace.detailsForm.title" placeholder="July grocery run" />
+                    </BaseFormField>
+                    <BaseFormField label="Description">
+                        <BaseTextarea v-model="workspace.detailsForm.description" placeholder="Optional notes for this pasabuy" />
+                    </BaseFormField>
+                    <BaseFormField label="Pasabuy date" hint="The date you'll go to the store; ordering closes once this date arrives" required>
+                        <BaseInput v-model="workspace.detailsForm.pasabuyScheduleDate" type="date" required />
+                    </BaseFormField>
                     <BaseButton type="submit" :loading="workspace.savingDetails">
                         Save details
                     </BaseButton>
@@ -71,15 +71,15 @@
                 </button>
 
                 <form v-if="isFormExpanded" class="mt-4 space-y-4 border-t border-default pt-4" @submit.prevent="workspace.saveDetails">
-                    <UFormField label="Title" required>
-                        <UInput v-model="workspace.detailsForm.title" disabled class="w-full" />
-                    </UFormField>
-                    <UFormField label="Description">
-                        <UTextarea v-model="workspace.detailsForm.description" disabled class="w-full" />
-                    </UFormField>
-                    <UFormField label="Pasabuy date" hint="The date you'll go to the store; ordering closes once this date arrives" required>
-                        <UInput v-model="workspace.detailsForm.pasabuyScheduleDate" type="date" disabled class="w-full" />
-                    </UFormField>
+                    <BaseFormField label="Title" required>
+                        <BaseInput v-model="workspace.detailsForm.title" disabled />
+                    </BaseFormField>
+                    <BaseFormField label="Description">
+                        <BaseTextarea v-model="workspace.detailsForm.description" disabled />
+                    </BaseFormField>
+                    <BaseFormField label="Pasabuy date" hint="The date you'll go to the store; ordering closes once this date arrives" required>
+                        <BaseInput v-model="workspace.detailsForm.pasabuyScheduleDate" type="date" disabled />
+                    </BaseFormField>
                     <BaseButton type="submit" disabled>
                         Save details
                     </BaseButton>

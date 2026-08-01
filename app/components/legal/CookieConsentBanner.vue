@@ -31,14 +31,14 @@
                             <p class="text-sm font-medium text-highlighted">Essential</p>
                             <p class="text-xs text-dimmed">Required to keep you signed in. Always on.</p>
                         </div>
-                        <USwitch :model-value="true" disabled />
+                        <BaseSwitch :model-value="true" disabled />
                     </div>
                     <div class="flex items-center justify-between gap-3">
                         <div>
                             <p class="text-sm font-medium text-highlighted">Analytics</p>
                             <p class="text-xs text-dimmed">Helps us understand usage. Optional.</p>
                         </div>
-                        <USwitch v-model="analyticsEnabled" />
+                        <BaseSwitch v-model="analyticsEnabled" />
                     </div>
                 </div>
 
