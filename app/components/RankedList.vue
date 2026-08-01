@@ -36,33 +36,42 @@
             @update:model-value="(value) => emit('update:activeTab', value)"
         />
 
-        <div v-if="loading" class="space-y-3">
-            <div v-for="n in 5" :key="n" class="flex items-center gap-3 py-1">
-                <USkeleton class="h-3 w-4" />
-                <div class="flex-1 space-y-1.5">
-                    <USkeleton class="h-3.5 w-2/3" />
-                    <USkeleton class="h-1.5 w-full rounded-full" />
+        <Transition
+            enter-active-class="transition-opacity duration-200"
+            enter-from-class="opacity-0"
+            leave-active-class="transition-opacity duration-150"
+            leave-to-class="opacity-0"
+            mode="out-in"
+        >
+            <div v-if="loading" class="space-y-3">
+                <div v-for="n in 5" :key="n" class="flex items-center gap-3 py-1">
+                    <USkeleton class="h-3 w-4" />
+                    <div class="flex-1 space-y-1.5">
+                        <USkeleton class="h-3.5 w-2/3" />
+                        <USkeleton class="h-1.5 w-full rounded-full" />
+                    </div>
+                    <USkeleton class="h-3.5 w-10 shrink-0" />
                 </div>
-                <USkeleton class="h-3.5 w-10 shrink-0" />
             </div>
-        </div>
-        <BaseEmptyState
-            v-else-if="items.length === 0"
-            :icon="emptyIcon"
-            :message="emptyMessage"
-            :description="emptyDescription"
-        />
-        <div v-else>
-            <RankedRow
-                v-for="item in items"
-                :key="item.productId"
-                :rank="item.rank"
-                :name="item.name"
-                :progress-pct="item.progressPct"
-                :qty="item.qty"
-                :unit="item.unit"
+            <BaseEmptyState
+                v-else-if="items.length === 0"
+                :key="'empty-' + (activeTab ?? '')"
+                :icon="emptyIcon"
+                :message="emptyMessage"
+                :description="emptyDescription"
             />
-        </div>
+            <div v-else :key="'list-' + (activeTab ?? '')">
+                <RankedRow
+                    v-for="item in items"
+                    :key="item.productId"
+                    :rank="item.rank"
+                    :name="item.name"
+                    :progress-pct="item.progressPct"
+                    :qty="item.qty"
+                    :unit="item.unit"
+                />
+            </div>
+        </Transition>
     </BaseCard>
 </template>
 

@@ -65,6 +65,7 @@ import APIError from '@/components/api/user/APIError'
 
 definePageMeta({
     layout: false,
+    middleware: 'guest',
 })
 
 useHead({ title: 'Reset Password' })

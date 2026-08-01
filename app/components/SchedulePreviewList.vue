@@ -9,39 +9,47 @@
             </div>
         </template>
 
-        <div v-if="loading" class="divide-y divide-default">
-            <div v-for="n in 3" :key="n" class="flex flex-col gap-1.5 py-3">
-                <div class="flex items-center justify-between gap-3">
-                    <div class="flex min-w-0 items-center gap-2">
-                        <USkeleton class="size-8 shrink-0 rounded-lg" />
-                        <USkeleton class="h-3.5 w-32" />
+        <Transition
+            enter-active-class="transition-opacity duration-200"
+            enter-from-class="opacity-0"
+            leave-active-class="transition-opacity duration-150"
+            leave-to-class="opacity-0"
+            mode="out-in"
+        >
+            <div v-if="loading" class="divide-y divide-default">
+                <div v-for="n in 3" :key="n" class="flex flex-col gap-1.5 py-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex min-w-0 items-center gap-2">
+                            <USkeleton class="size-8 shrink-0 rounded-lg" />
+                            <USkeleton class="h-3.5 w-32" />
+                        </div>
+                        <USkeleton class="h-5 w-14 rounded-full" />
                     </div>
-                    <USkeleton class="h-5 w-14 rounded-full" />
                 </div>
             </div>
-        </div>
 
-        <BaseEmptyState
-            v-else-if="items.length === 0"
-            icon="i-lucide-calendar-x"
-            :message="emptyMessage"
-        />
-
-        <div v-else>
-            <ScheduleRow
-                v-for="item in items"
-                :key="item.uuid"
-                :title="item.title"
-                :status="item.status"
-                :status-color="item.statusColor"
-                :status-label="item.statusLabel"
-                :href="item.href"
-                :closing-soon="item.closingSoon"
-                :fill-pct="item.fillPct"
-                :fill-label="item.fillLabel"
-                :note="item.note"
+            <BaseEmptyState
+                v-else-if="items.length === 0"
+                icon="i-lucide-calendar-x"
+                :message="emptyMessage"
             />
-        </div>
+
+            <div v-else>
+                <ScheduleRow
+                    v-for="item in items"
+                    :key="item.uuid"
+                    :title="item.title"
+                    :status="item.status"
+                    :status-color="item.statusColor"
+                    :status-label="item.statusLabel"
+                    :href="item.href"
+                    :closing-soon="item.closingSoon"
+                    :fill-pct="item.fillPct"
+                    :fill-label="item.fillLabel"
+                    :note="item.note"
+                />
+            </div>
+        </Transition>
     </BaseCard>
 </template>
 

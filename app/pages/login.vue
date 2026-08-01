@@ -23,7 +23,6 @@
                     icon="i-lucide-mail"
                     autocomplete="email"
                     size="xl"
-                   
                 />
             </BaseFormField>
 
@@ -31,7 +30,7 @@
                 <PasswordInput v-model="state.password" autocomplete="current-password" />
             </BaseFormField>
 
-            <div class="flex items-center justify-between">
+            <div class="flex flex-wrap items-center justify-between gap-2">
                 <BaseCheckbox v-model="state.rememberMe" label="Remember me" size="lg" />
                 <NuxtLink to="/forgot-password" class="text-sm text-primary hover:underline">Forgot password?</NuxtLink>
             </div>

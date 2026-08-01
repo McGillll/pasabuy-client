@@ -33,7 +33,6 @@
                         icon="i-lucide-mail"
                         autocomplete="email"
                         size="xl"
-                       
                     />
                 </BaseFormField>
 
@@ -66,6 +65,7 @@ import APIError from '@/components/api/user/APIError'
 
 definePageMeta({
     layout: false,
+    middleware: 'guest',
 })
 
 useHead({ title: 'Forgot Password' })

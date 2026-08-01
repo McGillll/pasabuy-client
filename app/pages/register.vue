@@ -62,7 +62,6 @@
                             icon="i-lucide-mail"
                             autocomplete="email"
                             size="xl"
-                           
                         />
                     </BaseFormField>
 
@@ -168,6 +167,10 @@
                 Already have an account?
                 <NuxtLink :to="loginLink" class="text-primary hover:underline">Sign in</NuxtLink>
             </p>
+
+            <p class="mt-4 text-center text-xs text-dimmed">
+                &copy; {{ currentYear }} Pasabuy. All rights reserved.
+            </p>
         </template>
     </AuthPageShell>
 </template>
@@ -180,10 +183,12 @@ import type { RegisterFormState } from '@/composables/useRegisterFormDraft'
 
 definePageMeta({
     layout: false,
+    middleware: 'guest',
 })
 
 useHead({ title: 'Create Account' })
 
+const currentYear = new Date().getFullYear()
 const route = useRoute()
 
 const loginLink = computed(() => {

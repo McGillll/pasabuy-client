@@ -1,22 +1,30 @@
 <template>
     <BaseCard>
-        <div v-if="loading" class="flex items-center gap-3">
-            <USkeleton class="size-10 shrink-0 rounded-lg" />
-            <div class="flex-1 space-y-1.5">
-                <USkeleton class="h-3 w-2/3" />
-                <USkeleton class="h-6 w-1/2" />
+        <Transition
+            enter-active-class="transition-opacity duration-200"
+            enter-from-class="opacity-0"
+            leave-active-class="transition-opacity duration-150"
+            leave-to-class="opacity-0"
+            mode="out-in"
+        >
+            <div v-if="loading" class="flex items-center gap-3">
+                <USkeleton class="size-10 shrink-0 rounded-lg" />
+                <div class="flex-1 space-y-1.5">
+                    <USkeleton class="h-3 w-2/3" />
+                    <USkeleton class="h-6 w-1/2" />
+                </div>
             </div>
-        </div>
-        <div v-else class="flex items-center gap-3">
-            <div class="flex items-center justify-center size-10 rounded-lg" :class="colorClasses">
-                <UIcon :name="icon" class="size-5" />
+            <div v-else class="flex items-center gap-3">
+                <div class="flex items-center justify-center size-10 rounded-lg" :class="colorClasses">
+                    <UIcon :name="icon" class="size-5" />
+                </div>
+                <div>
+                    <p class="text-xs text-muted">{{ label }}</p>
+                    <p class="font-mono tabular-nums text-2xl font-semibold text-highlighted">{{ value }}</p>
+                    <p v-if="delta" class="text-xs text-dimmed mt-0.5">{{ delta }}</p>
+                </div>
             </div>
-            <div>
-                <p class="text-xs text-muted">{{ label }}</p>
-                <p class="font-mono tabular-nums text-2xl font-semibold text-highlighted">{{ value }}</p>
-                <p v-if="delta" class="text-xs text-dimmed mt-0.5">{{ delta }}</p>
-            </div>
-        </div>
+        </Transition>
     </BaseCard>
 </template>
 
