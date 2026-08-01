@@ -1,10 +1,5 @@
 <template>
-    <div class="space-y-6">
-        <div>
-            <h1 class="text-xl font-semibold text-highlighted">My Account</h1>
-            <p class="mt-1 text-sm text-muted">Update your profile details and password.</p>
-        </div>
-
+    <div class="min-h-full max-w-2xl space-y-6">
         <AccountSettingsForm />
     </div>
 </template>

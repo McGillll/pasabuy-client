@@ -48,6 +48,9 @@
                             <template #list-item="{ item: customer }">
                                 <div>
                                     <ListCard>
+                                        <template #leading>
+                                            <BaseAvatar :name="`${customer.first_name} ${customer.last_name}`" />
+                                        </template>
                                         <template #title>
                                             <p class="font-medium text-highlighted">{{ customer.first_name }} {{ customer.last_name }}</p>
                                         </template>
@@ -145,6 +148,9 @@
                             </template>
                             <template #list-item="{ item: customer }">
                                 <ListCard>
+                                    <template #leading>
+                                        <BaseAvatar :name="`${customer.first_name} ${customer.last_name}`" />
+                                    </template>
                                     <template #title>
                                         <p class="font-medium text-highlighted">{{ customer.first_name }} {{ customer.last_name }}</p>
                                     </template>

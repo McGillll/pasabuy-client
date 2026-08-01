@@ -37,9 +37,11 @@ export function useLoginForm() {
                 return
             }
 
-            const homePath = user.value?.role === 'admin' ? '/admin' : '/customer'
+            const isAdmin = user.value?.role === 'admin'
+            const namespace = isAdmin ? '/admin' : '/customer'
+            const defaultTarget = isAdmin ? '/admin' : '/customer/welcome'
             const redirect = route.query.redirect as string | undefined
-            const target = redirect && redirect.startsWith(homePath) ? redirect : homePath
+            const target = redirect && redirect.startsWith(namespace) ? redirect : defaultTarget
             await navigateTo(target)
         } catch (error) {
             if (error instanceof APIError && error.errors) {

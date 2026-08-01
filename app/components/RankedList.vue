@@ -3,9 +3,24 @@
         <template #header>
             <div class="flex items-center justify-between">
                 <h2 class="font-medium">{{ title }}</h2>
-                <UBadge v-if="month !== undefined && year !== undefined" color="neutral" variant="subtle" size="sm">
-                    {{ monthLabel }} {{ year }}
-                </UBadge>
+                <div v-if="month !== undefined && year !== undefined" class="flex items-center gap-1">
+                    <BaseIconButton
+                        icon="i-lucide-chevron-left"
+                        size="xs"
+                        aria-label="Previous month"
+                        @click="emit('change-month', -1)"
+                    />
+                    <UBadge color="neutral" variant="subtle" size="sm" class="whitespace-nowrap">
+                        {{ monthLabel }} {{ year }}
+                    </UBadge>
+                    <BaseIconButton
+                        icon="i-lucide-chevron-right"
+                        size="xs"
+                        aria-label="Next month"
+                        :disabled="isCurrentMonth"
+                        @click="emit('change-month', 1)"
+                    />
+                </div>
             </div>
             <p v-if="hint" class="text-xs text-muted mt-0.5">{{ hint }}</p>
         </template>
@@ -73,6 +88,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
     'update:activeTab': [value: string]
+    'change-month': [delta: number]
 }>()
 
 const monthNames = [
@@ -81,4 +97,9 @@ const monthNames = [
 ]
 
 const monthLabel = computed(() => (props.month ? monthNames[props.month - 1] : ''))
+
+const isCurrentMonth = computed(() => {
+    const now = new Date()
+    return props.month === now.getMonth() + 1 && props.year === now.getFullYear()
+})
 </script>

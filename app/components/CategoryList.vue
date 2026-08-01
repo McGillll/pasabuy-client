@@ -9,6 +9,7 @@
             <BaseListItemCard
                 :name="item.name"
                 :meta="item.description ?? undefined"
+                :image-url="item.image_url"
                 icon="i-lucide-tag"
                 :inactive="!item.is_active"
                 @click="openSheet(item)"

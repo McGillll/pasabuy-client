@@ -82,6 +82,7 @@
                 <div v-else-if="currentStep === 2" class="flex flex-col gap-5">
                     <BaseFormField label="Password" name="password" required>
                         <PasswordInput v-model="state.password" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" />
+                        <PasswordStrengthMeter :password="state.password" />
                     </BaseFormField>
 
                     <BaseFormField label="Confirm password" name="password_confirmation" required>

@@ -5,7 +5,12 @@
         :class="closingSoon ? 'border-l-2 border-l-warning bg-warning/5 pl-2.5 -ml-2.5 pr-2' : ''"
     >
         <div class="flex items-center justify-between gap-3">
-            <span class="text-sm truncate">{{ title }}</span>
+            <div class="flex min-w-0 items-center gap-2">
+                <div class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <UIcon name="i-lucide-calendar-clock" class="size-4" />
+                </div>
+                <span class="text-sm truncate">{{ title }}</span>
+            </div>
             <BaseStatusBadge :color="statusColor" :label="statusLabel"/>
         </div>
 

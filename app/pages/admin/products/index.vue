@@ -13,7 +13,7 @@
                     <div class="mt-4" ref="panelEl">
                         <ProductsPanel
                             ref="productsPanelRef"
-                            :all-categories="allCategories"
+                            :all-categories="leafCategories"
                             :all-brands="allBrands"
                             :focus-category-uuid="focusCategoryUuid"
                         />
@@ -27,7 +27,7 @@
                         <CategoriesPanel
                             ref="categoriesPanelRef"
                             :all-categories="allCategories"
-                            @categories-updated="(list) => (allCategories = list)"
+                            @categories-updated="onCategoriesUpdated"
                             @view-products="onViewCategoryProducts"
                         />
                     </div>
@@ -80,6 +80,10 @@ const { data: allCategories, ensure: ensureCategoriesLoaded } = useCachedFetch<C
     'admin-product-categories',
     (etag) => productCategoryService.fetchCategoriesCacheable({ per_page: 200 }, etag)
 )
+const { data: leafCategories, ensure: ensureLeafCategoriesLoaded } = useCachedFetch<Category[]>(
+    'admin-product-categories-leaf',
+    (etag) => productCategoryService.fetchCategoriesCacheable({ per_page: 200, leaf_only: true }, etag)
+)
 const { data: allBrands, ensure: ensureBrandsLoaded } = useCachedFetch<Brand[]>(
     'admin-brands',
     (etag) => brandService.fetchBrandsCacheable({ per_page: 200 }, etag)
@@ -90,6 +94,13 @@ const focusCategoryUuid = ref<string | null>(null)
 function onViewCategoryProducts(category: Category) {
     focusCategoryUuid.value = category.uuid
     activeTab.value = 'products'
+}
+
+function onCategoriesUpdated(list: Category[]) {
+    allCategories.value = list
+    ensureLeafCategoriesLoaded(true).catch((error) => {
+        toast.add({ title: 'Failed to refresh categories', description: (error as APIError).message, color: 'error' })
+    })
 }
 
 const addLabel = computed(() => {
@@ -117,6 +128,9 @@ onMounted(() => {
     ensureCategoriesLoaded().catch((error) => {
         toast.add({ title: 'Failed to load categories', description: (error as APIError).message, color: 'error' })
     })
+    ensureLeafCategoriesLoaded().catch((error) => {
+        toast.add({ title: 'Failed to load categories', description: (error as APIError).message, color: 'error' })
+    })
     ensureBrandsLoaded().catch((error) => {
         toast.add({ title: 'Failed to load brands', description: (error as APIError).message, color: 'error' })
     })
@@ -124,6 +138,7 @@ onMounted(() => {
 
 onPullToRefresh(() => Promise.all([
     ensureCategoriesLoaded(true),
+    ensureLeafCategoriesLoaded(true),
     ensureBrandsLoaded(true),
     productsPanelRef.value?.reload?.(),
     categoriesPanelRef.value?.reload?.(),

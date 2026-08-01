@@ -20,7 +20,7 @@
                     color="neutral"
                     variant="ghost"
                     icon="i-lucide-arrow-left"
-                    to="/customer"
+                    to="/customer/pasabuys"
                     class="-ml-2"
                 >
                     Browse Pasabuys

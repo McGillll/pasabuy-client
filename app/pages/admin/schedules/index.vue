@@ -98,6 +98,11 @@
                         :actions="scheduleActions(scheduleRow)"
                         @click="navigateTo(`/admin/schedules/${scheduleRow.uuid}`)"
                     >
+                        <template #leading>
+                            <div class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <UIcon name="i-lucide-calendar-clock" class="size-4" />
+                            </div>
+                        </template>
                         <template #title>
                             <p class="font-medium text-highlighted">{{ scheduleRow.title }}</p>
                         </template>

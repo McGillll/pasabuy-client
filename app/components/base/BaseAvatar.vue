@@ -10,7 +10,7 @@
 <script setup lang="ts">
 interface Props {
     name: string
-    size?: 'sm' | 'md' | 'lg'
+    size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -20,7 +20,8 @@ const props = withDefaults(defineProps<Props>(), {
 const sizeMap = {
     sm: 'h-[26px] w-[26px] text-xs',
     md: 'h-9 w-9 text-sm',
-    lg: 'h-11 w-11 text-base'
+    lg: 'h-11 w-11 text-base',
+    xl: 'h-16 w-16 text-lg'
 }
 
 const colorPalette = [

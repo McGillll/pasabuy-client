@@ -39,9 +39,12 @@
                         trailing-icon="i-lucide-chevron-down"
                         :ui="{ base: 'justify-between px-2 py-2 h-auto' }"
                     >
-                        <div class="min-w-0 text-left">
-                            <p class="text-sm font-medium text-highlighted truncate">{{ user?.first_name }} {{ user?.last_name }}</p>
-                            <p class="text-xs text-muted truncate">{{ user?.email }}</p>
+                        <div class="flex min-w-0 items-center gap-2 text-left">
+                            <BaseAvatar :name="fullName" size="sm" />
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-highlighted truncate">{{ user?.first_name }} {{ user?.last_name }}</p>
+                                <p class="text-xs text-muted truncate">{{ user?.email }}</p>
+                            </div>
                         </div>
                     </BaseButton>
                 </UDropdownMenu>
@@ -74,7 +77,9 @@
 
             <div class="border-t border-default p-2 flex justify-center">
                 <UDropdownMenu :items="accountMenuItems" :content="{ align: 'start' }" :ui="{ content: 'w-56' }">
-                    <BaseIconButton icon="i-lucide-user-round" aria-label="Account menu" />
+                    <button type="button" class="rounded-lg transition-opacity hover:opacity-80" aria-label="Account menu">
+                        <BaseAvatar :name="fullName" size="md" />
+                    </button>
                 </UDropdownMenu>
             </div>
         </aside>
@@ -91,14 +96,9 @@
                     <div class="flex items-center gap-1">
                         <UColorModeButton color="neutral" variant="ghost" size="sm" square class="min-h-11 min-w-11 justify-center" />
                         <UDropdownMenu :items="accountMenuItems" :content="{ align: 'end' }">
-                            <BaseButton
-                                color="neutral"
-                                variant="ghost"
-                                icon="i-lucide-user-round"
-                                size="sm"
-                                square
-                                aria-label="Account menu"
-                            />
+                            <button type="button" class="flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-opacity hover:opacity-80" aria-label="Account menu">
+                                <BaseAvatar :name="fullName" size="sm" />
+                            </button>
                         </UDropdownMenu>
                     </div>
                 </div>
@@ -134,6 +134,8 @@ import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
 
 const { user, logout } = useAuth()
 const sidebarMode = useSidebarMode()
+
+const fullName = computed(() => `${user.value?.first_name ?? ''} ${user.value?.last_name ?? ''}`.trim())
 
 onMounted(() => {
     sidebarMode.init()

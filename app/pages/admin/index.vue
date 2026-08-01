@@ -11,6 +11,8 @@
             @secondary-click="navigateTo('/admin/products')"
         />
 
+        <DailyVerseCard />
+
         <KpiStrip :items="kpiItems" />
 
         <p class="text-xs font-bold uppercase tracking-wide text-dimmed">Today</p>
@@ -48,6 +50,7 @@
                     :loading="loadingRankings"
                     :empty-message="rankingTab === 'products' ? 'Product rankings aren\'t available yet' : 'No buyer rankings yet'"
                     :empty-description="rankingTab === 'products' ? 'We\'ll show your best-selling products here once order data is available.' : 'We\'ll show your best customers here once order data is available.'"
+                    @change-month="onChangeRankingMonth"
                 />
             </div>
         </div>
@@ -121,6 +124,22 @@ const rankingTabs = [
 ]
 const rankingMonth = ref(new Date().getMonth() + 1)
 const rankingYear = ref(new Date().getFullYear())
+
+function onChangeRankingMonth(delta: number) {
+    let month = rankingMonth.value + delta
+    let year = rankingYear.value
+
+    if (month < 1) {
+        month = 12
+        year -= 1
+    } else if (month > 12) {
+        month = 1
+        year += 1
+    }
+
+    rankingMonth.value = month
+    rankingYear.value = year
+}
 
 const stats = computed(() => [
     { label: 'Total members', value: totalMembers.value, icon: 'i-lucide-users' },

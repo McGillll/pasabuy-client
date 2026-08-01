@@ -5,6 +5,19 @@
         <div v-if="isDesktop">
             <UCard :ui="{ body: 'p-0 sm:p-0' }">
                 <UTable :data="categories" :columns="columns" :loading="loading" :ui="{ tr: 'hover:bg-elevated/50 transition-colors cursor-pointer' }" @select="(_event: Event, row: { original: Category }) => viewProducts(row.original)">
+                    <template #image-cell="{ row }">
+                        <img
+                            v-if="row.original.image_url && !imageLoadFailed[row.original.uuid]"
+                            :src="row.original.image_url"
+                            loading="lazy"
+                            class="size-10 rounded-lg object-cover ring-1 ring-default bg-elevated"
+                            alt=""
+                            @error="onImageError(row.original.uuid)"
+                        >
+                        <div v-else class="flex items-center justify-center size-10 rounded-lg bg-elevated text-dimmed">
+                            <UIcon name="i-lucide-tag" class="size-4" />
+                        </div>
+                    </template>
                     <template #category-cell="{ row }">
                         <p class="font-medium text-highlighted" :class="row.original.is_active ? '' : 'opacity-40'">{{ row.original.name }}</p>
                         <p v-if="row.original.description" class="text-sm text-muted truncate max-w-xs">{{ row.original.description }}</p>
@@ -39,6 +52,21 @@
             :loading="saving"
         >
             <form id="category-form" class="space-y-4" @submit.prevent="onSave">
+                <div class="flex items-center gap-3">
+                    <img
+                        v-if="form.image_url && !imagePreviewFailed"
+                        :src="form.image_url"
+                        class="size-14 shrink-0 rounded-lg object-cover ring-1 ring-default bg-elevated"
+                        alt=""
+                        @error="imagePreviewFailed = true"
+                    >
+                    <div v-else class="flex items-center justify-center size-14 shrink-0 rounded-lg bg-elevated text-dimmed">
+                        <UIcon name="i-lucide-tag" class="size-5" />
+                    </div>
+                    <BaseFormField label="Image URL" class="flex-1" hint="Optional">
+                        <BaseInput v-model="form.image_url" placeholder="https://example.com/image.jpg" @change="imagePreviewFailed = false" />
+                    </BaseFormField>
+                </div>
                 <BaseFormField label="Name" required>
                     <BaseInput v-model="form.name" placeholder="Appliances" />
                 </BaseFormField>
@@ -89,10 +117,17 @@ const total = ref(0)
 const search = ref('')
 
 const columns: TableColumn<Category>[] = [
+    { id: 'image', header: '' },
     { id: 'category', header: 'Category' },
     { id: 'status', header: 'Status' },
     { id: 'actions', header: '' }
 ]
+
+const imageLoadFailed = ref<Record<string, boolean>>({})
+
+function onImageError(uuid: string) {
+    imageLoadFailed.value[uuid] = true
+}
 
 async function loadCategories() {
     loading.value = true
@@ -100,6 +135,7 @@ async function loadCategories() {
         const response = await productCategoryService.fetchCategories({ page: page.value, per_page: perPage, search: search.value || undefined })
         categories.value = response.data.items
         total.value = response.data.total
+        imageLoadFailed.value = {}
     } catch (error) {
         toast.add({ title: 'Failed to load categories', description: (error as APIError).message, color: 'error' })
     } finally {
@@ -119,15 +155,19 @@ const editing = ref<Category | null>(null)
 const form = reactive({
     name: '',
     description: '',
+    image_url: '',
     is_active: true
 })
+const imagePreviewFailed = ref(false)
 const saving = ref(false)
 
 function openCreateModal() {
     editing.value = null
     form.name = ''
     form.description = ''
+    form.image_url = ''
     form.is_active = true
+    imagePreviewFailed.value = false
     isModalOpen.value = true
 }
 
@@ -135,7 +175,9 @@ function openEditModal(category: Category) {
     editing.value = category
     form.name = category.name
     form.description = category.description ?? ''
+    form.image_url = category.image_url ?? ''
     form.is_active = category.is_active
+    imagePreviewFailed.value = false
     isModalOpen.value = true
 }
 
@@ -145,6 +187,7 @@ async function onSave() {
         const payload = {
             name: form.name,
             description: form.description,
+            image_url: form.image_url || null,
             is_active: form.is_active
         }
         if (editing.value) {
