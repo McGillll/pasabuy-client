@@ -1,7 +1,9 @@
 <template>
-    <AuthPageShell subtitle="Sign in">
+    <AuthPageShell subtitle="Sign in to browse open pasabuys">
         <UAlert
             v-if="authError"
+            role="alert"
+            aria-live="assertive"
             color="error"
             variant="subtle"
             icon="i-lucide-alert-circle"
@@ -23,16 +25,24 @@
                     icon="i-lucide-mail"
                     autocomplete="email"
                     size="xl"
+                    :disabled="isSubmitting"
                 />
             </BaseFormField>
 
             <BaseFormField label="Password" name="password" :error="passwordError" required>
-                <PasswordInput v-model="state.password" autocomplete="current-password" />
+                <PasswordInput v-model="state.password" autocomplete="current-password" :disabled="isSubmitting" />
             </BaseFormField>
 
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <BaseCheckbox v-model="state.rememberMe" label="Remember me" size="lg" />
-                <NuxtLink to="/forgot-password" class="text-sm text-primary hover:underline">Forgot password?</NuxtLink>
+                <BaseCheckbox v-model="state.rememberMe" label="Remember me" size="lg" :disabled="isSubmitting" />
+                <NuxtLink
+                    to="/forgot-password"
+                    class="text-sm text-highlighted underline decoration-dimmed underline-offset-2 hover:decoration-highlighted"
+                    :class="{ 'pointer-events-none opacity-50': isSubmitting }"
+                    :tabindex="isSubmitting ? -1 : undefined"
+                >
+                    Forgot password?
+                </NuxtLink>
             </div>
 
             <BaseButton
@@ -48,7 +58,14 @@
         <template #footer>
             <p class="mt-6 text-center text-sm text-dimmed">
                 New customer?
-                <NuxtLink :to="registerLink" class="text-primary hover:underline">Create an account</NuxtLink>
+                <NuxtLink
+                    :to="registerLink"
+                    class="text-highlighted font-medium underline decoration-dimmed underline-offset-2 hover:decoration-highlighted"
+                    :class="{ 'pointer-events-none opacity-50': isSubmitting }"
+                    :tabindex="isSubmitting ? -1 : undefined"
+                >
+                    Create an account
+                </NuxtLink>
             </p>
 
             <p class="mt-4 text-center text-xs text-dimmed">

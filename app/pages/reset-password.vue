@@ -2,6 +2,8 @@
     <AuthPageShell subtitle="Choose a new password">
         <UAlert
             v-if="!linkValid"
+            role="alert"
+            aria-live="assertive"
             color="error"
             variant="subtle"
             icon="i-lucide-alert-circle"
@@ -13,6 +15,8 @@
         <template v-else>
             <UAlert
                 v-if="resetError"
+                role="alert"
+                aria-live="assertive"
                 color="error"
                 variant="subtle"
                 icon="i-lucide-alert-circle"
@@ -27,14 +31,14 @@
                 @submit="onSubmit"
             >
                 <BaseFormField label="New password" name="password" required>
-                    <PasswordInput v-model="state.password" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" />
+                    <PasswordInput v-model="state.password" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" :disabled="isSubmitting" />
                 </BaseFormField>
 
                 <BaseFormField label="Confirm password" name="passwordConfirmation" required>
-                    <PasswordInput v-model="state.passwordConfirmation" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" />
+                    <PasswordInput v-model="state.passwordConfirmation" autocomplete="new-password" :show-toggle="false" :visible="passwordsVisible" :disabled="isSubmitting" />
                 </BaseFormField>
 
-                <BaseCheckbox v-model="passwordsVisible" label="Show passwords" size="sm" />
+                <BaseCheckbox v-model="passwordsVisible" label="Show passwords" size="lg" :disabled="isSubmitting" />
 
                 <BaseButton
                     type="submit"
@@ -49,7 +53,14 @@
 
         <template #footer>
             <p class="mt-6 text-center text-sm text-dimmed">
-                <NuxtLink to="/forgot-password" class="text-primary hover:underline">Request a new link</NuxtLink>
+                <NuxtLink
+                    to="/forgot-password"
+                    class="text-highlighted font-medium underline decoration-dimmed underline-offset-2 hover:decoration-highlighted"
+                    :class="{ 'pointer-events-none opacity-50': isSubmitting }"
+                    :tabindex="isSubmitting ? -1 : undefined"
+                >
+                    Request a new link
+                </NuxtLink>
             </p>
 
             <p class="mt-4 text-center text-xs text-dimmed">

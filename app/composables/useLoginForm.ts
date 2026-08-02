@@ -16,9 +16,12 @@ export function useLoginForm() {
     const emailError = ref<string | null>(null)
     const passwordError = ref<string | null>(null)
 
+    const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
     function validate(state: { email: string, password: string }): FormError[] {
         const errors: FormError[] = []
         if (!state.email) errors.push({ name: 'email', message: 'Email is required' })
+        else if (!EMAIL_PATTERN.test(state.email)) errors.push({ name: 'email', message: 'Enter a valid email address' })
         if (!state.password) errors.push({ name: 'password', message: 'Password is required' })
         return errors
     }

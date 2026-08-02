@@ -4,7 +4,7 @@
             <div class="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
                 <div class="flex items-center gap-6">
                     <NuxtLink to="/customer" class="flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                        <div class="flex items-center justify-center size-8 rounded-lg bg-primary text-inverted font-bold">
+                        <div class="flex items-center justify-center size-11 rounded-2xl bg-primary text-inverted font-bold">
                             P
                         </div>
                         <span class="font-semibold text-highlighted">Pasabuy</span>

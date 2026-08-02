@@ -3,7 +3,7 @@
         <aside v-if="sidebarMode.mode.value === 'labeled'" class="hidden md:flex md:w-64 md:flex-col md:shrink-0 border-r border-default bg-muted shadow-[2px_0_10px_-4px_rgba(0,0,0,0.08)]">
             <div class="flex items-center justify-between gap-2 px-6 py-5">
                 <div class="flex items-center gap-2">
-                    <div class="flex items-center justify-center size-8 rounded-lg bg-primary text-inverted font-bold">
+                    <div class="flex items-center justify-center size-11 rounded-2xl bg-primary text-inverted font-bold">
                         P
                     </div>
                     <span class="font-semibold text-highlighted">Pasabuy</span>
@@ -53,7 +53,7 @@
 
         <aside v-else class="hidden md:flex md:w-[76px] md:flex-col md:shrink-0 border-r border-default bg-muted shadow-[2px_0_10px_-4px_rgba(0,0,0,0.08)]">
             <div class="flex flex-col items-center gap-2 px-2 py-5">
-                <div class="flex items-center justify-center size-8 rounded-lg bg-primary text-inverted font-bold">
+                <div class="flex items-center justify-center size-11 rounded-2xl bg-primary text-inverted font-bold">
                     P
                 </div>
                 <BaseIconButton
@@ -88,7 +88,7 @@
             <header class="md:hidden border-b border-default bg-muted shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
                 <div class="flex items-center justify-between px-4 py-3">
                     <div class="flex items-center gap-2">
-                        <div class="flex items-center justify-center size-7 rounded-lg bg-primary text-inverted font-bold text-sm">
+                        <div class="flex items-center justify-center size-11 rounded-2xl bg-primary text-inverted font-bold text-sm">
                             P
                         </div>
                         <span class="font-semibold text-highlighted">Pasabuy</span>

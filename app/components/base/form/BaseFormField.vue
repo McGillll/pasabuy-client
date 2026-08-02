@@ -11,16 +11,21 @@
         :class="class"
         :ui="ui"
     >
-        <template v-for="(_, name) in $slots" #[name]="slotProps">
+        <template #default="{ error: fieldError }">
+            <slot :error="fieldError" />
+            <span v-if="fieldError" class="sr-only" role="alert">{{ fieldError }}</span>
+        </template>
+        <template v-for="name in namedSlots" :key="name" #[name]="slotProps">
             <slot :name="name" v-bind="slotProps ?? {}" />
         </template>
     </UFormField>
 </template>
 
 <script setup lang="ts">
+import { useSlots } from 'vue'
 import type { FormFieldProps } from '@nuxt/ui'
 
-defineProps<{
+withDefaults(defineProps<{
     label?: string
     name?: string
     description?: string
@@ -31,5 +36,9 @@ defineProps<{
     size?: FormFieldProps['size']
     class?: string
     ui?: FormFieldProps['ui']
-}>()
+}>(), {
+    error: undefined
+})
+
+const namedSlots = computed(() => Object.keys(useSlots()).filter(slotName => slotName !== 'default'))
 </script>

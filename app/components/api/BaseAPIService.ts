@@ -51,6 +51,7 @@ class BaseAPIService {
             throw new APIError({
                 message: responseMessage ?? "Something went wrong. Please try again. If the problem persists, contact your system administrator",
                 errors: error.response?._data?.errors,
+                status: error.response?.status,
             })
         }
     }
@@ -94,6 +95,7 @@ class BaseAPIService {
             throw new APIError({
                 message: responseMessage ?? "Something went wrong. Please try again. If the problem persists, contact your system administrator",
                 errors: error.response?._data?.errors,
+                status: error.response?.status,
             })
         }
     }

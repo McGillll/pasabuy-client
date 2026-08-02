@@ -1,10 +1,12 @@
 interface APIErrorPayload {
     message: string
     errors?: Record<string, string[]>
+    status?: number
 }
 
 class APIError extends Error {
     errors?: Record<string, string[]>
+    status?: number
 
     constructor(error: APIErrorPayload) {
         super(error.message)
@@ -12,6 +14,7 @@ class APIError extends Error {
         if (error.errors) {
             this.errors = error.errors
         }
+        this.status = error.status
     }
 
     getErrorMessage() {
