@@ -42,9 +42,12 @@ export function useLoginForm() {
 
             const isAdmin = user.value?.role === 'admin'
             const namespace = isAdmin ? '/admin' : '/customer'
-            const defaultTarget = isAdmin ? '/admin' : '/customer/welcome'
+            const defaultTarget = isAdmin ? '/admin' : '/customer'
             const redirect = route.query.redirect as string | undefined
             const target = redirect && redirect.startsWith(namespace) ? redirect : defaultTarget
+
+            if (!isAdmin) await prepareWelcomeOverlay()
+
             await navigateTo(target)
         } catch (error) {
             if (error instanceof APIError && error.errors) {

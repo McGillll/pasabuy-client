@@ -60,6 +60,8 @@
                 <span class="text-xs leading-tight transition-all duration-300 motion-reduce:transition-none group-[.text-primary]:font-semibold">{{ link.label }}</span>
             </NuxtLink>
         </nav>
+
+        <WelcomeOverlay v-if="pendingWelcome" @dismiss="pendingWelcome = false" />
     </div>
 </template>
 
@@ -67,6 +69,7 @@
 import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
 
 const { user, logout } = useAuth()
+const pendingWelcome = useWelcomeOverlay()
 
 const accountMenuItems = computed<DropdownMenuItem[]>(() => [
     { label: 'My Account', icon: 'i-lucide-user', to: '/customer/account' },

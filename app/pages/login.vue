@@ -92,4 +92,6 @@ const registerLink = computed(() => {
 })
 
 const { state, isSubmitting, authError, emailError, passwordError, validate, onSubmit } = useLoginForm()
+
+onMounted(prefetchWelcomeVerse)
 </script>
