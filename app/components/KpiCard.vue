@@ -19,7 +19,10 @@
                     <UIcon :name="icon" class="size-5" />
                 </div>
                 <div>
-                    <p class="text-xs text-muted">{{ label }}</p>
+                    <p class="flex items-center gap-1 text-xs text-muted">
+                        {{ label }}
+                        <BaseHelpTooltip v-if="tooltip">{{ tooltip }}</BaseHelpTooltip>
+                    </p>
                     <p class="font-mono tabular-nums text-2xl font-semibold text-highlighted">{{ value }}</p>
                     <p v-if="delta" class="text-xs text-dimmed mt-0.5">{{ delta }}</p>
                 </div>
@@ -37,6 +40,7 @@ const props = withDefaults(defineProps<{
     label: string
     value: string | number
     delta?: string
+    tooltip?: string
     loading?: boolean
 }>(), {
     color: 'primary',

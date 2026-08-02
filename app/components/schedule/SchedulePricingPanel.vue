@@ -15,8 +15,13 @@
         <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
             <template v-if="workspace.summary.length > 0" #header>
                 <div class="flex items-center justify-between font-medium text-highlighted">
-                    <span>Grand total</span>
-                    <span>₱{{ workspace.summaryGrandTotal.toFixed(2) }}</span>
+                    <span class="inline-flex items-center gap-1">
+                        Grand total
+                        <BaseHelpTooltip>
+                            Excludes products marked out of stock. Quantities for B1T1 products are already doubled to reflect the free bonus item.
+                        </BaseHelpTooltip>
+                    </span>
+                    <span class="font-mono tabular-nums">₱{{ workspace.summaryGrandTotal.toFixed(2) }}</span>
                 </div>
             </template>
             <BaseTable
@@ -38,16 +43,16 @@
                     <p class="text-sm text-muted">{{ row.original.category_name ?? '-' }}</p>
                 </template>
                 <template #default_price-cell="{ row }">
-                    ₱{{ row.original.default_price }}
+                    <span class="font-mono tabular-nums">₱{{ row.original.default_price }}</span>
                 </template>
                 <template #total_quantity-cell="{ row }">
-                    {{ workspace.getDisplayQuantity(row.original) }}
+                    <span class="font-mono tabular-nums">{{ workspace.getDisplayQuantity(row.original) }}</span>
                 </template>
                 <template #subtotal-cell="{ row }">
                     <span v-if="workspace.getScheduleProductStatus(row.original.product_uuid) === 'out_of_stock'" class="text-sm font-medium text-error">
                         Out of stock
                     </span>
-                    <span v-else>₱{{ row.original.subtotal }}</span>
+                    <span v-else class="font-mono tabular-nums">₱{{ row.original.subtotal }}</span>
                 </template>
                 <template #list-item="{ item }">
                     <ListCard
@@ -62,11 +67,11 @@
                             {{ item.category_name ?? '-' }}
                         </template>
                         <template #meta>
-                            <span class="text-muted">₱{{ item.default_price }} × {{ workspace.getDisplayQuantity(item) }}</span>
+                            <span class="text-muted font-mono tabular-nums">₱{{ item.default_price }} × {{ workspace.getDisplayQuantity(item) }}</span>
                             <span v-if="workspace.getScheduleProductStatus(item.product_uuid) === 'out_of_stock'" class="font-medium text-error">
                                 Out of stock
                             </span>
-                            <span v-else class="font-medium text-highlighted">₱{{ item.subtotal }}</span>
+                            <span v-else class="font-medium text-highlighted font-mono tabular-nums">₱{{ item.subtotal }}</span>
                         </template>
                         <template v-if="workspace.getScheduleProductStatus(item.product_uuid) === 'b1t1'" #status>
                             <UBadge color="warning" variant="subtle" size="sm">

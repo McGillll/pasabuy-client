@@ -1,5 +1,5 @@
 <template>
-    <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+    <div class="grid grid-cols-2 gap-3 sm:gap-4">
         <KpiCard v-for="item in items" :key="item.label" v-bind="item" :loading="loading" />
     </div>
 </template>
@@ -13,6 +13,7 @@ export interface KpiStripItem {
     label: string
     value: string | number
     delta?: string
+    tooltip?: string
 }
 
 withDefaults(defineProps<{

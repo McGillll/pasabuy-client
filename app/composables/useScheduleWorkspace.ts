@@ -20,6 +20,8 @@ export function useScheduleWorkspace(uuid: string) {
     const { displayName } = useProductDisplayName()
     const { copyTextAsync } = useAsyncClipboard()
     const { confirmDialog, confirming, askConfirm, confirmDialogAccept } = useConfirmDialog()
+    const { runUndoable } = useUndoableAction()
+    const { setOrderStatusUndoable } = useOrderUndoAction()
     const { $echo } = useNuxtApp()
 
     // ---- Core schedule ----
@@ -245,7 +247,12 @@ export function useScheduleWorkspace(uuid: string) {
             const response = await pasabuyScheduleService.fetchProductBuyers(uuid, item.product_uuid)
             buyers.value = response.data
         } catch (error) {
-            toast.add({ title: 'Failed to load buyers', description: (error as APIError).message, color: 'error' })
+            toast.add({
+                title: 'Failed to load buyers',
+                description: (error as APIError).message,
+                color: 'error',
+                actions: [{ label: 'Retry', onClick: () => openBuyersModal(item) }]
+            })
         } finally {
             buyersLoading.value = false
         }
@@ -322,7 +329,12 @@ export function useScheduleWorkspace(uuid: string) {
             const response = await pasabuyScheduleService.fetchChecklist(uuid)
             checklistItems.value = response.data
         } catch (error) {
-            toast.add({ title: 'Failed to load checklist', description: (error as APIError).message, color: 'error' })
+            toast.add({
+                title: 'Failed to load checklist',
+                description: (error as APIError).message,
+                color: 'error',
+                actions: [{ label: 'Retry', onClick: () => loadChecklist() }]
+            })
         } finally {
             checklistLoading.value = false
         }
@@ -475,6 +487,104 @@ export function useScheduleWorkspace(uuid: string) {
 
     const pendingOrderCount = computed(() => orders.value.filter((o) => o.status === 'pending').length)
 
+    // ---- Bulk order selection ----
+
+    const selectedOrderUuids = ref<Set<string>>(new Set())
+
+    const selectedOrders = computed(() => orders.value.filter((order) => selectedOrderUuids.value.has(order.uuid)))
+    const selectedOrderCount = computed(() => selectedOrderUuids.value.size)
+
+    function isOrderSelected(order: Order) {
+        return selectedOrderUuids.value.has(order.uuid)
+    }
+
+    function removeOrderFromSelection(orderUuid: string) {
+        if (!selectedOrderUuids.value.has(orderUuid)) return
+        const next = new Set(selectedOrderUuids.value)
+        next.delete(orderUuid)
+        selectedOrderUuids.value = next
+    }
+
+    function toggleOrderSelection(order: Order) {
+        if (order.status !== 'pending') return
+        const next = new Set(selectedOrderUuids.value)
+        if (next.has(order.uuid)) next.delete(order.uuid)
+        else next.add(order.uuid)
+        selectedOrderUuids.value = next
+    }
+
+    function setOrdersSelected(targetOrders: Order[], selected: boolean) {
+        const next = new Set(selectedOrderUuids.value)
+        for (const order of targetOrders) {
+            if (order.status !== 'pending') continue
+            if (selected) next.add(order.uuid)
+            else next.delete(order.uuid)
+        }
+        selectedOrderUuids.value = next
+    }
+
+    function clearOrderSelection() {
+        selectedOrderUuids.value = new Set()
+    }
+
+    // Re-validates the selection whenever the order list is reloaded from the server
+    // (not on the in-place status flips the undo pattern makes), so a stale selection
+    // can't survive an order being removed or settled by someone else in the meantime.
+    watch(orders, () => {
+        const stillSelectable = new Set(
+            orders.value.filter((order) => order.status === 'pending').map((order) => order.uuid)
+        )
+        const pruned = new Set([...selectedOrderUuids.value].filter((uuid) => stillSelectable.has(uuid)))
+        if (pruned.size !== selectedOrderUuids.value.size) selectedOrderUuids.value = pruned
+    })
+
+    // Loops the existing single-order status endpoint since there is no bulk endpoint yet.
+    // Uses the delayed-commit undo pattern: the change applies to the UI immediately and only
+    // reaches the API after the undo window closes, so a bulk mistake never needs a confirm modal.
+    function bulkSetOrderStatus(status: 'confirmed' | 'cancelled') {
+        const targets = selectedOrders.value
+        if (targets.length === 0) return
+
+        const previousStatuses = new Map(targets.map((order) => [order.uuid, order.status] as const))
+        const verb = status === 'confirmed' ? 'confirmed' : 'cancelled'
+        clearOrderSelection()
+
+        runUndoable({
+            label: `${targets.length} order${targets.length === 1 ? '' : 's'} ${verb}`,
+            apply: () => { targets.forEach((order) => { order.status = status }) },
+            revert: () => { targets.forEach((order) => { order.status = previousStatuses.get(order.uuid)! }) },
+            commit: async () => {
+                const failedUuids: string[] = []
+                await Promise.all(targets.map(async (order) => {
+                    try {
+                        await pasabuyScheduleService.updateOrderStatus(order.uuid, status)
+                    } catch {
+                        failedUuids.push(order.uuid)
+                        order.status = previousStatuses.get(order.uuid)!
+                    }
+                }))
+                if (failedUuids.length > 0) {
+                    const succeeded = targets.length - failedUuids.length
+                    selectedOrderUuids.value = new Set(failedUuids)
+                    toast.add({
+                        title: `${succeeded} ${verb}, ${failedUuids.length} failed`,
+                        description: 'The failed orders stay selected so you can try again.',
+                        color: succeeded > 0 ? 'warning' : 'error',
+                        actions: [{ label: 'Retry failed', onClick: () => { bulkSetOrderStatus(status) } }]
+                    })
+                }
+            }
+        })
+    }
+
+    function bulkConfirmOrders() {
+        bulkSetOrderStatus('confirmed')
+    }
+
+    function bulkCancelOrders() {
+        bulkSetOrderStatus('cancelled')
+    }
+
     const orderActiveFilterCount = computed(() =>
         [orderStatusFilter.value, orderPaymentStatusFilter.value, orderDeliveryStatusFilter.value].filter((value) => value !== 'all').length
     )
@@ -508,34 +618,12 @@ export function useScheduleWorkspace(uuid: string) {
         orders.value = response.data
     }
 
-    async function setOrderStatus(order: Order, status: 'confirmed' | 'cancelled') {
-        try {
-            await pasabuyScheduleService.updateOrderStatus(order.uuid, status)
-            order.status = status
-            toast.add({ title: `Order ${status}`, color: 'success' })
-        } catch (error) {
-            toast.add({ title: 'Update failed', description: (error as APIError).message, color: 'error' })
-        }
-    }
-
     function confirmOrder(order: Order) {
-        askConfirm({
-            title: 'Confirm order?',
-            description: `Confirm ${order.customer_name}'s order? This marks it as settled.`,
-            confirmLabel: 'Confirm order',
-            color: 'success',
-            action: () => setOrderStatus(order, 'confirmed')
-        })
+        setOrderStatusUndoable(order, 'confirmed', { onApply: () => removeOrderFromSelection(order.uuid) })
     }
 
     function cancelOrder(order: Order) {
-        askConfirm({
-            title: 'Cancel order?',
-            description: `Cancel ${order.customer_name}'s order? This cannot be undone.`,
-            confirmLabel: 'Cancel order',
-            color: 'error',
-            action: () => setOrderStatus(order, 'cancelled')
-        })
+        setOrderStatusUndoable(order, 'cancelled', { onApply: () => removeOrderFromSelection(order.uuid) })
     }
 
     async function setDeliveryStatus(order: Order, deliveryStatus: 'not_delivered' | 'delivered') {
@@ -631,7 +719,12 @@ export function useScheduleWorkspace(uuid: string) {
             const response = await productService.fetchProducts({ per_page: 1000 })
             allProducts.value = response.data.items
         } catch (error) {
-            toast.add({ title: 'Failed to load products', description: (error as APIError).message, color: 'error' })
+            toast.add({
+                title: 'Failed to load products',
+                description: (error as APIError).message,
+                color: 'error',
+                actions: [{ label: 'Retry', onClick: () => loadAllProducts() }]
+            })
         } finally {
             loadingAllProducts.value = false
         }
@@ -740,7 +833,12 @@ export function useScheduleWorkspace(uuid: string) {
 
             await loadChecklist()
         } catch (error) {
-            toast.add({ title: 'Failed to load schedule', description: (error as APIError).message, color: 'error' })
+            toast.add({
+                title: 'Failed to load schedule',
+                description: (error as APIError).message,
+                color: 'error',
+                actions: [{ label: 'Retry', onClick: () => loadAll() }]
+            })
         } finally {
             loading.value = false
         }
@@ -761,7 +859,12 @@ export function useScheduleWorkspace(uuid: string) {
             summary.value = summaryResponse.data
             await loadChecklist()
         } catch (error) {
-            toast.add({ title: 'Failed to refresh', description: (error as APIError).message, color: 'error' })
+            toast.add({
+                title: 'Failed to refresh',
+                description: (error as APIError).message,
+                color: 'error',
+                actions: [{ label: 'Retry', onClick: () => pullRefresh() }]
+            })
         }
     }
 
@@ -849,6 +952,14 @@ export function useScheduleWorkspace(uuid: string) {
         setDeliveryStatus,
         toggleDeliveryStatus,
         orderActions,
+
+        selectedOrderCount,
+        isOrderSelected,
+        toggleOrderSelection,
+        setOrdersSelected,
+        clearOrderSelection,
+        bulkConfirmOrders,
+        bulkCancelOrders,
 
         isOrderModalOpen,
         viewingOrder,

@@ -1,7 +1,10 @@
 <template>
     <BaseCard>
         <template #header>
-            <p class="text-sm font-medium text-highlighted">{{ title }}</p>
+            <p class="flex items-center gap-1 text-sm font-medium text-highlighted">
+                {{ title }}
+                <BaseHelpTooltip v-if="helpText">{{ helpText }}</BaseHelpTooltip>
+            </p>
         </template>
 
         <Transition
@@ -35,7 +38,7 @@
                             <span class="text-xs text-muted truncate">{{ stage.label }}</span>
                         </div>
                         <div class="flex items-baseline gap-1">
-                            <span class="text-sm font-semibold text-highlighted">{{ stage.count }}</span>
+                            <span class="text-sm font-semibold text-highlighted font-mono tabular-nums">{{ stage.count }}</span>
                             <span class="text-xs text-dimmed">{{ stage.pct }}%</span>
                         </div>
                     </div>
@@ -55,6 +58,7 @@ export type PipelineStage = {
 const props = withDefaults(defineProps<{
     title: string
     stages: PipelineStage[]
+    helpText?: string
     loading?: boolean
 }>(), {
     loading: false

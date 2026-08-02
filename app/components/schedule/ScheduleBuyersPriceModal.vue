@@ -6,6 +6,12 @@
     >
         <div class="space-y-4">
             <BaseTable :data="workspace.buyers" :columns="buyerColumns" :loading="workspace.buyersLoading">
+                <template #quantity-cell="{ row }">
+                    <span class="font-mono tabular-nums">{{ row.original.quantity }}</span>
+                </template>
+                <template #subtotal-cell="{ row }">
+                    <span class="font-mono tabular-nums">₱{{ row.original.subtotal }}</span>
+                </template>
                 <template #status-cell="{ row }">
                     <OrderStatusBadge :status="row.original.status" />
                 </template>
@@ -15,8 +21,8 @@
                             <p class="font-medium text-highlighted">{{ buyer.customer_name }}</p>
                         </template>
                         <template #meta>
-                            <span class="text-muted">Qty {{ buyer.quantity }}</span>
-                            <span class="font-medium text-highlighted">₱{{ buyer.subtotal }}</span>
+                            <span class="text-muted font-mono tabular-nums">Qty {{ buyer.quantity }}</span>
+                            <span class="font-medium text-highlighted font-mono tabular-nums">₱{{ buyer.subtotal }}</span>
                         </template>
                         <template #status>
                             <OrderStatusBadge :status="buyer.status" />
@@ -52,7 +58,15 @@
                                 </template>
                             </BaseInput>
                         </BaseFormField>
-                        <BaseFormField label="Product status">
+                        <BaseFormField>
+                            <template #label>
+                                <span class="inline-flex items-center gap-1">
+                                    Product status
+                                    <BaseHelpTooltip>
+                                        This status only applies to this schedule, it does not change the product's catalog listing. B1T1 doubles the quantity charged to buyers as a free bonus. Out of stock zeroes the price for any unconfirmed orders of this product.
+                                    </BaseHelpTooltip>
+                                </span>
+                            </template>
                             <BaseSelect
                                 v-model="workspace.confirmForm.product_status"
                                 :items="productStatusOptions"

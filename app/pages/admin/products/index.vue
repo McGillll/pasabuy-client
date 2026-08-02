@@ -79,7 +79,12 @@ function onViewCategoryProducts(category: Category) {
 function onCategoriesUpdated(list: Category[]) {
     allCategories.value = list
     ensureLeafCategoriesLoaded(true).catch((error) => {
-        toast.add({ title: 'Failed to refresh categories', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to refresh categories',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => { ensureLeafCategoriesLoaded(true) } }]
+        })
     })
 }
 
@@ -103,10 +108,20 @@ function onAddClick() {
 
 onMounted(() => {
     ensureCategoriesLoaded().catch((error) => {
-        toast.add({ title: 'Failed to load categories', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load categories',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => { ensureCategoriesLoaded(true) } }]
+        })
     })
     ensureLeafCategoriesLoaded().catch((error) => {
-        toast.add({ title: 'Failed to load categories', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load categories',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => { ensureLeafCategoriesLoaded(true) } }]
+        })
     })
 })
 

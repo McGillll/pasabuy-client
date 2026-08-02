@@ -137,7 +137,12 @@ async function loadCategories() {
         total.value = response.data.total
         imageLoadFailed.value = {}
     } catch (error) {
-        toast.add({ title: 'Failed to load categories', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load categories',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => loadCategories() }]
+        })
     } finally {
         loading.value = false
     }

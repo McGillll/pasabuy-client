@@ -16,8 +16,11 @@
     />
 
     <div v-else class="min-h-full space-y-6" @touchstart="onTabsTouchStart" @touchmove="onTabsTouchMove" @touchend="onTabsTouchEnd">
-        <div>
-            <h1 class="text-xl font-semibold text-highlighted">{{ workspace.schedule.title }}</h1>
+        <div class="sticky top-0 z-10 -mx-6 flex items-center gap-2 border-b border-default bg-default px-6 py-3 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
+            <h1 class="truncate text-xl font-semibold text-highlighted">{{ workspace.schedule.title }}</h1>
+            <UBadge :color="scheduleStatusColor" variant="subtle" class="shrink-0">
+                {{ scheduleStatusLabel }}
+            </UBadge>
         </div>
 
         <BaseTabs v-model="activeTab" :items="tabs" variant="link" class="w-full">
@@ -76,6 +79,20 @@ const workspace = useScheduleWorkspace(uuid)
 useHead({ title: computed(() => workspace.schedule?.title ?? 'Schedule Details') })
 
 const activeTab = ref('summary')
+
+const scheduleStatusLabel = computed(() => {
+    const status = workspace.schedule?.status
+    if (status === 'open') return 'Open'
+    if (status === 'closed') return 'Closed'
+    return 'Finished'
+})
+
+const scheduleStatusColor = computed(() => {
+    const status = workspace.schedule?.status
+    if (status === 'open') return 'primary' as const
+    if (status === 'closed') return 'warning' as const
+    return 'success' as const
+})
 
 const tabs = computed<TabsItem[]>(() => [
     { label: 'Details', icon: 'i-lucide-file-text', value: 'details', slot: 'details' },

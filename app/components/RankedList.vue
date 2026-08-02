@@ -2,7 +2,10 @@
     <BaseCard>
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="font-medium">{{ title }}</h2>
+                <h2 class="flex items-center gap-1 font-medium">
+                    {{ title }}
+                    <BaseHelpTooltip v-if="helpText">{{ helpText }}</BaseHelpTooltip>
+                </h2>
                 <div v-if="month !== undefined && year !== undefined" class="flex items-center gap-1">
                     <BaseIconButton
                         icon="i-lucide-chevron-left"
@@ -90,6 +93,7 @@ interface RankedListItem {
 const props = withDefaults(defineProps<{
     title: string
     hint?: string
+    helpText?: string
     items: RankedListItem[]
     loading?: boolean
     emptyMessage?: string

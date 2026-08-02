@@ -82,10 +82,10 @@
                         <p v-if="row.original.description" class="text-sm text-muted truncate max-w-xs">{{ row.original.description }}</p>
                     </template>
                     <template #category-cell="{ row }">
-                        <span class="text-sm text-muted">{{ row.original.category?.name ?? '—' }}</span>
+                        <span class="text-sm text-muted">{{ row.original.category?.name ?? '-' }}</span>
                     </template>
                     <template #default_price-cell="{ row }">
-                        <span class="font-medium text-highlighted">₱{{ row.original.default_price }}</span>
+                        <span class="font-medium text-highlighted font-mono tabular-nums">₱{{ row.original.default_price }}</span>
                     </template>
                     <template #status-cell="{ row }">
                         <span class="text-sm text-dimmed">{{ row.original.is_active ? 'Active' : 'Inactive' }}</span>
@@ -152,7 +152,15 @@
                                 </template>
                             </BaseFileUpload>
                         </BaseFormField>
-                        <BaseFormField label="Active">
+                        <BaseFormField>
+                            <template #label>
+                                <span class="inline-flex items-center gap-1">
+                                    Active
+                                    <BaseHelpTooltip>
+                                        Inactive products are hidden from new schedules but stay visible in schedules they were already added to.
+                                    </BaseHelpTooltip>
+                                </span>
+                            </template>
                             <BaseSwitch v-model="form.is_active" label="Product is active" />
                         </BaseFormField>
                     </div>
@@ -160,7 +168,15 @@
                         <BaseFormField label="Name" required>
                             <BaseInput v-model="form.name" placeholder="Turbo 9inch fan" />
                         </BaseFormField>
-                        <BaseFormField label="Default price" required>
+                        <BaseFormField required>
+                            <template #label>
+                                <span class="inline-flex items-center gap-1">
+                                    Default price
+                                    <BaseHelpTooltip>
+                                        This is the base price used when adding this product to a new schedule. It can still be confirmed at a different actual price per schedule without changing this default.
+                                    </BaseHelpTooltip>
+                                </span>
+                            </template>
                             <BaseInput v-model.number="form.default_price" type="number" min="0" step="0.01" placeholder="0.00">
                                 <template #leading>
                                     <span class="text-sm text-dimmed">₱</span>
@@ -170,7 +186,15 @@
                         <BaseFormField label="Category">
                             <BaseSelect v-model="form.category_id" :items="categoryOptions" />
                         </BaseFormField>
-                        <BaseFormField label="Default product status">
+                        <BaseFormField>
+                            <template #label>
+                                <span class="inline-flex items-center gap-1">
+                                    Default product status
+                                    <BaseHelpTooltip>
+                                        Sets the starting status when this product is added to a new schedule. Each schedule can override it independently, so changing it here only affects schedules created afterward.
+                                    </BaseHelpTooltip>
+                                </span>
+                            </template>
                             <BaseSelect v-model="form.default_product_status" :items="productStatusOptions" />
                         </BaseFormField>
                         <BaseFormField label="Description" class="sm:col-span-2">
@@ -315,7 +339,12 @@ async function loadProducts() {
         total.value = response.data.total
         imageLoadFailed.value = {}
     } catch (error) {
-        toast.add({ title: 'Failed to load products', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load products',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => loadProducts() }]
+        })
     } finally {
         loading.value = false
     }

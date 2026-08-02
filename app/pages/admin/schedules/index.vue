@@ -1,7 +1,14 @@
 <template>
     <div class="space-y-4">
         <div class="flex items-center justify-between">
-            <h1 class="text-xl font-semibold text-highlighted">Pasabuy Schedules</h1>
+            <div class="flex items-center gap-1.5">
+                <h1 class="text-xl font-semibold text-highlighted">Pasabuy Schedules</h1>
+                <BaseHelpTooltip>
+                    <span class="font-medium text-highlighted">Open:</span> customers can submit orders; you can still edit schedule details and products.
+                    <br><span class="font-medium text-highlighted">Closed:</span> ordering stops and details are locked, but you can confirm actual prices, edit order items, and still reopen it.
+                    <br><span class="font-medium text-highlighted">Finished:</span> final state, prices are locked in and order items can no longer be edited.
+                </BaseHelpTooltip>
+            </div>
             <BaseButton icon="i-lucide-plus" class="hidden sm:inline-flex" @click="isCreateModalOpen = true">New Schedule</BaseButton>
         </div>
 
@@ -227,7 +234,12 @@ async function loadSchedules() {
         schedules.value = response.data.items
         total.value = response.data.total
     } catch (error) {
-        toast.add({ title: 'Failed to load schedules', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load schedules',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => loadSchedules() }]
+        })
     } finally {
         loading.value = false
     }

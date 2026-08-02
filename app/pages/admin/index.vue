@@ -13,13 +13,12 @@
 
         <DailyVerseCard />
 
-        <KpiStrip :items="kpiItems" :loading="loading" />
-
         <div class="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-6">
             <div class="space-y-6">
                 <AttentionQueue
                     title="Needs attention"
                     hint="Orders waiting on confirm or cancel"
+                    help-text="Orders land here while they're still pending, meaning you haven't confirmed or cancelled them yet. Confirm or cancel each one from its menu to clear it from this list."
                     :count="pendingOrders.length"
                     :items="attentionQueueItems"
                     view-all-href="/admin/schedules"
@@ -35,10 +34,20 @@
             </div>
 
             <div class="space-y-6">
-                <PipelineBar title="Order pipeline" :stages="pipelineStages" :loading="loading" />
+                <KpiStrip :items="kpiItems" :loading="loading" />
+
+                <PipelineBar
+                    title="Order pipeline"
+                    help-text="How many orders across all your schedules are currently pending, confirmed, or cancelled."
+                    :stages="pipelineStages"
+                    :loading="loading"
+                />
 
                 <RankedList
                     :title="rankingTabs.find((tab) => tab.value === rankingTab)?.label ?? 'Rankings'"
+                    :help-text="rankingTab === 'products'
+                        ? 'Ranked by total quantity ordered in the selected month, across all your schedules.'
+                        : 'Ranked by total amount spent in the selected month, across all your schedules.'"
                     :tabs="rankingTabs"
                     :active-tab="rankingTab"
                     @update:active-tab="(value) => (rankingTab = value as 'products' | 'buyers')"
@@ -52,16 +61,6 @@
                 />
             </div>
         </div>
-
-        <BaseConfirmModal
-            v-model:open="confirmDialog.open"
-            :title="confirmDialog.title"
-            :description="confirmDialog.description"
-            :color="confirmDialog.color"
-            :confirm-label="confirmDialog.confirmLabel"
-            :loading="confirming"
-            @confirm="confirmDialogAccept"
-        />
     </div>
 </template>
 
@@ -102,8 +101,8 @@ interface PendingOrder extends Order {
 }
 
 const toast = useToast()
+const { setOrderStatusUndoable } = useOrderUndoAction()
 const loading = ref(true)
-const actingOn = ref<string | null>(null)
 
 const totalProducts = ref(0)
 const totalMembers = ref(0)
@@ -140,20 +139,30 @@ function onChangeRankingMonth(delta: number) {
 }
 
 const stats = computed(() => [
-    { label: 'Total members', value: totalMembers.value, icon: 'i-lucide-users' },
+    {
+        label: 'Total members',
+        value: totalMembers.value,
+        icon: 'i-lucide-users',
+        tooltip: 'Customers you\'ve approved to place orders. Pending signups aren\'t counted until you approve them in Members.'
+    },
     { label: 'Total products', value: totalProducts.value, icon: 'i-lucide-package' },
-    { label: 'Open schedules', value: (schedules.value ?? []).filter((s) => s.status === 'open').length, icon: 'i-lucide-calendar-clock' },
-    { label: 'Finished schedules', value: (schedules.value ?? []).filter((s) => s.status === 'finished').length, icon: 'i-lucide-check-circle' },
-    { label: 'Pending orders', value: pendingOrders.value.length, icon: 'i-lucide-clock-alert' }
+    {
+        label: 'Open schedules',
+        value: (schedules.value ?? []).filter((s) => s.status === 'open').length,
+        icon: 'i-lucide-calendar-clock',
+        tooltip: 'Schedules still accepting orders. A schedule moves to Closed once its schedule date passes.'
+    },
+    {
+        label: 'Finished schedules',
+        value: (schedules.value ?? []).filter((s) => s.status === 'finished').length,
+        icon: 'i-lucide-check-circle',
+        tooltip: 'Schedules you\'ve marked complete after fulfilling all orders, the final stage after Closed.'
+    }
 ])
 
-const kpiItems = computed(() => [
-    { ...stats.value[0], color: 'info' as const },
-    { ...stats.value[1], color: 'primary' as const },
-    { ...stats.value[2], color: 'success' as const },
-    { ...stats.value[3], color: 'neutral' as const },
-    { ...stats.value[4], color: 'warning' as const }
-])
+const kpiColors = ['info', 'primary', 'success', 'neutral'] as const
+
+const kpiItems = computed(() => stats.value.map((stat, index) => ({ ...stat, color: kpiColors[index] })))
 
 const recentSchedules = computed(() =>
     [...(schedules.value ?? [])]
@@ -261,7 +270,12 @@ async function loadDashboard(force = false) {
             { label: 'Cancelled', count: cancelledOrdersResponse.data.total, color: 'bg-error' }
         ]
     } catch (error) {
-        toast.add({ title: 'Failed to load dashboard', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load dashboard',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => loadDashboard(true) }]
+        })
     } finally {
         loading.value = false
     }
@@ -278,7 +292,12 @@ async function loadRankings() {
         topProducts.value = topProductsResponse.data
         topBuyers.value = topBuyersResponse.data
     } catch (error) {
-        toast.add({ title: 'Failed to load rankings', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load rankings',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => loadRankings() }]
+        })
     } finally {
         loadingRankings.value = false
     }
@@ -286,37 +305,23 @@ async function loadRankings() {
 
 watch([rankingMonth, rankingYear], loadRankings)
 
-async function setOrderStatus(order: PendingOrder, status: 'confirmed' | 'cancelled') {
-    actingOn.value = order.uuid
-    try {
-        await pasabuyScheduleService.updateOrderStatus(order.uuid, status)
-        pendingOrders.value = pendingOrders.value.filter((o) => o.uuid !== order.uuid)
-        toast.add({ title: `Order ${status}`, color: 'success' })
-    } catch (error) {
-        toast.add({ title: 'Update failed', description: (error as APIError).message, color: 'error' })
-    } finally {
-        actingOn.value = null
-    }
+function setOrderStatus(order: PendingOrder, status: 'confirmed' | 'cancelled') {
+    setOrderStatusUndoable(order, status, {
+        onApply: () => { pendingOrders.value = pendingOrders.value.filter((o) => o.uuid !== order.uuid) },
+        onRevert: () => { pendingOrders.value = [order, ...pendingOrders.value] }
+    })
 }
 
-const { confirmDialog, confirming, askConfirm, confirmDialogAccept } = useConfirmDialog()
-
 function cancelOrder(order: PendingOrder) {
-    askConfirm({
-        title: 'Cancel order?',
-        description: `Cancel ${order.customer_name}'s order? This cannot be undone.`,
-        confirmLabel: 'Cancel order',
-        color: 'error',
-        action: () => setOrderStatus(order, 'cancelled')
-    })
+    setOrderStatus(order, 'cancelled')
 }
 
 function pendingOrderActions(order: PendingOrder): DropdownMenuItem[] {
     return [
         ...(order.scheduleStatus === 'closed'
-            ? [{ label: 'Confirm order', icon: 'i-lucide-check', color: 'success' as const, loading: actingOn.value === order.uuid, onSelect: () => setOrderStatus(order, 'confirmed') }]
+            ? [{ label: 'Confirm order', icon: 'i-lucide-check', color: 'success' as const, onSelect: () => setOrderStatus(order, 'confirmed') }]
             : []),
-        { label: 'Cancel order', icon: 'i-lucide-x', color: 'error', loading: actingOn.value === order.uuid, onSelect: () => cancelOrder(order) }
+        { label: 'Cancel order', icon: 'i-lucide-x', color: 'error', onSelect: () => cancelOrder(order) }
     ]
 }
 

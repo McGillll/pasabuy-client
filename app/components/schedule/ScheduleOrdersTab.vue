@@ -56,8 +56,65 @@
             </template>
         </USlideover>
 
+        <div
+            v-if="workspace.selectedOrderCount > 0"
+            class="sticky top-2 z-10 mt-4 flex flex-col gap-3 rounded-lg bg-elevated p-3 shadow-sm ring-1 ring-default sm:flex-row sm:items-center"
+        >
+            <div class="flex items-center justify-between gap-2 sm:block">
+                <div>
+                    <span class="text-sm font-medium text-highlighted">{{ workspace.selectedOrderCount }} selected</span>
+                    <button
+                        v-if="workspace.selectedOrderCount < totalMatchingPendingCount"
+                        type="button"
+                        class="block text-xs text-primary hover:underline"
+                        @click="workspace.setOrdersSelected(workspace.filteredOrders, true)"
+                    >
+                        Select all {{ totalMatchingPendingCount }} pending
+                    </button>
+                </div>
+                <BaseButton class="sm:hidden" size="sm" color="neutral" variant="ghost" @click="workspace.clearOrderSelection">
+                    Clear
+                </BaseButton>
+            </div>
+            <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-1 sm:justify-end">
+                <BaseButton class="hidden sm:inline-flex" color="neutral" variant="ghost" @click="workspace.clearOrderSelection">
+                    Clear selection
+                </BaseButton>
+                <BaseButton color="error" variant="outline" @click="workspace.bulkCancelOrders">
+                    Cancel selected
+                </BaseButton>
+                <BaseButton
+                    color="success"
+                    :disabled="!workspace.isClosed"
+                    :aria-label="workspace.isClosed ? 'Confirm selected orders' : 'Close schedule to confirm'"
+                    @click="workspace.bulkConfirmOrders"
+                >
+                    Confirm selected
+                </BaseButton>
+            </div>
+        </div>
+
         <UCard class="mt-4" :ui="{ body: 'p-0 sm:p-0' }">
             <BaseTable :data="pagedOrders" :columns="orderColumns" :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }">
+                <template v-if="pagePendingOrders.length > 0" #select-header>
+                    <div class="flex h-11 w-11 items-center justify-center">
+                        <BaseCheckbox
+                            :model-value="headerSelectionState"
+                            aria-label="Select all pending orders on this page"
+                            @update:model-value="(value: boolean | 'indeterminate') => workspace.setOrdersSelected(pagePendingOrders, value !== false)"
+                        />
+                    </div>
+                </template>
+                <template #select-cell="{ row }">
+                    <div class="flex h-11 w-11 items-center justify-center">
+                        <BaseCheckbox
+                            v-if="row.original.status === 'pending'"
+                            :model-value="workspace.isOrderSelected(row.original)"
+                            aria-label="Select order"
+                            @update:model-value="workspace.toggleOrderSelection(row.original)"
+                        />
+                    </div>
+                </template>
                 <template #customer_name-cell="{ row }">
                     <p class="font-medium text-highlighted">{{ row.original.customer_name }}</p>
                     <p class="text-xs text-dimmed">{{ row.original.customer_contact }} · <span class="font-mono">{{ row.original.order_no }}</span></p>
@@ -73,7 +130,7 @@
                     <span v-else class="text-muted">-</span>
                 </template>
                 <template #total_amount-cell="{ row }">
-                    {{ workspace.orderDisplayAmount(row.original) }}
+                    <span class="font-mono tabular-nums">{{ workspace.orderDisplayAmount(row.original) }}</span>
                 </template>
                 <template #actions-cell="{ row }">
                     <div class="flex justify-end gap-1">
@@ -130,6 +187,15 @@
                             clickable
                             @click="workspace.viewOrder(order)"
                         >
+                            <template v-if="order.status === 'pending'" #leading>
+                                <div class="flex h-11 w-11 items-center justify-center" @click.stop>
+                                    <BaseCheckbox
+                                        :model-value="workspace.isOrderSelected(order)"
+                                        aria-label="Select order"
+                                        @update:model-value="workspace.toggleOrderSelection(order)"
+                                    />
+                                </div>
+                            </template>
                             <template #title>
                                 <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
                             </template>
@@ -137,7 +203,7 @@
                                 {{ order.customer_contact }} · <span class="font-mono text-xs">{{ order.order_no }}</span>
                             </template>
                             <template #meta>
-                                <span class="font-medium text-highlighted">₱{{ workspace.orderDisplayAmount(order) }}</span>
+                                <span class="font-medium text-highlighted font-mono tabular-nums">₱{{ workspace.orderDisplayAmount(order) }}</span>
                             </template>
                             <template #status>
                                 <OrderStatusBadge :status="order.status" />
@@ -236,6 +302,10 @@ const props = defineProps<{
 const isOrderFiltersOpen = ref(false)
 const expandedOrderUuid = ref<string | null>(null)
 
+useEscapeKey(() => {
+    if (props.workspace.selectedOrderCount > 0) props.workspace.clearOrderSelection()
+})
+
 function toggleExpanded(uuid: string) {
     expandedOrderUuid.value = expandedOrderUuid.value === uuid ? null : uuid
 }
@@ -269,6 +339,7 @@ const orderDeliveryStatusChipOptions = [
 ]
 
 const orderColumns: TableColumn<Order>[] = [
+    { id: 'select', header: '' },
     { accessorKey: 'customer_name', header: 'Customer' },
     { accessorKey: 'total_amount', header: 'Total' },
     { accessorKey: 'status', header: 'Status' },
@@ -282,6 +353,20 @@ const orderPage = ref(1)
 const pagedOrders = computed(() => {
     const start = (orderPage.value - 1) * orderPerPage
     return props.workspace.filteredOrders.slice(start, start + orderPerPage)
+})
+
+const pagePendingOrders = computed(() => pagedOrders.value.filter((order) => order.status === 'pending'))
+
+const totalMatchingPendingCount = computed(() => props.workspace.filteredOrders.filter((order) => order.status === 'pending').length)
+
+// Select-all in the header only covers pending orders on the current page, matching
+// standard table select-all behavior (it doesn't reach across pagination).
+const headerSelectionState = computed<boolean | 'indeterminate'>(() => {
+    if (pagePendingOrders.value.length === 0) return false
+    const selectedCount = pagePendingOrders.value.filter((order) => props.workspace.isOrderSelected(order)).length
+    if (selectedCount === 0) return false
+    if (selectedCount === pagePendingOrders.value.length) return true
+    return 'indeterminate'
 })
 
 watch(() => props.workspace.filteredOrders, () => {

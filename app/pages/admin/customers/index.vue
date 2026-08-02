@@ -8,7 +8,7 @@
             <template #approved>
                 <div class="overflow-x-clip">
                 <div class="mt-4 space-y-4" ref="panelEl">
-                    <div class="sticky top-0 z-10 -mx-6 bg-default/95 px-6 py-2 backdrop-blur-sm">
+                    <div class="sticky top-0 z-10 -mx-6 border-b border-default bg-default px-6 py-2 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
                         <BaseSearchInput v-model="search" placeholder="Search customers…" />
                     </div>
 
@@ -119,6 +119,40 @@
             <template #pending>
                 <div class="overflow-x-clip">
                 <div class="mt-4 space-y-4" ref="panelEl">
+                    <div
+                        v-if="selectedPendingUuids.size > 0"
+                        class="sticky top-2 z-10 flex flex-col gap-3 rounded-lg bg-elevated p-3 shadow-sm ring-1 ring-default sm:flex-row sm:items-center"
+                    >
+                        <div class="flex items-center justify-between gap-2 sm:block">
+                            <div>
+                                <span class="text-sm font-medium text-highlighted">{{ selectedPendingUuids.size }} selected</span>
+                                <button
+                                    v-if="pendingTotal > perPage && selectedPendingUuids.size < pendingTotal"
+                                    type="button"
+                                    class="block text-xs text-primary hover:underline"
+                                    :disabled="selectingAllPending"
+                                    @click="selectAllMatchingPending"
+                                >
+                                    {{ selectingAllPending ? 'Selecting...' : `Select all ${pendingTotal} pending` }}
+                                </button>
+                            </div>
+                            <BaseButton class="sm:hidden" size="sm" color="neutral" variant="ghost" @click="clearPendingSelection">
+                                Clear
+                            </BaseButton>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-1 sm:justify-end">
+                            <BaseButton class="hidden sm:inline-flex" color="neutral" variant="ghost" @click="clearPendingSelection">
+                                Clear selection
+                            </BaseButton>
+                            <BaseButton color="error" variant="outline" @click="bulkRejectPending">
+                                Reject selected
+                            </BaseButton>
+                            <BaseButton color="success" @click="bulkApprovePending">
+                                Approve selected
+                            </BaseButton>
+                        </div>
+                    </div>
+
                     <UCard :ui="{ body: 'p-0 sm:p-0' }">
                         <BaseTable
                             :data="pendingCustomers"
@@ -126,6 +160,24 @@
                             :loading="pendingLoading"
                             :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
                         >
+                            <template #select-header>
+                                <div class="flex h-11 w-11 items-center justify-center">
+                                    <BaseCheckbox
+                                        :model-value="allPendingSelected"
+                                        aria-label="Select all pending customers"
+                                        @update:model-value="toggleSelectAllPending"
+                                    />
+                                </div>
+                            </template>
+                            <template #select-cell="{ row }">
+                                <div class="flex h-11 w-11 items-center justify-center">
+                                    <BaseCheckbox
+                                        :model-value="selectedPendingUuids.has(row.original.uuid)"
+                                        aria-label="Select customer"
+                                        @update:model-value="() => togglePendingSelection(row.original.uuid)"
+                                    />
+                                </div>
+                            </template>
                             <template #customer-cell="{ row }">
                                 <p class="font-medium text-highlighted">{{ row.original.first_name }} {{ row.original.last_name }}</p>
                                 <p class="text-sm text-muted truncate">{{ row.original.email }}</p>
@@ -149,7 +201,17 @@
                             <template #list-item="{ item: customer }">
                                 <ListCard>
                                     <template #leading>
-                                        <BaseAvatar :name="`${customer.first_name} ${customer.last_name}`" />
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex h-11 w-11 items-center justify-center">
+                                                <BaseCheckbox
+                                                    :model-value="selectedPendingUuids.has(customer.uuid)"
+                                                    aria-label="Select customer"
+                                                    @update:model-value="() => togglePendingSelection(customer.uuid)"
+                                                    @click.stop
+                                                />
+                                            </div>
+                                            <BaseAvatar :name="`${customer.first_name} ${customer.last_name}`" />
+                                        </div>
                                     </template>
                                     <template #title>
                                         <p class="font-medium text-highlighted">{{ customer.first_name }} {{ customer.last_name }}</p>
@@ -203,6 +265,9 @@
                         {{ row.original.pasabuy_schedule.title }}
                     </NuxtLink>
                 </template>
+                <template #total_amount-cell="{ row }">
+                    <span class="font-mono tabular-nums">₱{{ row.original.total_amount }}</span>
+                </template>
                 <template #status-cell="{ row }">
                     <OrderStatusBadge :status="row.original.status" />
                 </template>
@@ -221,7 +286,7 @@
                             </NuxtLink>
                         </template>
                         <template #meta>
-                            <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
+                            <span class="font-medium text-highlighted font-mono tabular-nums">₱{{ order.total_amount }}</span>
                             <span class="text-muted">{{ formatDate(order.created_at) }}</span>
                         </template>
                     </ListCard>
@@ -305,6 +370,7 @@ const approvedColumns: TableColumn<Customer>[] = [
 ]
 
 const pendingColumns: TableColumn<Customer>[] = [
+    { id: 'select', header: '' },
     { id: 'customer', header: 'Customer' },
     { accessorKey: 'contact_number', header: 'Contact' },
     { accessorKey: 'created_at', header: 'Registered' },
@@ -324,6 +390,10 @@ const pendingLoading = ref(false)
 const pendingPage = ref(1)
 const pendingTotal = ref(0)
 
+useEscapeKey(() => {
+    if (selectedPendingUuids.value.size > 0) clearPendingSelection()
+})
+
 const approvedEtag = ref<string | null>(null)
 const pendingEtag = ref<string | null>(null)
 
@@ -341,7 +411,12 @@ async function loadApproved() {
         approvedTotal.value = result.data.total
         approvedEtag.value = result.etag
     } catch (error) {
-        toast.add({ title: 'Failed to load customers', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load customers',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => loadApproved() }]
+        })
     } finally {
         approvedLoading.value = false
     }
@@ -359,15 +434,24 @@ async function loadPending() {
         pendingCustomers.value = result.data.items
         pendingTotal.value = result.data.total
         pendingEtag.value = result.etag
+        pruneSelectedPending()
     } catch (error) {
-        toast.add({ title: 'Failed to load customers', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load customers',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => loadPending() }]
+        })
     } finally {
         pendingLoading.value = false
     }
 }
 
 watch(approvedPage, loadApproved)
-watch(pendingPage, loadPending)
+watch(pendingPage, () => {
+    clearPendingSelection()
+    loadPending()
+})
 
 useSearchDebounce(search, () => {
     approvedPage.value = 1
@@ -394,7 +478,12 @@ async function viewOrders(customer: Customer) {
         const response = await customerService.fetchCustomerOrders(customer.uuid)
         customerOrders.value = response.data
     } catch (error) {
-        toast.add({ title: 'Failed to load orders', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load orders',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => viewOrders(customer) }]
+        })
     } finally {
         loadingOrders.value = false
     }
@@ -407,12 +496,155 @@ async function approveCustomer(customer: Customer) {
         pendingCustomers.value = pendingCustomers.value.filter((c) => c.uuid !== customer.uuid)
         pendingTotal.value = Math.max(0, pendingTotal.value - 1)
         await loadApproved()
-        toast.add({ title: 'Customer approved', color: 'success' })
+        toast.add({
+            title: 'Customer approved',
+            color: 'success',
+            actions: [{ label: 'Undo', onClick: () => undoApproveCustomer(customer) }]
+        })
     } catch (error) {
         toast.add({ title: 'Approval failed', description: (error as APIError).message, color: 'error' })
     } finally {
         actingOn.value = null
     }
+}
+
+async function undoApproveCustomer(customer: Customer) {
+    try {
+        await customerService.rejectCustomer(customer.uuid)
+        approvedCustomers.value = approvedCustomers.value.filter((c) => c.uuid !== customer.uuid)
+        approvedTotal.value = Math.max(0, approvedTotal.value - 1)
+        await loadPending()
+        toast.add({ title: 'Approval undone', color: 'success' })
+    } catch (error) {
+        toast.add({ title: 'Undo failed', description: (error as APIError).message, color: 'error' })
+    }
+}
+
+const selectedPendingUuids = ref<Set<string>>(new Set())
+const selectingAllPending = ref(false)
+
+const allPendingSelected = computed(() =>
+    pendingCustomers.value.length > 0 && pendingCustomers.value.every((c) => selectedPendingUuids.value.has(c.uuid))
+)
+
+async function selectAllMatchingPending() {
+    if (pendingTotal.value === 0) return
+    selectingAllPending.value = true
+    try {
+        const result = await customerService.fetchCustomers({
+            page: 1,
+            per_page: pendingTotal.value,
+            is_approved: '0'
+        })
+        selectedPendingUuids.value = new Set(result.data.items.map((c: Customer) => c.uuid))
+    } catch (error) {
+        toast.add({ title: 'Could not select all pending', description: (error as APIError).message, color: 'error' })
+    } finally {
+        selectingAllPending.value = false
+    }
+}
+
+function togglePendingSelection(uuid: string) {
+    const next = new Set(selectedPendingUuids.value)
+    if (next.has(uuid)) next.delete(uuid)
+    else next.add(uuid)
+    selectedPendingUuids.value = next
+}
+
+function toggleSelectAllPending() {
+    selectedPendingUuids.value = allPendingSelected.value
+        ? new Set()
+        : new Set(pendingCustomers.value.map((c) => c.uuid))
+}
+
+function clearPendingSelection() {
+    selectedPendingUuids.value = new Set()
+}
+
+function pruneSelectedPending() {
+    const validUuids = new Set(pendingCustomers.value.map((c) => c.uuid))
+    selectedPendingUuids.value = new Set([...selectedPendingUuids.value].filter((uuid) => validUuids.has(uuid)))
+}
+
+async function runBulkAction(uuids: string[], action: (uuid: string) => Promise<any>) {
+    const results = await Promise.allSettled(uuids.map((uuid) => action(uuid)))
+    const failedUuids = uuids.filter((_, index) => results[index]!.status === 'rejected')
+    const succeeded = results.length - failedUuids.length
+    return { succeeded, failed: failedUuids.length, failedUuids }
+}
+
+async function undoBulkApprove(approvedUuids: string[]) {
+    await runBulkAction(approvedUuids, (uuid) => customerService.rejectCustomer(uuid))
+    await Promise.all([loadApproved(), loadPending()])
+    toast.add({ title: `${approvedUuids.length} approval${approvedUuids.length === 1 ? '' : 's'} undone`, color: 'success' })
+}
+
+async function runApprovePending(uuids: string[]) {
+    const { succeeded, failed, failedUuids } = await runBulkAction(uuids, (uuid) => customerService.approveCustomer(uuid))
+    const approvedUuids = uuids.filter((uuid) => !failedUuids.includes(uuid))
+    pendingCustomers.value = pendingCustomers.value.filter((c) => !approvedUuids.includes(c.uuid))
+    pendingTotal.value = Math.max(0, pendingTotal.value - succeeded)
+    selectedPendingUuids.value = new Set(failedUuids)
+    await Promise.all([loadApproved(), loadPending()])
+    toast.add({
+        title: failed > 0 ? `${succeeded} approved, ${failed} failed` : `${succeeded} customer${succeeded === 1 ? '' : 's'} approved`,
+        description: failed > 0 ? 'The failed customers stay selected so you can try again.' : undefined,
+        color: failed > 0 ? 'warning' : 'success',
+        actions: [
+            ...(succeeded > 0 ? [{ label: 'Undo', onClick: () => undoBulkApprove(approvedUuids) }] : []),
+            ...(failed > 0 ? [{ label: 'Retry failed', onClick: () => runApprovePending(failedUuids) }] : [])
+        ]
+    })
+}
+
+function bulkApprovePending() {
+    const uuids = Array.from(selectedPendingUuids.value)
+    if (uuids.length === 0) return
+
+    askConfirm({
+        title: 'Approve selected customers?',
+        description: `This will approve ${uuids.length} customer${uuids.length === 1 ? '' : 's'}.`,
+        confirmLabel: 'Approve',
+        color: 'success',
+        action: () => runApprovePending(uuids)
+    })
+}
+
+async function undoBulkReject(rejectedUuids: string[]) {
+    await runBulkAction(rejectedUuids, (uuid) => customerService.approveCustomer(uuid))
+    await Promise.all([loadApproved(), loadPending()])
+    toast.add({ title: `${rejectedUuids.length} rejection${rejectedUuids.length === 1 ? '' : 's'} undone`, color: 'success' })
+}
+
+async function runRejectPending(uuids: string[]) {
+    const { succeeded, failed, failedUuids } = await runBulkAction(uuids, (uuid) => customerService.rejectCustomer(uuid))
+    const rejectedUuids = uuids.filter((uuid) => !failedUuids.includes(uuid))
+    pendingCustomers.value = pendingCustomers.value.filter((c) => !rejectedUuids.includes(c.uuid))
+    pendingTotal.value = Math.max(0, pendingTotal.value - succeeded)
+    selectedPendingUuids.value = new Set(failedUuids)
+    await loadPending()
+    toast.add({
+        title: failed > 0 ? `${succeeded} rejected, ${failed} failed` : `${succeeded} customer${succeeded === 1 ? '' : 's'} rejected`,
+        description: failed > 0 ? 'The failed customers stay selected so you can try again.' : undefined,
+        color: failed > 0 ? 'warning' : 'success',
+        actions: [
+            ...(succeeded > 0 ? [{ label: 'Undo', onClick: () => undoBulkReject(rejectedUuids) }] : []),
+            ...(failed > 0 ? [{ label: 'Retry failed', onClick: () => runRejectPending(failedUuids) }] : [])
+        ]
+    })
+}
+
+function bulkRejectPending() {
+    const uuids = Array.from(selectedPendingUuids.value)
+    if (uuids.length === 0) return
+
+    askConfirm({
+        title: 'Reject selected customers?',
+        description: `This will reject ${uuids.length} customer${uuids.length === 1 ? '' : 's'}.`,
+        confirmLabel: 'Reject',
+        color: 'error',
+        action: () => runRejectPending(uuids)
+    })
 }
 
 const { confirmDialog, confirming, askConfirm, confirmDialogAccept } = useConfirmDialog()
@@ -430,7 +662,11 @@ function revokeCustomer(customer: Customer) {
                 approvedCustomers.value = approvedCustomers.value.filter((c) => c.uuid !== customer.uuid)
                 approvedTotal.value = Math.max(0, approvedTotal.value - 1)
                 await loadPending()
-                toast.add({ title: 'Approval revoked', color: 'success' })
+                toast.add({
+                    title: 'Approval revoked',
+                    color: 'success',
+                    actions: [{ label: 'Undo', onClick: () => undoApproveCustomer(customer) }]
+                })
             } catch (error) {
                 toast.add({ title: 'Update failed', description: (error as APIError).message, color: 'error' })
             } finally {

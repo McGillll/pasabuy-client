@@ -23,7 +23,7 @@
                 <div class="flex items-center gap-2">
                     <slot name="title" />
                 </div>
-                <div v-if="$slots.subtitle" class="text-sm text-muted">
+                <div v-if="$slots.subtitle" class="truncate text-sm text-muted">
                     <slot name="subtitle" />
                 </div>
                 <div v-if="$slots.meta" class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
@@ -31,7 +31,9 @@
                 </div>
             </div>
 
-            <slot v-if="$slots.trailing" name="trailing" />
+            <div v-if="$slots.trailing" class="shrink-0 self-start">
+                <slot name="trailing" />
+            </div>
             <template v-else>
                 <UDropdownMenu v-if="actions?.length" :items="actions" :content="{ align: 'end' }">
                     <ListCardButton icon="i-lucide-ellipsis-vertical" aria-label="More actions" @click.stop />

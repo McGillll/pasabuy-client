@@ -16,7 +16,7 @@
                 <p class="text-xs text-dimmed">{{ timestamp }}</p>
             </div>
 
-            <span class="text-sm font-medium text-highlighted shrink-0">{{ amount }}</span>
+            <span class="text-sm font-medium text-highlighted shrink-0 font-mono tabular-nums">{{ amount }}</span>
 
             <ListCardButton icon="i-lucide-ellipsis-vertical" aria-label="Order actions" @click="expanded = !expanded" />
         </div>

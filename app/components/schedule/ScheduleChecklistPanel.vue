@@ -60,7 +60,7 @@
                 <p class="text-sm text-muted">{{ row.original.category_name ?? '-' }}</p>
             </template>
             <template #quantity-cell="{ row }">
-                <span class="text-lg font-bold tabular-nums" :class="row.original.is_checked ? 'text-muted' : 'text-highlighted'">{{ row.original.quantity }}x</span>
+                <span class="font-mono text-lg font-bold tabular-nums" :class="row.original.is_checked ? 'text-muted' : 'text-highlighted'">{{ row.original.quantity }}x</span>
             </template>
             <template #adjustment-cell="{ row }">
                 <UBadge v-if="row.original.additional_quantity > 0" color="warning" variant="subtle" size="sm">
@@ -86,7 +86,7 @@
                     <template #title>
                         <div class="flex w-full items-center justify-between gap-2">
                             <p class="font-medium text-highlighted" :class="{ 'line-through text-muted': item.is_checked }">{{ item.product_name }}</p>
-                            <p class="shrink-0 text-xl font-bold tabular-nums" :class="item.is_checked ? 'text-muted' : 'text-highlighted'">{{ item.quantity }}x</p>
+                            <p class="shrink-0 font-mono text-xl font-bold tabular-nums" :class="item.is_checked ? 'text-muted' : 'text-highlighted'">{{ item.quantity }}x</p>
                         </div>
                     </template>
                     <template #subtitle>
@@ -144,7 +144,7 @@
                     v-for="option in productStatusOptions"
                     :key="option.value"
                     type="button"
-                    class="flex flex-col items-center gap-1 rounded-lg px-2 py-2.5 text-xs font-semibold ring-1 transition-colors"
+                    class="flex min-h-11 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-xs font-semibold ring-1 transition-colors"
                     :class="confirmForm.product_status === option.value ? statusActiveClass[option.value] : 'text-muted ring-default'"
                     @click="confirmForm.product_status = option.value"
                 >

@@ -2,9 +2,17 @@
     <BaseCard>
         <template #header>
             <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="font-medium">{{ title }}</h2>
-                    <p v-if="hint" class="text-xs text-muted mt-0.5">{{ hint }}</p>
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center justify-center size-10 rounded-lg bg-warning/10 text-warning shrink-0">
+                        <UIcon name="i-lucide-inbox" class="size-5" />
+                    </div>
+                    <div>
+                        <h2 class="flex items-center gap-1 font-semibold text-highlighted">
+                            {{ title }}
+                            <BaseHelpTooltip v-if="helpText">{{ helpText }}</BaseHelpTooltip>
+                        </h2>
+                        <p v-if="hint" class="text-xs text-muted mt-0.5">{{ hint }}</p>
+                    </div>
                 </div>
                 <UBadge v-if="count && count > 0" color="warning" variant="subtle">
                     {{ count }} pending
@@ -81,6 +89,7 @@ interface AttentionQueueItem {
 withDefaults(defineProps<{
     title: string
     hint?: string
+    helpText?: string
     count?: number
     items: AttentionQueueItem[]
     viewAllHref?: string

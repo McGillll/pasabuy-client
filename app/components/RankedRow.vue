@@ -18,7 +18,7 @@
         </div>
 
         <div class="text-right shrink-0">
-            <p class="text-sm font-semibold">{{ qty }}</p>
+            <p class="text-sm font-semibold font-mono tabular-nums">{{ qty }}</p>
             <p v-if="unit" class="text-[10px] text-dimmed">{{ unit }}</p>
         </div>
     </div>

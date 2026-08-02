@@ -12,7 +12,12 @@
         </div>
 
         <UCard>
-            <p class="mb-3 text-xs font-medium uppercase tracking-wide text-dimmed">Status</p>
+            <p class="mb-3 inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-dimmed">
+                Status
+                <BaseHelpTooltip>
+                    Closing stops new orders and unlocks the shopping checklist and order-item editing. Finishing locks in the confirmed prices and invoice due date and cannot be undone.
+                </BaseHelpTooltip>
+            </p>
             <ScheduleStatusStepper
                 :status="workspace.schedule!.status"
                 :can-set-status="workspace.canSetStatus"
@@ -67,7 +72,7 @@
                     @click="isFormExpanded = !isFormExpanded"
                 >
                     <UIcon :name="isFormExpanded ? 'i-lucide-chevron-up' : 'i-lucide-lock'" class="size-4" />
-                    {{ isFormExpanded ? 'Hide form' : (workspace.isClosed ? 'Locked while closed' : 'Locked — finished') }}
+                    {{ isFormExpanded ? 'Hide form' : (workspace.isClosed ? 'Locked while closed' : 'Locked, finished') }}
                 </button>
 
                 <form v-if="isFormExpanded" class="mt-4 space-y-4 border-t border-default pt-4" @submit.prevent="workspace.saveDetails">

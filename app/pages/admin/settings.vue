@@ -5,7 +5,7 @@
             <p class="mt-1 text-sm text-muted">Manage your business information and invoice rules.</p>
         </div>
 
-        <nav class="sticky top-0 z-10 -mx-6 flex gap-2 overflow-x-auto bg-default/90 px-6 py-2 backdrop-blur">
+        <nav class="sticky top-0 z-10 -mx-6 flex gap-2 overflow-x-auto border-b border-default bg-default px-6 py-2 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
             <button
                 v-for="section in sections"
                 :key="section.id"
@@ -29,7 +29,12 @@
                                 <div class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                                     <UIcon name="i-lucide-store" class="size-4" />
                                 </div>
-                                <h2 class="text-sm font-semibold text-highlighted">Business</h2>
+                                <div>
+                                    <h2 class="text-sm font-semibold text-highlighted">Business</h2>
+                                    <p class="mt-1 text-sm text-muted">
+                                        Shown on your public share link and on customer invoices.
+                                    </p>
+                                </div>
                             </div>
 
                             <BaseFormField label="Business name" name="business_name" required>
@@ -49,6 +54,8 @@
                     </UCard>
                 </section>
 
+                <div class="border-t border-default"></div>
+
                 <BaseForm :state="invoiceState" :validate="validateInvoice" class="space-y-6" @submit="onSubmitInvoice">
                     <section :id="sections[1]!.id" class="scroll-mt-16">
                         <UCard>
@@ -57,6 +64,9 @@
                                     <UIcon name="i-lucide-percent" class="size-4" />
                                 </div>
                                 <h2 class="text-sm font-semibold text-highlighted">Markup</h2>
+                                <BaseHelpTooltip>
+                                    Markup is added on top of the base product price to set what the customer pays; the difference between what the customer pays and what you receive for the product is your margin. Orders above the threshold amount are charged the markup percentage instead of the fixed markup, and the handling fee is added on every order regardless of which one applies.
+                                </BaseHelpTooltip>
                             </div>
                             <p class="mt-1 text-sm text-muted">
                                 Orders above the threshold are charged a percentage markup; orders at or below it are charged a flat fee.
@@ -94,6 +104,8 @@
                         </UCard>
                     </section>
 
+                    <div class="border-t border-default"></div>
+
                     <section :id="sections[2]!.id" class="scroll-mt-16">
                         <UCard :ui="{ root: invoiceState.is_active ? 'ring-1 ring-warning/50 bg-warning/5' : '' }">
                             <div class="flex items-start justify-between gap-4">
@@ -125,6 +137,17 @@
                                 <BaseFormField label="Interest applies to" name="interest_base" description="What the interest is based on" required>
                                     <BaseSelect v-model="invoiceState.interest_base" :items="interestBaseOptions" value-key="value" :disabled="invoiceLoading" />
                                 </BaseFormField>
+                            </div>
+
+                            <div v-if="invoiceState.is_active" class="mt-4 rounded-lg bg-elevated/50 p-3">
+                                <p class="text-sm font-medium text-highlighted">Worked example</p>
+                                <p class="mt-1 text-sm text-muted">
+                                    Say an order totals ₱1,000 and the customer has already paid ₱600, leaving ₱400 unpaid past the due date.
+                                </p>
+                                <ul class="mt-2 space-y-1 text-sm text-muted">
+                                    <li><span class="font-medium text-highlighted">Outstanding balance:</span> interest applies only to the ₱400 still owed, so it shrinks as the customer pays more.</li>
+                                    <li><span class="font-medium text-highlighted">Full invoice total:</span> interest applies to the original ₱1,000 regardless of the ₱600 already paid.</li>
+                                </ul>
                             </div>
                         </UCard>
                     </section>
@@ -226,7 +249,12 @@ async function loadBusinessSettings() {
         businessState.address = data.address ?? ''
         settingsEtag.value = response.etag
     } catch (error) {
-        toast.add({ title: 'Failed to load settings', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load settings',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => loadBusinessSettings() }]
+        })
     } finally {
         businessLoading.value = false
     }
@@ -305,7 +333,12 @@ async function loadInvoiceSettings() {
         invoiceState.interest_base = data.interest_base
         invoiceState.is_active = data.is_active
     } catch (error) {
-        toast.add({ title: 'Failed to load invoice settings', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load invoice settings',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => loadInvoiceSettings() }]
+        })
     } finally {
         invoiceLoading.value = false
     }

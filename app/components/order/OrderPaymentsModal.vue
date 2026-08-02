@@ -152,7 +152,12 @@ async function loadPayments(orderUuid: string) {
         payments.value = result.data
         paymentsEtags.value[orderUuid] = result.etag
     } catch (error) {
-        toast.add({ title: 'Failed to load payments', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load payments',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => loadPayments(orderUuid) }]
+        })
     } finally {
         paymentsLoading.value = false
     }
@@ -164,7 +169,12 @@ async function loadInvoice(orderUuid: string) {
         const response = await orderService.fetchInvoice(orderUuid)
         invoice.value = response.data
     } catch (error) {
-        toast.add({ title: 'Failed to load invoice', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load invoice',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => loadInvoice(orderUuid) }]
+        })
     } finally {
         invoiceLoading.value = false
     }
