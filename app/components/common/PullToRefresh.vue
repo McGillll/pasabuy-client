@@ -30,7 +30,9 @@ const tracking = ref(false)
 const pullDistance = ref(0)
 const refreshing = ref(false)
 
+let startX = 0
 let startY = 0
+let axisLocked: 'x' | 'y' | null = null
 let scrollParent: HTMLElement | Window | null = null
 
 const offset = computed(() => {
@@ -62,21 +64,37 @@ function onTouchStart(event: TouchEvent) {
     if (scrollTopOf(parent) > 0) return
 
     scrollParent = parent
+    startX = event.touches[0]!.clientX
     startY = event.touches[0]!.clientY
+    axisLocked = null
     tracking.value = true
 }
 
 function onTouchMove(event: TouchEvent) {
     if (!tracking.value || !scrollParent) return
 
-    const delta = event.touches[0]!.clientY - startY
-    if (delta <= 0 || scrollTopOf(scrollParent) > 0) {
+    const touch = event.touches[0]!
+    const deltaX = touch.clientX - startX
+    const deltaY = touch.clientY - startY
+
+    if (!axisLocked) {
+        if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) return
+        axisLocked = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y'
+    }
+
+    if (axisLocked === 'x') {
+        tracking.value = false
+        pullDistance.value = 0
+        return
+    }
+
+    if (deltaY <= 0 || scrollTopOf(scrollParent) > 0) {
         pullDistance.value = 0
         return
     }
 
     event.preventDefault()
-    pullDistance.value = delta * 0.5
+    pullDistance.value = deltaY * 0.5
 }
 
 async function onTouchEnd() {

@@ -76,14 +76,13 @@ function onViewCategoryProducts(category: Category) {
     activeTab.value = 'products'
 }
 
-function onCategoriesUpdated(list: Category[]) {
-    allCategories.value = list
-    ensureLeafCategoriesLoaded(true).catch((error) => {
+function onCategoriesUpdated() {
+    Promise.all([ensureCategoriesLoaded(true), ensureLeafCategoriesLoaded(true)]).catch((error) => {
         toast.add({
             title: 'Failed to refresh categories',
             description: (error as APIError).message,
             color: 'error',
-            actions: [{ label: 'Retry', onClick: () => { ensureLeafCategoriesLoaded(true) } }]
+            actions: [{ label: 'Retry', onClick: () => { onCategoriesUpdated() } }]
         })
     })
 }

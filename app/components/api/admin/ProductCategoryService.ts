@@ -5,6 +5,7 @@ export interface CategoryPayload {
     description?: string
     image_url?: string | null
     is_active?: boolean
+    parent_uuid?: string | null
 }
 
 class ProductCategoryService extends BaseAPIService {

@@ -3,16 +3,16 @@
         :items="items"
         :loading="loading"
         empty-icon="i-lucide-tags"
-        empty-message="No categories found."
+        :empty-message="emptyMessage"
     >
         <template #item="{ item }">
             <BaseListItemCard
                 :name="item.name"
-                :meta="item.description ?? undefined"
+                :meta="metaFor(item)"
                 :image-url="item.image_url"
                 icon="i-lucide-tag"
                 :inactive="!item.is_active"
-                @click="openSheet(item)"
+                @click="onItemClick(item)"
             />
         </template>
     </BaseList>
@@ -28,19 +28,33 @@
 <script setup lang="ts">
 import type { Category } from '@/types/Category'
 
-defineProps<{
+withDefaults(defineProps<{
     items: Category[]
     loading?: boolean
-}>()
+    emptyMessage?: string
+}>(), {
+    emptyMessage: 'No categories found.'
+})
 
 const emit = defineEmits<{
     view: [category: Category]
+    drill: [category: Category]
     edit: [category: Category]
     delete: [category: Category]
 }>()
 
 const sheetOpen = ref(false)
 const selected = ref<Category | null>(null)
+
+function metaFor(category: Category) {
+    if (category.has_children) return category.description ? `Subcategories · ${category.description}` : 'Subcategories'
+    return category.description ?? undefined
+}
+
+function onItemClick(category: Category) {
+    if (category.has_children) emit('drill', category)
+    else openSheet(category)
+}
 
 function openSheet(category: Category) {
     selected.value = category
