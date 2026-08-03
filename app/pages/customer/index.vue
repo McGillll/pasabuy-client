@@ -253,7 +253,7 @@ async function fetchSuggestions() {
     }
 }
 
-useSearchDebounce(search, fetchSuggestions, 300)
+useSearchDebounce(search, fetchSuggestions, 500)
 
 function onSuggestionSelect(item: InputMenuItem) {
     const product = (item as { product?: Product })?.product

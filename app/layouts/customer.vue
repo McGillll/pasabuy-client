@@ -78,7 +78,8 @@ const accountMenuItems = computed<DropdownMenuItem[]>(() => [
 
 const mobileLinks: NavigationMenuItem[] = [
     { label: 'Home', icon: 'i-lucide-layout-dashboard', to: '/customer' },
-    { label: 'Browse Pasabuys', icon: 'i-lucide-package-search', to: '/customer/pasabuys' },
+    { label: 'Aisles', icon: 'i-lucide-shopping-basket', to: '/customer/aisles' },
+    { label: 'Pasabuys', icon: 'i-lucide-package-search', to: '/customer/pasabuys' },
     { label: 'My Orders', icon: 'i-lucide-receipt', to: '/customer/orders' }
 ]
 </script>
