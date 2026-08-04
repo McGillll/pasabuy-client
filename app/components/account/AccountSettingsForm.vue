@@ -43,6 +43,10 @@
             </UCard>
         </div>
 
+        <BaseButton block color="neutral" variant="outline" icon="i-lucide-log-out" @click="logout('/login')">
+            Log out
+        </BaseButton>
+
         <BaseModal v-model:open="isNameModalOpen" title="Edit name">
             <BaseForm :state="nameState" :validate="validateName" class="space-y-4" @submit="onSubmitName">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -89,7 +93,7 @@ import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import { authService } from '@/components/api/auth/AuthService'
 import APIError from '@/components/api/user/APIError'
 
-const { user, fetchCurrentUser } = useAuth()
+const { user, fetchCurrentUser, logout } = useAuth()
 const toast = useToast()
 
 const profileState = reactive({

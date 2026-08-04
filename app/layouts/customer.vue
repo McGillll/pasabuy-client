@@ -12,18 +12,14 @@
                     <div id="customer-header-search-target" class="hidden min-w-0 max-w-sm flex-1 md:flex" />
                     <div class="ml-auto flex shrink-0 items-center gap-1">
                         <UColorModeButton color="neutral" variant="ghost" size="sm" square class="min-h-11 min-w-11 justify-center" />
-                        <UDropdownMenu :items="accountMenuItems" :content="{ align: 'end' }">
-                            <BaseButton
-                                color="neutral"
-                                variant="ghost"
-                                trailing-icon="i-lucide-chevron-down"
-                                size="sm"
-                                aria-label="Account menu"
-                            >
-                                <span class="hidden sm:inline">{{ user?.first_name }} {{ user?.last_name }}</span>
-                                <UIcon name="i-lucide-user-round" class="sm:hidden size-5" />
-                            </BaseButton>
-                        </UDropdownMenu>
+                        <NuxtLink
+                            to="/customer/account"
+                            class="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            aria-label="My account"
+                        >
+                            <BaseAvatar :name="fullName" size="sm" />
+                            <span class="hidden text-sm font-medium text-highlighted sm:inline">{{ user?.first_name }} {{ user?.last_name }}</span>
+                        </NuxtLink>
                     </div>
                 </div>
             </div>
@@ -73,16 +69,13 @@
 </template>
 
 <script setup lang="ts">
-import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
+import type { NavigationMenuItem } from '@nuxt/ui'
 
-const { user, logout } = useAuth()
+const { user } = useAuth()
 const pendingWelcome = useWelcomeOverlay()
 const route = useRoute()
 
-const accountMenuItems = computed<DropdownMenuItem[]>(() => [
-    { label: 'My Account', icon: 'i-lucide-user', to: '/customer/account' },
-    { label: 'Log out', icon: 'i-lucide-log-out', onSelect: () => logout('/login') }
-])
+const fullName = computed(() => `${user.value?.first_name ?? ''} ${user.value?.last_name ?? ''}`.trim())
 
 const mobileLinks: NavigationMenuItem[] = [
     { label: 'Home', icon: 'i-lucide-layout-dashboard', to: '/customer' },

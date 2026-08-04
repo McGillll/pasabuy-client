@@ -1,6 +1,6 @@
 <template>
     <div class="space-y-6">
-        <div class="md:hidden sticky top-0 z-10 -mx-4 bg-default/95 px-4 py-3 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)] backdrop-blur-sm">
+        <div class="md:hidden sticky top-0 z-10 -mx-4 bg-default px-4 py-3 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
             <Teleport to="#customer-header-search-target" :disabled="!isDesktop">
                 <BaseSearchInput
                     v-model="search"

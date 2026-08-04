@@ -17,7 +17,14 @@
                 <UIcon name="i-lucide-image" class="size-8" />
             </div>
 
-            <UBadge v-if="isB1T1" color="success" variant="solid" size="sm" class="absolute left-2 top-2">
+            <UBadge
+                v-if="isB1T1"
+                color="success"
+                variant="solid"
+                size="sm"
+                class="absolute left-2 top-2"
+                title="Buy 1 Take 1: order one, get an extra unit free"
+            >
                 B1T1
             </UBadge>
             <UBadge v-else-if="isOutOfStock" color="error" variant="solid" size="sm" class="absolute left-2 top-2">

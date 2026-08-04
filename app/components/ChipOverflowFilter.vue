@@ -5,7 +5,7 @@
                 v-for="item in visibleItems"
                 :key="item.value"
                 type="button"
-                class="min-h-11 shrink-0 rounded-full px-4 text-sm font-medium transition-colors"
+                class="min-h-11 shrink-0 whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors"
                 :class="item.value === modelValue ? 'bg-primary text-inverted' : 'bg-elevated text-muted hover:text-highlighted'"
                 @click="select(item.value)"
             >
@@ -15,23 +15,23 @@
             <button
                 v-if="overflowItems.length"
                 type="button"
-                class="min-h-11 shrink-0 rounded-full bg-elevated px-4 text-sm font-medium text-primary"
+                class="min-h-11 shrink-0 whitespace-nowrap rounded-full bg-elevated px-4 text-sm font-medium text-primary"
                 @click="isSheetOpen = true"
             >
                 More ({{ overflowItems.length }})
             </button>
         </div>
 
-        <div ref="measureRef" class="pointer-events-none absolute left-0 top-0 w-0 h-0 overflow-hidden opacity-0" style="visibility: hidden; z-index: -1;">
+        <div ref="measureRef" aria-hidden="true" class="pointer-events-none absolute left-0 top-0 h-0 overflow-hidden opacity-0" style="visibility: hidden; z-index: -1;">
             <button
                 v-for="item in items"
                 :key="item.value"
                 type="button"
-                class="min-h-11 shrink-0 rounded-full px-4 text-sm font-medium"
+                class="min-h-11 shrink-0 whitespace-nowrap rounded-full px-4 text-sm font-medium"
             >
                 {{ item.label }}
             </button>
-            <button type="button" class="min-h-11 shrink-0 rounded-full px-4 text-sm font-medium">
+            <button type="button" class="min-h-11 shrink-0 whitespace-nowrap rounded-full px-4 text-sm font-medium">
                 More ({{ items.length }})
             </button>
         </div>
@@ -90,6 +90,10 @@ const GAP = 8
 // Generous on purpose: it's far better to show one fewer chip than to clip
 // the "More" chip against the container's overflow-hidden edge.
 const SAFETY_MARGIN = 32
+// Covers sub-pixel width differences between the hidden measurement clone
+// and the real rendered row (font hinting, rounding); without it, a chip
+// that "fits" by a fraction of a pixel in JS can still clip in the DOM.
+const ROUNDING_BUFFER = 4
 
 function recalculate() {
     const container = containerRef.value
@@ -114,7 +118,7 @@ function recalculate() {
         const reserveForMore = isLast ? 0 : GAP + moreWidth
         const fits = widthWithThisItem + reserveForMore <= containerWidth
 
-        if (fits || (isLast && widthWithThisItem <= containerWidth)) {
+        if (fits || (isLast && widthWithThisItem + ROUNDING_BUFFER <= containerWidth)) {
             usedWidth = widthWithThisItem
             count++
         } else {

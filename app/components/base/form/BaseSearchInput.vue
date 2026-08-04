@@ -12,7 +12,9 @@
         v-else
         v-model:search-term="model"
         :items="items"
+        :loading="loading"
         icon="i-lucide-search"
+        trailing-icon=""
         :placeholder="placeholder"
         :class="class"
         :ui="{ base: 'h-11' }"
@@ -45,10 +47,13 @@ const props = withDefaults(defineProps<{
     items?: InputMenuItem[]
     /** Clears the typed text after a suggestion is picked. */
     resetSearchTermOnSelect?: boolean
+    /** Shows a spinner while suggestions are being fetched (smart search only). */
+    loading?: boolean
     class?: string
 }>(), {
     placeholder: 'Search…',
     resetSearchTermOnSelect: true,
+    loading: false,
     class: 'w-full sm:w-72 lg:max-w-md lg:flex-1'
 })
 

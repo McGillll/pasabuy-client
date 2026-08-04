@@ -60,7 +60,12 @@
                     <p class="font-mono text-2xl font-semibold tabular-nums text-highlighted">
                         ₱{{ product.default_price }}
                     </p>
-                    <UBadge v-if="product.default_product_status === 'b1t1'" color="success" variant="subtle">
+                    <UBadge
+                        v-if="product.default_product_status === 'b1t1'"
+                        color="success"
+                        variant="subtle"
+                        title="Buy 1 Take 1: order one, get an extra unit free"
+                    >
                         B1T1
                     </UBadge>
                     <UBadge v-else-if="product.default_product_status === 'out_of_stock'" color="error" variant="subtle">

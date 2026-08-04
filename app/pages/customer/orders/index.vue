@@ -22,8 +22,6 @@
             </template>
         </UAlert>
 
-        <KpiStrip :items="kpiItems" :loading="loading && !orders.length" />
-
         <div class="space-y-3">
             <div class="flex items-center gap-2">
                 <BaseInput
@@ -60,12 +58,29 @@
                 </button>
             </div>
 
-            <div class="hidden sm:grid grid-cols-2 gap-2 lg:grid-cols-5">
-                <BaseSelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" />
-                <BaseSelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" />
-                <BaseSelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" />
-                <BaseInput v-model="dateFrom" type="date" placeholder="From" />
-                <BaseInput v-model="dateTo" type="date" placeholder="To" />
+            <div class="hidden sm:block space-y-2">
+                <div class="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                    <BaseSelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" />
+                    <BaseButton
+                        color="neutral"
+                        variant="outline"
+                        :trailing-icon="isAdvancedFiltersOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+                        @click="isAdvancedFiltersOpen = !isAdvancedFiltersOpen"
+                    >
+                        Advanced filters
+                        <UBadge v-if="advancedFilterCount" color="primary" variant="subtle" size="sm">{{ advancedFilterCount }}</UBadge>
+                    </BaseButton>
+                </div>
+                <UCollapsible v-model:open="isAdvancedFiltersOpen">
+                    <template #content>
+                        <div class="grid grid-cols-2 gap-2 lg:grid-cols-4 pt-2">
+                            <BaseSelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" />
+                            <BaseSelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" />
+                            <BaseInput v-model="dateFrom" type="date" placeholder="From" />
+                            <BaseInput v-model="dateTo" type="date" placeholder="To" />
+                        </div>
+                    </template>
+                </UCollapsible>
             </div>
         </div>
 
@@ -75,20 +90,36 @@
                     <BaseFormField label="Status">
                         <BaseSelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" />
                     </BaseFormField>
-                    <BaseFormField label="Payment status">
-                        <BaseSelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" />
-                    </BaseFormField>
-                    <BaseFormField label="Delivery status">
-                        <BaseSelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" />
-                    </BaseFormField>
-                    <div class="grid grid-cols-2 gap-4">
-                        <BaseFormField label="From date">
-                            <BaseInput v-model="dateFrom" type="date" />
-                        </BaseFormField>
-                        <BaseFormField label="To date">
-                            <BaseInput v-model="dateTo" type="date" />
-                        </BaseFormField>
-                    </div>
+
+                    <UCollapsible v-model:open="isAdvancedFiltersOpen">
+                        <BaseButton
+                            block
+                            color="neutral"
+                            variant="outline"
+                            :trailing-icon="isAdvancedFiltersOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+                        >
+                            Advanced filters
+                            <UBadge v-if="advancedFilterCount" color="primary" variant="subtle" size="sm">{{ advancedFilterCount }}</UBadge>
+                        </BaseButton>
+                        <template #content>
+                            <div class="space-y-4 pt-4">
+                                <BaseFormField label="Payment status">
+                                    <BaseSelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" />
+                                </BaseFormField>
+                                <BaseFormField label="Delivery status">
+                                    <BaseSelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" />
+                                </BaseFormField>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <BaseFormField label="From date">
+                                        <BaseInput v-model="dateFrom" type="date" />
+                                    </BaseFormField>
+                                    <BaseFormField label="To date">
+                                        <BaseInput v-model="dateTo" type="date" />
+                                    </BaseFormField>
+                                </div>
+                            </div>
+                        </template>
+                    </UCollapsible>
                 </div>
             </template>
             <template #footer>
@@ -117,7 +148,7 @@
                     <p class="font-mono text-xs text-dimmed">{{ row.original.order_no }}</p>
                 </template>
                 <template #total_amount-cell="{ row }">
-                    {{ orderDisplayAmount(row.original) }}
+                    <span class="font-mono tabular-nums">{{ orderDisplayAmount(row.original) }}</span>
                 </template>
                 <template #status-cell="{ row }">
                     <OrderStatusBadge :status="row.original.status" />
@@ -149,7 +180,7 @@
                             <span class="font-mono text-xs">{{ order.order_no }}</span>
                         </template>
                         <template #meta>
-                            <span class="font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
+                            <span class="font-mono tabular-nums font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
                             <span class="text-muted">{{ formatDate(order.created_at) }}</span>
                         </template>
                         <template #status>
@@ -225,12 +256,17 @@
 
                     <div class="flex items-center justify-between border-t border-default pt-3 font-medium text-highlighted">
                         <span>Total</span>
-                        <span>₱{{ selectedOrder.total_amount }}</span>
+                        <span class="font-mono tabular-nums">₱{{ selectedOrder.total_amount }}</span>
                     </div>
                 </template>
 
                 <div v-if="selectedOrder.is_cancellable" class="flex items-center justify-end gap-2">
-                    <CancelOrderControl :loading="cancellingOrder" @confirm="cancelSelectedOrder" />
+                    <CancelOrderControl
+                        :loading="cancellingOrder"
+                        :order-title="selectedOrder?.pasabuy_schedule?.title"
+                        :order-total="selectedOrder?.total_amount"
+                        @confirm="cancelSelectedOrder"
+                    />
                 </div>
             </div>
         </BaseModal>
@@ -242,7 +278,6 @@ import { customerOrderService } from '@/components/api/customer/CustomerOrderSer
 import APIError from '@/components/api/user/APIError'
 import type { Invoice } from '@/types/Invoice'
 import type { TableColumn } from '@nuxt/ui'
-import type { KpiStripItem } from '@/components/KpiStrip.vue'
 
 definePageMeta({ layout: 'customer', middleware: 'customer-auth' })
 
@@ -290,6 +325,9 @@ const deliveryStatusFilter = ref('all')
 const dateFrom = ref('')
 const dateTo = ref('')
 const isFiltersOpen = ref(false)
+const isAdvancedFiltersOpen = ref(
+    paymentStatusFilter.value !== 'all' || deliveryStatusFilter.value !== 'all' || !!dateFrom.value || !!dateTo.value
+)
 
 const statusFilterOptions = [
     { label: 'All statuses', value: 'all' },
@@ -316,6 +354,11 @@ const activeFilterCount = computed(() =>
         .filter(Boolean).length
 )
 
+const advancedFilterCount = computed(() =>
+    [paymentStatusFilter.value !== 'all', deliveryStatusFilter.value !== 'all', !!dateFrom.value, !!dateTo.value]
+        .filter(Boolean).length
+)
+
 function clearFilters() {
     statusFilter.value = 'all'
     paymentStatusFilter.value = 'all'
@@ -337,17 +380,6 @@ const columns: TableColumn<Order>[] = [
 function orderDisplayAmount(order: Order) {
     return order.pasabuy_schedule?.status === 'finished' ? order.amount_due : order.total_amount
 }
-
-const pendingCount = computed(() => orders.value.filter((o) => o.status === 'pending').length)
-const confirmedCount = computed(() => orders.value.filter((o) => o.status === 'confirmed').length)
-const cancelledCount = computed(() => orders.value.filter((o) => o.status === 'cancelled').length)
-
-const kpiItems = computed<KpiStripItem[]>(() => [
-    { icon: 'i-lucide-receipt', color: 'primary', label: 'Total', value: total.value },
-    { icon: 'i-lucide-clock', color: 'warning', label: 'Pending', value: pendingCount.value },
-    { icon: 'i-lucide-circle-check', color: 'success', label: 'Confirmed', value: confirmedCount.value },
-    { icon: 'i-lucide-circle-x', color: 'error', label: 'Cancelled', value: cancelledCount.value }
-])
 
 const statusChips: { label: string; value: typeof statusFilter.value; dotClass?: string }[] = [
     { label: 'All', value: 'all' },

@@ -18,7 +18,7 @@
                     <NuxtLink
                         v-if="order.pasabuy_schedule"
                         :to="`/pasabuy/${order.pasabuy_schedule.uuid}`"
-                        class="mt-1 block text-sm text-muted hover:text-primary"
+                        class="mt-1 block text-sm text-muted hover:text-highlighted"
                     >
                         {{ order.pasabuy_schedule.title }}
                     </NuxtLink>
@@ -26,14 +26,25 @@
                 <OrderStatusBadge :status="order.status" />
             </div>
 
-            <UAlert
-                v-if="justPlaced"
-                color="success"
-                variant="subtle"
-                icon="i-lucide-check"
-                title="Order placed!"
-                description="The seller will reach out to confirm."
-            />
+            <Transition
+                appear
+                enter-active-class="transition-all duration-300 ease-out motion-reduce:transition-none"
+                enter-from-class="opacity-0 -translate-y-1 scale-95"
+                enter-to-class="opacity-100 translate-y-0 scale-100"
+            >
+                <UAlert
+                    v-if="justPlaced"
+                    color="success"
+                    variant="subtle"
+                    icon="i-lucide-check"
+                    title="Order placed!"
+                    description="The seller will reach out to confirm."
+                    :ui="{
+                        root: 'p-4 ring-2 ring-success/20',
+                        icon: 'animate-[bounce_0.6s_ease-in-out_1] motion-reduce:animate-none'
+                    }"
+                />
+            </Transition>
 
             <OrderInvoice v-if="isFinished" :order="order" />
 
@@ -47,7 +58,7 @@
                 <template #footer>
                     <div class="flex items-center justify-between font-medium text-highlighted">
                         <span>Total</span>
-                        <span>₱{{ order.total_amount }}</span>
+                        <span class="font-mono tabular-nums">₱{{ order.total_amount }}</span>
                     </div>
                 </template>
             </UCard>
@@ -66,7 +77,13 @@
                     >
                         Edit order
                     </BaseButton>
-                    <CancelOrderControl v-if="order.is_cancellable" :loading="cancelling" @confirm="cancelOrder" />
+                    <CancelOrderControl
+                        v-if="order.is_cancellable"
+                        :loading="cancelling"
+                        :order-title="order.pasabuy_schedule?.title"
+                        :order-total="order.total_amount"
+                        @confirm="cancelOrder"
+                    />
                 </div>
             </div>
         </template>
