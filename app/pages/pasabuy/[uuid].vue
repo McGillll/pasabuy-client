@@ -50,6 +50,37 @@
                     description="Ordering is no longer available for this pasabuy."
                 />
 
+                <UAlert
+                    v-else-if="!isLoggedIn && !pricingNoteDismissed"
+                    color="info"
+                    variant="subtle"
+                    icon="i-lucide-info"
+                    title="Browsing as a guest"
+                    description="You can browse freely, log in to place an order. One note: 'estimated' prices may still change until the seller confirms them, and 'B1T1' means Buy 1, Take 1."
+                    :close="true"
+                    @update:open="dismissPricingNote"
+                />
+
+                <UAlert
+                    v-else-if="!isLoggedIn"
+                    color="info"
+                    variant="subtle"
+                    icon="i-lucide-info"
+                    title="Browsing as a guest"
+                    description="You can browse freely. You'll need to log in to place an order."
+                />
+
+                <UAlert
+                    v-else-if="!pricingNoteDismissed"
+                    color="neutral"
+                    variant="subtle"
+                    icon="i-lucide-badge-info"
+                    title="A note on pricing"
+                    description="'Estimated' prices may still change until the seller confirms them. 'B1T1' means Buy 1, Take 1."
+                    :close="true"
+                    @update:open="dismissPricingNote"
+                />
+
                 <UCard v-if="myOrder && !editingOrder">
                     <template #header>
                         <div class="flex items-center justify-between">
@@ -66,7 +97,7 @@
 
                     <template #footer>
                         <div class="flex items-center justify-between gap-3">
-                            <p class="font-semibold text-highlighted">Total: ₱{{ myOrder.total_amount }}</p>
+                            <p class="font-semibold text-highlighted">Total: <span class="font-mono tabular-nums">₱{{ Number(myOrder.total_amount).toFixed(2) }}</span></p>
                             <div class="flex items-center gap-2">
                                 <BaseButton v-if="myOrder.is_editable" variant="soft" icon="i-lucide-pencil" @click="startEditOrder">
                                     Edit order
@@ -101,10 +132,10 @@
                                     <img
                                         v-if="(item as ProductSuggestionItem).product.image_url"
                                         :src="(item as ProductSuggestionItem).product.image_url!"
-                                        class="size-8 rounded-md object-cover"
+                                        class="size-8 rounded-lg object-cover"
                                         alt=""
                                     >
-                                    <div v-else class="flex size-8 items-center justify-center rounded-md bg-elevated text-dimmed">
+                                    <div v-else class="flex size-8 items-center justify-center rounded-lg bg-elevated text-dimmed">
                                         <UIcon name="i-lucide-image" class="size-4" />
                                     </div>
                                 </template>
@@ -144,31 +175,31 @@
                                 @click="isFiltersOpen = true"
                             >
                                 Filters
-                                <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
+                                <UBadge v-if="activeFilterCount" color="neutral" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
                             </BaseButton>
                         </div>
                         <div v-if="showFilters" class="hidden sm:grid grid-cols-4 gap-2">
                             <BaseSelect
-                                v-model="statusFilter"
+                                v-model="filters.applied.status"
                                 :items="statusFilterOptions"
                                 value-key="value"
                                 placeholder="Status"
                             />
                             <BaseSelect
-                                v-model="sortByPrice"
+                                v-model="filters.applied.sortByPrice"
                                 :items="sortByPriceOptions"
                                 value-key="value"
                                 placeholder="Sort by price"
                             />
                             <BaseInput
-                                v-model.number="priceMin"
+                                v-model.number="filters.applied.priceMin"
                                 type="number"
                                 min="0"
                                 step="0.01"
                                 placeholder="Min price"
                             />
                             <BaseInput
-                                v-model.number="priceMax"
+                                v-model.number="filters.applied.priceMax"
                                 type="number"
                                 min="0"
                                 step="0.01"
@@ -180,17 +211,17 @@
                             <template #body>
                                 <div class="space-y-4">
                                     <BaseFormField label="Status">
-                                        <BaseSelect v-model="draftStatusFilter" :items="statusFilterOptions" value-key="value" />
+                                        <BaseSelect v-model="filters.draft.status" :items="statusFilterOptions" value-key="value" />
                                     </BaseFormField>
                                     <BaseFormField label="Sort by price">
-                                        <BaseSelect v-model="draftSortByPrice" :items="sortByPriceOptions" value-key="value" />
+                                        <BaseSelect v-model="filters.draft.sortByPrice" :items="sortByPriceOptions" value-key="value" />
                                     </BaseFormField>
                                     <div class="grid grid-cols-2 gap-4">
                                         <BaseFormField label="Min price">
-                                            <BaseInput v-model.number="draftPriceMin" type="number" min="0" step="0.01" placeholder="0.00" />
+                                            <BaseInput v-model.number="filters.draft.priceMin" type="number" min="0" step="0.01" placeholder="0.00" />
                                         </BaseFormField>
                                         <BaseFormField label="Max price">
-                                            <BaseInput v-model.number="draftPriceMax" type="number" min="0" step="0.01" placeholder="0.00" />
+                                            <BaseInput v-model.number="filters.draft.priceMax" type="number" min="0" step="0.01" placeholder="0.00" />
                                         </BaseFormField>
                                     </div>
                                 </div>
@@ -216,7 +247,7 @@
                         </BaseButton>
 
                         <div v-if="!categoryTreeNotFound" class="flex items-center gap-2">
-                            <UIcon name="i-lucide-shopping-basket" class="size-5 text-primary" />
+                            <UIcon name="i-lucide-shopping-basket" class="size-5 text-dimmed" />
                             <h2 class="text-lg font-semibold text-highlighted">{{ currentCategory?.name ?? 'Browse by category' }}</h2>
                         </div>
                     </div>
@@ -327,13 +358,19 @@
                 </template>
 
                 <template v-else-if="!isApproved">
-                    <p class="text-sm text-warning">Your account is pending admin approval before you can order.</p>
+                    <UAlert
+                        color="info"
+                        variant="subtle"
+                        icon="i-lucide-clock"
+                        title="Waiting on admin approval"
+                        description="You'll be able to order as soon as the seller approves your account. Feel free to keep browsing in the meantime."
+                    />
                 </template>
 
                 <template v-else>
                     <UAlert v-if="submitError" color="error" variant="subtle" :title="submitError" class="mb-3" />
                     <p class="text-xs text-muted">{{ itemCount }} item{{ itemCount === 1 ? '' : 's' }}</p>
-                    <p class="text-2xl font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
+                    <p class="font-mono tabular-nums text-2xl font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
                     <BaseButton
                         block
                         class="mt-3"
@@ -349,7 +386,7 @@
         </aside>
         </div>
 
-        <div v-if="showBottomBar" class="fixed inset-x-0 bottom-0 z-10 border-t border-default bg-muted/95 shadow-[0_-2px_10px_-4px_rgba(0,0,0,0.08)] backdrop-blur-sm lg:hidden">
+        <div v-if="showBottomBar" class="fixed inset-x-0 bottom-0 z-10 border-t border-default bg-muted/95 shadow-sm backdrop-blur-sm lg:hidden">
             <div class="mx-auto max-w-2xl space-y-3 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <template v-if="!isLoggedIn">
                     <div class="flex items-center justify-between gap-3">
@@ -366,14 +403,17 @@
                 </template>
 
                 <template v-else-if="!isApproved">
-                    <p class="text-sm text-warning">Your account is pending admin approval before you can order.</p>
+                    <p class="flex items-center gap-1.5 text-sm text-info">
+                        <UIcon name="i-lucide-clock" class="size-4 shrink-0" />
+                        Waiting on admin approval. You can order once approved, keep browsing meanwhile.
+                    </p>
                 </template>
 
                 <template v-else>
                     <div class="flex items-center justify-between gap-3">
                         <div>
                             <p class="text-xs text-muted">{{ itemCount }} item{{ itemCount === 1 ? '' : 's' }}</p>
-                            <p class="text-lg font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
+                            <p class="font-mono tabular-nums text-lg font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
                         </div>
                         <BaseButton
                             size="lg"
@@ -404,17 +444,17 @@
 
                     <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <p class="text-lg font-semibold text-highlighted">
-                            ₱{{ resolvedPrice(quickAddProduct) }}
+                            <span class="font-mono tabular-nums">₱{{ resolvedPrice(quickAddProduct) }}</span>
                             <span class="text-xs font-normal text-dimmed">{{ isPriceConfirmed(quickAddProduct) ? 'confirmed' : 'estimated' }}</span>
                         </p>
-                        <UBadge v-if="resolvedStatus(quickAddProduct) === 'b1t1'" color="success" variant="outline" size="sm" icon="i-lucide-check">
+                        <UBadge v-if="resolvedStatus(quickAddProduct) === 'b1t1'" color="success" variant="subtle" size="sm" icon="i-lucide-check">
                             B1T1
                         </UBadge>
                     </div>
 
-                    <span v-if="resolvedStatus(quickAddProduct) === 'out_of_stock'" class="text-sm font-medium text-error">
+                    <UBadge v-if="resolvedStatus(quickAddProduct) === 'out_of_stock'" color="error" variant="subtle" size="sm">
                         Out of stock
-                    </span>
+                    </UBadge>
                     <div v-else class="flex items-center justify-between gap-3">
                         <BaseQuantityInput
                             :model-value="quantities[quickAddProduct.uuid] || 0"
@@ -426,7 +466,7 @@
                             :aria-label="`Quantity for ${displayName(quickAddProduct)}`"
                             @update:model-value="(value: number | null) => setQuantity(quickAddProduct!, value)"
                         />
-                        <p v-if="quantities[quickAddProduct.uuid]" class="text-lg font-semibold text-primary">
+                        <p v-if="quantities[quickAddProduct.uuid]" class="font-mono tabular-nums text-lg font-semibold text-highlighted">
                             ₱{{ (Number(resolvedPrice(quickAddProduct)) * quantities[quickAddProduct.uuid]!).toFixed(2) }}
                         </p>
                     </div>
@@ -467,9 +507,15 @@
 
                         <div class="min-w-0 flex-1">
                             <p class="truncate font-medium text-highlighted">{{ displayName(product) }}</p>
-                            <p class="text-sm font-medium text-primary">
+                            <p class="font-mono tabular-nums text-sm font-medium text-highlighted">
                                 ₱{{ (Number(resolvedPrice(product)) * quantities[product.uuid]!).toFixed(2) }}
                             </p>
+                            <UBadge v-if="resolvedStatus(product) === 'out_of_stock'" color="error" variant="subtle" size="sm" class="mt-1">
+                                Out of stock
+                            </UBadge>
+                            <UBadge v-else-if="resolvedStatus(product) === 'b1t1'" color="success" variant="subtle" size="sm" class="mt-1">
+                                B1T1
+                            </UBadge>
                         </div>
 
                         <div class="flex shrink-0 items-center gap-2">
@@ -478,18 +524,20 @@
                                 size="xs"
                                 color="neutral"
                                 variant="soft"
+                                class="min-h-11 min-w-11"
                                 :aria-label="`Decrease quantity for ${displayName(product)}`"
                                 :disabled="!schedule?.is_open"
                                 @click="decrement(product)"
                             />
-                            <span class="w-6 text-center font-medium">{{ quantities[product.uuid] || 0 }}</span>
+                            <span class="w-6 text-center font-mono tabular-nums font-medium">{{ quantities[product.uuid] || 0 }}</span>
                             <BaseButton
                                 icon="i-lucide-plus"
                                 size="xs"
                                 color="neutral"
                                 variant="soft"
+                                class="min-h-11 min-w-11"
                                 :aria-label="`Increase quantity for ${displayName(product)}`"
-                                :disabled="!schedule?.is_open"
+                                :disabled="!schedule?.is_open || resolvedStatus(product) === 'out_of_stock'"
                                 @click="increment(product)"
                             />
                         </div>
@@ -502,7 +550,7 @@
                     <UAlert v-if="submitError" color="error" variant="subtle" :title="submitError" />
                     <div class="flex items-center justify-between">
                         <p class="text-sm text-muted">Total</p>
-                        <p class="text-lg font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
+                        <p class="font-mono tabular-nums text-lg font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
                     </div>
                     <BaseButton
                         block
@@ -558,6 +606,7 @@ interface MyOrder {
 }
 
 const route = useRoute()
+const router = useRouter()
 const uuid = route.params.uuid as string
 const toast = useToast()
 const { user, fetchCurrentUser } = useAuth()
@@ -575,43 +624,52 @@ useHead({ title: computed(() => schedule.value?.title ?? 'Pasabuy Run') })
 const productSearch = ref('')
 
 const quantities = ref<Record<string, number>>({})
-const statusFilter = ref('all')
-const sortByPrice = ref('none')
-const priceMin = ref<number | null>(null)
-const priceMax = ref<number | null>(null)
 const isCartOpen = ref(false)
 const isFiltersOpen = ref(false)
 
-const draftStatusFilter = ref('all')
-const draftSortByPrice = ref('none')
-const draftPriceMin = ref<number | null>(null)
-const draftPriceMax = ref<number | null>(null)
+/**
+ * Single source of truth for product filters. The inline desktop row reads
+ * and writes `filters.applied` directly (live filtering); the mobile
+ * USlideover reads and writes `filters.draft`, only copied over to
+ * `applied` on "Show N Results". This keeps the intentional draft/apply UX
+ * without maintaining two parallel trees of refs plus a sync watcher.
+ */
+interface ProductFilters {
+    status: string
+    sortByPrice: string
+    priceMin: number | null
+    priceMax: number | null
+}
+
+function createDefaultFilters(): ProductFilters {
+    return { status: 'all', sortByPrice: 'none', priceMin: null, priceMax: null }
+}
+
+const filters = reactive({
+    applied: createDefaultFilters(),
+    draft: createDefaultFilters()
+})
 
 const activeFilterCount = computed(() =>
-    [statusFilter.value !== 'all', sortByPrice.value !== 'none', priceMin.value !== null, priceMax.value !== null]
-        .filter(Boolean).length
+    [
+        filters.applied.status !== 'all',
+        filters.applied.sortByPrice !== 'none',
+        filters.applied.priceMin !== null,
+        filters.applied.priceMax !== null
+    ].filter(Boolean).length
 )
 
 watch(isFiltersOpen, (open) => {
     if (!open) return
-    draftStatusFilter.value = statusFilter.value
-    draftSortByPrice.value = sortByPrice.value
-    draftPriceMin.value = priceMin.value
-    draftPriceMax.value = priceMax.value
+    Object.assign(filters.draft, filters.applied)
 })
 
 function clearDraftFilters() {
-    draftStatusFilter.value = 'all'
-    draftSortByPrice.value = 'none'
-    draftPriceMin.value = null
-    draftPriceMax.value = null
+    Object.assign(filters.draft, createDefaultFilters())
 }
 
 function applyDraftFilters() {
-    statusFilter.value = draftStatusFilter.value
-    sortByPrice.value = draftSortByPrice.value
-    priceMin.value = draftPriceMin.value
-    priceMax.value = draftPriceMax.value
+    Object.assign(filters.applied, filters.draft)
     isFiltersOpen.value = false
 }
 
@@ -619,7 +677,7 @@ const statusFilterOptions = [
     { label: 'All statuses', value: 'all' },
     { label: 'Buy 1 Take 1', value: 'b1t1' },
     { label: 'Out of stock', value: 'out_of_stock' },
-    { label: 'None', value: 'none' }
+    { label: 'Regular price', value: 'none' }
 ]
 
 const sortByPriceOptions = [
@@ -642,6 +700,18 @@ const editingOrder = ref(false)
 
 const isLoggedIn = computed(() => !!user.value)
 const isApproved = computed(() => user.value?.is_approved === true)
+
+const PRICING_NOTE_DISMISSED_KEY = 'pasabuy-pricing-note-dismissed'
+const pricingNoteDismissed = ref(false)
+if (import.meta.client) {
+    pricingNoteDismissed.value = localStorage.getItem(PRICING_NOTE_DISMISSED_KEY) === 'true'
+}
+function dismissPricingNote() {
+    pricingNoteDismissed.value = true
+    if (import.meta.client) {
+        localStorage.setItem(PRICING_NOTE_DISMISSED_KEY, 'true')
+    }
+}
 
 const showBottomBar = computed(() => !!schedule.value && (!myOrder.value || editingOrder.value))
 
@@ -813,20 +883,20 @@ function matchesAdvancedFilters(product: Product, status: string, min: number | 
 
 const filteredProducts = computed(() => {
     const items = catalogItems.value.filter((product) =>
-        matchesCategory(product) && matchesAdvancedFilters(product, statusFilter.value, priceMin.value, priceMax.value)
+        matchesCategory(product) && matchesAdvancedFilters(product, filters.applied.status, filters.applied.priceMin, filters.applied.priceMax)
     )
 
-    if (sortByPrice.value === 'none') return items
+    if (filters.applied.sortByPrice === 'none') return items
 
     return [...items].sort((a, b) => {
         const diff = Number(resolvedPrice(a)) - Number(resolvedPrice(b))
-        return sortByPrice.value === 'asc' ? diff : -diff
+        return filters.applied.sortByPrice === 'asc' ? diff : -diff
     })
 })
 
 const draftFilteredCount = computed(() =>
     catalogItems.value.filter((product) =>
-        matchesCategory(product) && matchesAdvancedFilters(product, draftStatusFilter.value, draftPriceMin.value, draftPriceMax.value)
+        matchesCategory(product) && matchesAdvancedFilters(product, filters.draft.status, filters.draft.priceMin, filters.draft.priceMax)
     ).length
 )
 
@@ -841,9 +911,12 @@ function loadMoreProducts() {
     visibleCount.value += initialBatchSize.value
 }
 
-watch([currentCategoryUuid, statusFilter, sortByPrice, priceMin, priceMax, isDesktop], () => {
-    visibleCount.value = initialBatchSize.value
-})
+watch(
+    [currentCategoryUuid, () => filters.applied.status, () => filters.applied.sortByPrice, () => filters.applied.priceMin, () => filters.applied.priceMax, isDesktop],
+    () => {
+        visibleCount.value = initialBatchSize.value
+    }
+)
 
 const cartItems = computed(() => Object.values(knownProducts.value).filter((product) => (quantities.value[product.uuid] || 0) > 0))
 
@@ -863,6 +936,41 @@ const quickAddProduct = ref<Product | null>(null)
 function openQuickAdd(product: Product) {
     quickAddProduct.value = product
     isQuickAddOpen.value = true
+}
+
+/**
+ * Deep-link support for "Order this in a pasabuy" on the product detail
+ * page: ?product={uuid} pre-opens quick-add for that exact product, so a
+ * customer never has to remember its name and hunt for it in the catalog.
+ */
+async function applyPreselectedProduct() {
+    const productUuid = route.query.product as string | undefined
+    if (!productUuid) return
+
+    let product = knownProducts.value[productUuid] ?? null
+    if (!product) {
+        try {
+            const result = await publicProductService.fetchByUuidCacheable(productUuid, null)
+            if (result !== 'not-modified') {
+                product = result.data as Product
+                knownProducts.value[product.uuid] = product
+            }
+        } catch {
+            product = null
+            toast.add({ title: "Couldn't load that item", description: 'Browse below to find it', color: 'error' })
+        }
+    }
+
+    if (product) {
+        if (myOrder.value) {
+            startEditOrder()
+            toast.add({ title: 'Now editing your order', description: schedule.value?.title, color: 'success' })
+        }
+        openQuickAdd(product)
+    }
+
+    const { product: _omit, ...rest } = route.query
+    router.replace({ query: rest })
 }
 
 async function load(force = false) {
@@ -978,6 +1086,7 @@ async function submitOrder() {
             toast.add({ title: 'Order updated', color: 'success' })
         } else {
             const response = await customerOrderService.placeOrder(uuid, items)
+            toast.add({ title: 'Order placed!', color: 'success' })
             await navigateTo(`/customer/orders/${response.data.uuid}?placed=1`)
         }
     } catch (error) {
@@ -1026,6 +1135,7 @@ onMounted(async () => {
     if (isLoggedIn.value && isApproved.value) {
         await loadMyOrder()
     }
+    await applyPreselectedProduct()
 })
 
 onPullToRefresh(async () => {

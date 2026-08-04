@@ -6,7 +6,7 @@ export const productStatusIcon: Record<NotableProductStatus, string> = {
 }
 
 export const productStatusIconClass: Record<NotableProductStatus, string> = {
-    b1t1: 'bg-warning text-inverted',
+    b1t1: 'bg-success text-inverted',
     out_of_stock: 'bg-error text-inverted'
 }
 

@@ -2,7 +2,7 @@
     <div class="space-y-3">
         <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2">
-                <UIcon name="i-lucide-shapes" class="size-4 text-primary" />
+                <UIcon name="i-lucide-shapes" class="size-4 text-dimmed" />
                 <h2 class="text-sm font-semibold text-highlighted">{{ category.name }}</h2>
             </div>
             <BaseButton size="xs" color="neutral" variant="link" trailing-icon="i-lucide-chevron-right" @click="emit('viewAll')">
@@ -32,7 +32,7 @@
             <button
                 v-if="canScrollLeft"
                 type="button"
-                class="absolute left-0 top-1/2 hidden size-9 -translate-x-1/3 -translate-y-1/2 items-center justify-center rounded-full bg-default text-highlighted shadow-md ring ring-default hover:bg-elevated sm:flex"
+                class="absolute left-0 top-1/2 hidden size-11 -translate-x-1/3 -translate-y-1/2 items-center justify-center rounded-full bg-default text-highlighted shadow-sm ring ring-default hover:bg-elevated sm:flex"
                 :aria-label="`Scroll ${category.name} left`"
                 @click="scrollBy(-1)"
             >
@@ -41,7 +41,7 @@
             <button
                 v-if="canScrollRight"
                 type="button"
-                class="absolute right-0 top-1/2 hidden size-9 translate-x-1/3 -translate-y-1/2 items-center justify-center rounded-full bg-default text-highlighted shadow-md ring ring-default hover:bg-elevated sm:flex"
+                class="absolute right-0 top-1/2 hidden size-11 translate-x-1/3 -translate-y-1/2 items-center justify-center rounded-full bg-default text-highlighted shadow-sm ring ring-default hover:bg-elevated sm:flex"
                 :aria-label="`Scroll ${category.name} right`"
                 @click="scrollBy(1)"
             >

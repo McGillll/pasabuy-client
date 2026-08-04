@@ -15,7 +15,7 @@
                 </div>
             </div>
             <div v-else class="flex items-center gap-3">
-                <div class="flex items-center justify-center size-10 rounded-lg" :class="colorClasses">
+                <div class="flex items-center justify-center size-10 shrink-0 rounded-lg" :class="colorClasses">
                     <UIcon :name="icon" class="size-5" />
                 </div>
                 <div>

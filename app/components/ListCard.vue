@@ -2,7 +2,7 @@
     <div
         class="w-full rounded-lg border text-left"
         :class="[
-            clickable ? 'cursor-pointer transition-colors' : '',
+            clickable ? 'cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary' : '',
             dimmed ? 'opacity-50' : '',
             tone === 'warning' ? 'border-warning bg-warning/10' : 'border-default bg-default',
             clickable && tone !== 'warning' ? 'hover:bg-elevated/50' : '',

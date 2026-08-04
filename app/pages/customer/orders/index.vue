@@ -21,26 +21,14 @@
         </UAlert>
 
         <div class="space-y-3">
-            <div class="flex items-center gap-2">
-                <BaseInput
-                    v-model="search"
-                    icon="i-lucide-search"
-                    placeholder="Search by pasabuy title…"
-                    class="flex-1 sm:w-72 sm:flex-none"
-                />
-                <BaseButton
-                    class="sm:hidden shrink-0"
-                    color="neutral"
-                    variant="outline"
-                    icon="i-lucide-list-filter"
-                    @click="isFiltersOpen = true"
-                >
-                    Filters
-                    <UBadge v-if="activeFilterCount" color="primary" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
-                </BaseButton>
-            </div>
+            <BaseInput
+                v-model="search"
+                icon="i-lucide-search"
+                placeholder="Search by pasabuy title…"
+                class="w-full sm:w-72"
+            />
 
-            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden sm:hidden">
+            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden">
                 <button
                     v-for="chip in statusChips"
                     :key="chip.value"
@@ -55,78 +43,7 @@
                     {{ chip.label }}
                 </button>
             </div>
-
-            <div class="hidden sm:block space-y-2">
-                <div class="grid grid-cols-2 gap-2 lg:grid-cols-4">
-                    <BaseSelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" />
-                    <BaseButton
-                        color="neutral"
-                        variant="outline"
-                        :trailing-icon="isAdvancedFiltersOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-                        @click="isAdvancedFiltersOpen = !isAdvancedFiltersOpen"
-                    >
-                        Advanced filters
-                        <UBadge v-if="advancedFilterCount" color="primary" variant="subtle" size="sm">{{ advancedFilterCount }}</UBadge>
-                    </BaseButton>
-                </div>
-                <UCollapsible v-model:open="isAdvancedFiltersOpen">
-                    <template #content>
-                        <div class="grid grid-cols-2 gap-2 lg:grid-cols-4 pt-2">
-                            <BaseSelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" />
-                            <BaseSelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" />
-                            <BaseInput v-model="dateFrom" type="date" placeholder="From" />
-                            <BaseInput v-model="dateTo" type="date" placeholder="To" />
-                        </div>
-                    </template>
-                </UCollapsible>
-            </div>
         </div>
-
-        <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
-            <template #body>
-                <div class="space-y-4">
-                    <BaseFormField label="Status">
-                        <BaseSelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" />
-                    </BaseFormField>
-
-                    <UCollapsible v-model:open="isAdvancedFiltersOpen">
-                        <BaseButton
-                            block
-                            color="neutral"
-                            variant="outline"
-                            :trailing-icon="isAdvancedFiltersOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-                        >
-                            Advanced filters
-                            <UBadge v-if="advancedFilterCount" color="primary" variant="subtle" size="sm">{{ advancedFilterCount }}</UBadge>
-                        </BaseButton>
-                        <template #content>
-                            <div class="space-y-4 pt-4">
-                                <BaseFormField label="Payment status">
-                                    <BaseSelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" />
-                                </BaseFormField>
-                                <BaseFormField label="Delivery status">
-                                    <BaseSelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" />
-                                </BaseFormField>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <BaseFormField label="From date">
-                                        <BaseInput v-model="dateFrom" type="date" />
-                                    </BaseFormField>
-                                    <BaseFormField label="To date">
-                                        <BaseInput v-model="dateTo" type="date" />
-                                    </BaseFormField>
-                                </div>
-                            </div>
-                        </template>
-                    </UCollapsible>
-                </div>
-            </template>
-            <template #footer>
-                <div class="w-full flex items-center gap-2">
-                    <BaseButton class="flex-1" color="neutral" variant="outline" @click="clearFilters">Clear filters</BaseButton>
-                    <BaseButton class="flex-1" @click="isFiltersOpen = false">Done</BaseButton>
-                </div>
-            </template>
-        </USlideover>
 
         <UCard :ui="{ body: 'p-0 sm:p-0' }">
             <BaseTable
@@ -318,52 +235,6 @@ const perPage = 15
 const total = ref(0)
 const search = ref('')
 const statusFilter = ref<'all' | 'pending' | 'confirmed' | 'cancelled'>('all')
-const paymentStatusFilter = ref('all')
-const deliveryStatusFilter = ref('all')
-const dateFrom = ref('')
-const dateTo = ref('')
-const isFiltersOpen = ref(false)
-const isAdvancedFiltersOpen = ref(
-    paymentStatusFilter.value !== 'all' || deliveryStatusFilter.value !== 'all' || !!dateFrom.value || !!dateTo.value
-)
-
-const statusFilterOptions = [
-    { label: 'All statuses', value: 'all' },
-    { label: customerOrderStatusLabel.pending, value: 'pending' },
-    { label: customerOrderStatusLabel.confirmed, value: 'confirmed' },
-    { label: customerOrderStatusLabel.cancelled, value: 'cancelled' }
-]
-
-const paymentStatusFilterOptions = [
-    { label: 'All payment statuses', value: 'all' },
-    { label: paymentStatusLabel.unpaid, value: 'unpaid' },
-    { label: paymentStatusLabel.partially_paid, value: 'partially_paid' },
-    { label: paymentStatusLabel.paid, value: 'paid' }
-]
-
-const deliveryStatusFilterOptions = [
-    { label: 'All delivery statuses', value: 'all' },
-    { label: deliveryStatusLabel.not_delivered, value: 'not_delivered' },
-    { label: deliveryStatusLabel.delivered, value: 'delivered' }
-]
-
-const activeFilterCount = computed(() =>
-    [statusFilter.value !== 'all', paymentStatusFilter.value !== 'all', deliveryStatusFilter.value !== 'all', !!dateFrom.value, !!dateTo.value]
-        .filter(Boolean).length
-)
-
-const advancedFilterCount = computed(() =>
-    [paymentStatusFilter.value !== 'all', deliveryStatusFilter.value !== 'all', !!dateFrom.value, !!dateTo.value]
-        .filter(Boolean).length
-)
-
-function clearFilters() {
-    statusFilter.value = 'all'
-    paymentStatusFilter.value = 'all'
-    deliveryStatusFilter.value = 'all'
-    dateFrom.value = ''
-    dateTo.value = ''
-}
 
 const columns: TableColumn<Order>[] = [
     { id: 'schedule', header: 'Pasabuy' },
@@ -392,7 +263,7 @@ const attentionOrder = computed(() => {
     return candidates.reduce((highest, order) => (order.amount_due > highest.amount_due ? order : highest))
 })
 
-const hasActiveFilters = computed(() => statusFilter.value !== 'all' || !!search.value || !!activeFilterCount.value)
+const hasActiveFilters = computed(() => statusFilter.value !== 'all' || !!search.value)
 
 const emptyStateTitle = computed(() => (hasActiveFilters.value ? 'No orders match this filter' : 'No orders yet'))
 
@@ -408,10 +279,6 @@ async function loadOrders() {
             page: page.value,
             per_page: perPage,
             status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
-            payment_status: paymentStatusFilter.value !== 'all' ? paymentStatusFilter.value : undefined,
-            delivery_status: deliveryStatusFilter.value !== 'all' ? deliveryStatusFilter.value : undefined,
-            date_from: dateFrom.value || undefined,
-            date_to: dateTo.value || undefined,
             schedule_title: search.value || undefined
         })
         orders.value = response.data.items
@@ -425,7 +292,7 @@ async function loadOrders() {
 
 watch(page, loadOrders)
 
-watch([statusFilter, paymentStatusFilter, deliveryStatusFilter, dateFrom, dateTo], () => {
+watch(statusFilter, () => {
     page.value = 1
     loadOrders()
 })

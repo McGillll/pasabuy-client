@@ -3,12 +3,12 @@
         <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2">
                 <p class="font-medium text-highlighted">{{ item.product_name }}</p>
-                <UBadge v-if="item.bonus_quantity > 0" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
+                <UBadge v-if="item.bonus_quantity > 0" color="success" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
             </div>
-            <p class="mt-0.5 text-sm text-muted">₱<span class="font-mono tabular-nums">{{ item.actual_price ?? item.estimated_price }}</span> × <span class="font-mono tabular-nums">{{ item.quantity }}</span></p>
+            <p class="mt-0.5 text-sm text-muted"><span class="font-mono tabular-nums">₱{{ item.actual_price ?? item.estimated_price }}</span> × <span class="font-mono tabular-nums">{{ item.quantity }}</span></p>
             <UBadge
                 v-if="item.bonus_quantity > 0"
-                color="warning"
+                color="success"
                 variant="subtle"
                 size="sm"
                 icon="i-lucide-sparkles"

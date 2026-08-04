@@ -1,8 +1,8 @@
 <template>
     <button
         type="button"
-        class="group relative flex min-h-11 flex-col overflow-hidden rounded-xl border border-default bg-default text-left shadow-sm transition-colors hover:bg-elevated/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        :aria-label="`View details for ${name}`"
+        class="group relative flex min-h-11 flex-col overflow-hidden rounded-xl ring ring-default bg-default text-left shadow-sm transition-colors hover:bg-elevated/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        :aria-label="`Add ${name} to your order`"
         @click="emit('select')"
     >
         <div class="relative aspect-square w-full overflow-hidden bg-elevated" :class="{ 'opacity-60': status === 'out_of_stock' }">
@@ -18,19 +18,22 @@
                 <UIcon name="i-lucide-image" class="size-8" />
             </div>
 
-            <UBadge v-if="status === 'b1t1'" color="success" variant="solid" size="sm" class="absolute left-2 top-2">
+            <UBadge v-if="status === 'b1t1'" color="success" variant="subtle" size="sm" class="absolute left-2 top-2">
                 B1T1
             </UBadge>
-            <UBadge v-else-if="status === 'out_of_stock'" color="error" variant="solid" size="sm" class="absolute left-2 top-2">
+            <UBadge v-else-if="status === 'out_of_stock'" color="error" variant="subtle" size="sm" class="absolute left-2 top-2">
                 Out of stock
             </UBadge>
 
-            <div
+            <UBadge
                 v-if="quantity > 0"
-                class="absolute right-2 top-2 flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-semibold text-inverted shadow"
+                color="neutral"
+                variant="solid"
+                size="sm"
+                class="absolute right-2 top-2 font-mono tabular-nums"
             >
                 {{ quantity }}
-            </div>
+            </UBadge>
         </div>
 
         <div class="flex flex-1 flex-col gap-1 p-3">

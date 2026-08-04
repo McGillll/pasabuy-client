@@ -58,18 +58,18 @@
                             <template #title>
                                 <div class="flex w-full items-center gap-2">
                                     <p class="min-w-0 flex-1 truncate font-medium text-highlighted" :class="{ 'line-through text-muted': item.is_checked }">{{ item.product_name }}</p>
-                                    <UBadge v-if="item.category_name" color="primary" variant="subtle" size="sm" class="shrink-0">
+                                    <UBadge v-if="item.category_name" color="neutral" variant="subtle" size="sm" class="shrink-0">
                                         {{ item.category_name }}
                                     </UBadge>
-                                    <p class="shrink-0 text-lg font-bold tabular-nums" :class="item.is_checked ? 'text-muted' : 'text-highlighted'">{{ item.quantity }}x</p>
+                                    <p class="shrink-0 font-mono text-lg font-bold tabular-nums" :class="item.is_checked ? 'text-muted' : 'text-highlighted'">{{ item.quantity }}x</p>
                                 </div>
                             </template>
                             <template v-if="item.additional_quantity > 0 || item.return_quantity > 0" #status>
                                 <UBadge v-if="item.additional_quantity > 0" color="warning" variant="subtle" size="sm">
-                                    +{{ item.additional_quantity }} more
+                                    <span class="font-mono tabular-nums">+{{ item.additional_quantity }}</span> more
                                 </UBadge>
                                 <UBadge v-if="item.return_quantity > 0" color="error" variant="subtle" size="sm">
-                                    return {{ item.return_quantity }}
+                                    <span class="font-mono tabular-nums">-{{ item.return_quantity }}</span> to return
                                 </UBadge>
                             </template>
                         </ListCard>
@@ -109,12 +109,15 @@
                     </BaseInput>
                 </BaseFormField>
 
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Product status" @keydown="onStatusRadioKeydown">
                     <button
                         v-for="option in productStatusOptions"
                         :key="option.value"
                         type="button"
-                        class="flex flex-col items-center gap-1 rounded-lg px-2 py-2.5 text-xs font-semibold ring-1 transition-colors"
+                        role="radio"
+                        :aria-checked="confirmForm.product_status === option.value"
+                        :tabindex="confirmForm.product_status === option.value ? 0 : -1"
+                        class="flex min-h-11 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-xs font-semibold ring-2 ring-inset transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         :class="confirmForm.product_status === option.value ? statusActiveClass[option.value] : 'text-muted ring-default'"
                         @click="confirmForm.product_status = option.value"
                     >
@@ -156,9 +159,23 @@ const productStatusOptions = [
 ]
 
 const statusActiveClass: Record<string, string> = {
-    none: 'bg-success/10 text-success ring-success',
-    b1t1: 'bg-warning/10 text-warning ring-warning',
+    none: 'bg-elevated text-highlighted ring-muted',
+    b1t1: 'bg-success/10 text-success ring-success',
     out_of_stock: 'bg-error/10 text-error ring-error'
+}
+
+function onStatusRadioKeydown(event: KeyboardEvent) {
+    if (!['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(event.key)) return
+    event.preventDefault()
+
+    const currentIndex = productStatusOptions.findIndex((option) => option.value === confirmForm.product_status)
+    const direction = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1
+    const nextIndex = (currentIndex + direction + productStatusOptions.length) % productStatusOptions.length
+    confirmForm.product_status = productStatusOptions[nextIndex]!.value
+
+    const group = event.currentTarget as HTMLElement
+    const buttons = group.querySelectorAll<HTMLButtonElement>('[role="radio"]')
+    buttons[nextIndex]?.focus()
 }
 
 const isConfirmSheetOpen = ref(false)
@@ -211,9 +228,10 @@ async function toggleItem(item: ChecklistItem, isChecked: boolean) {
     try {
         const response = await publicChecklistService.toggleChecklistItem(token, item.product_uuid, isChecked)
         Object.assign(item, response.data)
-    } catch {
+    } catch (error) {
         item.is_checked = previousIsChecked
         item.checked_at = previousCheckedAt
+        toast.add({ title: 'Update failed', description: error instanceof APIError ? error.message : 'Something went wrong.', color: 'error' })
     } finally {
         togglingUuid.value = null
     }

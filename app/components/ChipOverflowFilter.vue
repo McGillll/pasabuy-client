@@ -1,24 +1,30 @@
 <template>
     <div>
         <div ref="containerRef" class="flex flex-nowrap items-center gap-2 overflow-hidden">
-            <button
-                v-for="item in visibleItems"
-                :key="item.value"
-                type="button"
-                class="min-h-11 shrink-0 whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors"
-                :class="item.value === modelValue ? 'bg-primary text-inverted' : 'bg-elevated text-muted hover:text-highlighted'"
-                @click="select(item.value)"
-            >
-                {{ item.label }}
-            </button>
+            <div class="contents" role="radiogroup" :aria-label="title" @keydown="onRadioKeydown($event, visibleItems)">
+                <button
+                    v-for="(item, index) in visibleItems"
+                    :key="item.value"
+                    type="button"
+                    role="radio"
+                    :aria-checked="item.value === modelValue"
+                    :tabindex="item.value === modelValue || (!visibleActiveItem && index === 0) ? 0 : -1"
+                    class="min-h-11 shrink-0 whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    :class="item.value === modelValue ? 'bg-primary text-inverted' : 'bg-elevated text-muted hover:text-highlighted'"
+                    @click="select(item.value)"
+                >
+                    {{ item.label }}
+                </button>
+            </div>
 
             <button
                 v-if="overflowItems.length"
                 type="button"
-                class="min-h-11 shrink-0 whitespace-nowrap rounded-full bg-elevated px-4 text-sm font-medium text-primary"
+                class="min-h-11 shrink-0 whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                :class="activeOverflowItem ? 'bg-primary/10 text-primary ring-1 ring-primary' : 'bg-elevated text-muted hover:text-highlighted'"
                 @click="isSheetOpen = true"
             >
-                More ({{ overflowItems.length }})
+                {{ activeOverflowItem ? activeOverflowItem.label : `More (${overflowItems.length})` }}
             </button>
         </div>
 
@@ -40,12 +46,15 @@
             <template #body>
                 <div class="space-y-3">
                     <BaseSearchInput v-model="sheetSearch" :placeholder="searchPlaceholder" class="w-full" />
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-2 gap-2" role="radiogroup" :aria-label="title" @keydown="onRadioKeydown($event, filteredItems)">
                         <button
-                            v-for="item in filteredItems"
+                            v-for="(item, index) in filteredItems"
                             :key="item.value"
                             type="button"
-                            class="min-h-11 rounded-lg px-3 text-left text-sm font-medium ring-1 ring-default transition-colors"
+                            role="radio"
+                            :aria-checked="item.value === modelValue"
+                            :tabindex="item.value === modelValue || (!filteredItems.some((i) => i.value === modelValue) && index === 0) ? 0 : -1"
+                            class="min-h-11 rounded-lg px-3 text-left text-sm font-medium ring-1 ring-default transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             :class="item.value === modelValue ? 'bg-primary/10 text-primary ring-primary' : 'text-muted hover:text-highlighted'"
                             @click="select(item.value)"
                         >
@@ -131,6 +140,8 @@ function recalculate() {
 
 const visibleItems = computed(() => props.items.slice(0, visibleCount.value))
 const overflowItems = computed(() => props.items.slice(visibleCount.value))
+const visibleActiveItem = computed(() => visibleItems.value.some((item) => item.value === props.modelValue))
+const activeOverflowItem = computed(() => overflowItems.value.find((item) => item.value === props.modelValue) ?? null)
 
 const filteredItems = computed(() => {
     const query = sheetSearch.value.trim().toLowerCase()
@@ -141,6 +152,21 @@ const filteredItems = computed(() => {
 function select(value: string) {
     emit('update:modelValue', value)
     isSheetOpen.value = false
+}
+
+function onRadioKeydown(event: KeyboardEvent, groupItems: ChipOverflowItem[]) {
+    if (!['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(event.key)) return
+    if (groupItems.length === 0) return
+    event.preventDefault()
+
+    const currentIndex = groupItems.findIndex((item) => item.value === props.modelValue)
+    const direction = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1
+    const nextIndex = (currentIndex + direction + groupItems.length) % groupItems.length
+    emit('update:modelValue', groupItems[nextIndex]!.value)
+
+    const group = event.currentTarget as HTMLElement
+    const buttons = group.querySelectorAll<HTMLButtonElement>('[role="radio"]')
+    buttons[nextIndex]?.focus()
 }
 
 let resizeObserver: ResizeObserver | null = null

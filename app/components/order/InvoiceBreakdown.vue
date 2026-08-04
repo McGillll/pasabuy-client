@@ -14,31 +14,31 @@
                         <p class="text-highlighted">{{ item.product_name }}</p>
                         <UBadge v-if="item.bonus_quantity > 0" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
                     </div>
-                    <p class="text-xs text-muted">₱{{ item.unit_price.toFixed(2) }} × {{ item.quantity }}</p>
+                    <p class="text-xs text-muted"><span class="font-mono tabular-nums">₱{{ item.unit_price.toFixed(2) }} × {{ item.quantity }}</span></p>
                     <UBadge v-if="item.bonus_quantity > 0" color="warning" variant="subtle" size="sm" icon="i-lucide-sparkles" class="mt-1">
                         +{{ item.bonus_quantity }} free
                     </UBadge>
                 </div>
-                <span class="shrink-0 font-medium text-highlighted">₱{{ item.line_total.toFixed(2) }}</span>
+                <span class="shrink-0 font-mono tabular-nums font-medium text-highlighted">₱{{ item.line_total.toFixed(2) }}</span>
             </div>
         </div>
 
         <div class="space-y-1 border-t border-default pt-2">
             <div class="flex items-center justify-between">
                 <span class="text-muted">Subtotal</span>
-                <span>₱{{ invoice.subtotal.toFixed(2) }}</span>
+                <span class="font-mono tabular-nums">₱{{ invoice.subtotal.toFixed(2) }}</span>
             </div>
             <div class="flex items-center justify-between">
                 <span class="text-muted">Markup</span>
-                <span>₱{{ invoice.markup_amount.toFixed(2) }}</span>
+                <span class="font-mono tabular-nums">₱{{ invoice.markup_amount.toFixed(2) }}</span>
             </div>
             <div v-if="invoice.handling_fee > 0" class="flex items-center justify-between">
                 <span class="text-muted">Handling fee</span>
-                <span>₱{{ invoice.handling_fee.toFixed(2) }}</span>
+                <span class="font-mono tabular-nums">₱{{ invoice.handling_fee.toFixed(2) }}</span>
             </div>
             <div class="flex items-center justify-between border-t border-dashed border-default pt-1 font-medium text-highlighted">
                 <span>Order total</span>
-                <span>₱{{ invoice.total.toFixed(2) }}</span>
+                <span class="font-mono tabular-nums">₱{{ invoice.total.toFixed(2) }}</span>
             </div>
         </div>
 
@@ -65,32 +65,32 @@
                 >
                     <span class="text-muted">{{ line.label }}</span>
                     <span class="flex shrink-0 items-center gap-2">
-                        <span :class="line.type === 'payment' ? 'text-success' : 'text-error'">
+                        <span :class="['font-mono tabular-nums', line.type === 'payment' ? 'text-success' : 'text-error']">
                             {{ line.amount >= 0 ? '+' : '' }}₱{{ line.amount.toFixed(2) }}
                         </span>
-                        <span class="font-medium text-highlighted">₱{{ line.running_total.toFixed(2) }}</span>
+                        <span class="font-mono tabular-nums font-medium text-highlighted">₱{{ line.running_total.toFixed(2) }}</span>
                     </span>
                 </li>
             </ol>
             <div class="flex items-center justify-between text-error">
                 <span>Interest total</span>
-                <span>₱{{ invoice.interest_total.toFixed(2) }}</span>
+                <span class="font-mono tabular-nums">₱{{ invoice.interest_total.toFixed(2) }}</span>
             </div>
         </div>
 
         <div class="flex items-center justify-between border-t border-default pt-2 text-base font-semibold text-highlighted">
             <span>Grand total</span>
-            <span>₱{{ invoice.grand_total.toFixed(2) }}</span>
+            <span class="font-mono tabular-nums">₱{{ invoice.grand_total.toFixed(2) }}</span>
         </div>
 
         <div class="space-y-1 border-t border-default pt-2">
             <div class="flex items-center justify-between">
                 <span class="text-muted">Amount paid</span>
-                <span>₱{{ invoice.amount_paid.toFixed(2) }}</span>
+                <span class="font-mono tabular-nums">₱{{ invoice.amount_paid.toFixed(2) }}</span>
             </div>
             <div class="flex items-center justify-between font-semibold text-highlighted">
                 <span>Amount due</span>
-                <span>₱{{ invoice.balance_due.toFixed(2) }}</span>
+                <span class="font-mono tabular-nums">₱{{ invoice.balance_due.toFixed(2) }}</span>
             </div>
         </div>
 

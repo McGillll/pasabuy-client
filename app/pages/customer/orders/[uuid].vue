@@ -41,7 +41,7 @@
                     description="The seller will reach out to confirm."
                     :ui="{
                         root: 'p-4 ring-2 ring-success/20',
-                        icon: 'animate-[bounce_0.6s_ease-in-out_1] motion-reduce:animate-none'
+                        icon: 'animate-fade-scale-in motion-reduce:animate-none'
                     }"
                 />
             </Transition>

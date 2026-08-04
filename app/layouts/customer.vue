@@ -57,7 +57,7 @@
                 class="group relative z-1 flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 py-2 text-muted transition-colors duration-200 motion-reduce:transition-none"
                 active-class="text-primary"
             >
-                <span class="flex size-11 items-center justify-center rounded-full transition-all duration-480 ease-[cubic-bezier(0.3,1.32,0.42,1)] motion-reduce:transition-none motion-reduce:transform-none group-[.text-primary]:size-13 group-[.text-primary]:-translate-y-4.5 group-[.text-primary]:bg-primary group-[.text-primary]:shadow-[0_14px_24px_-10px_rgba(0,0,0,0.45),0_4px_10px_-4px_rgba(0,0,0,0.3)]">
+                <span class="flex size-11 items-center justify-center rounded-full transition-all duration-480 ease-[cubic-bezier(0.3,1.32,0.42,1)] motion-reduce:transition-none motion-reduce:transform-none group-[.text-primary]:size-13 group-[.text-primary]:-translate-y-4.5 group-[.text-primary]:bg-primary group-[.text-primary]:shadow-md">
                     <UIcon :name="link.icon" class="size-5 transition-transform duration-300 motion-reduce:transition-none group-[.text-primary]:scale-110 group-[.text-primary]:text-inverted" />
                 </span>
                 <span class="text-xs leading-tight transition-colors duration-200 motion-reduce:transition-none group-[.text-primary]:font-semibold">{{ link.label }}</span>

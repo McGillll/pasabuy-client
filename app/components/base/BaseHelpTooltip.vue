@@ -2,7 +2,7 @@
     <UPopover :content="{ side: 'top' }">
         <button
             type="button"
-            class="inline-flex h-11 w-11 items-center justify-center text-dimmed hover:text-muted sm:h-5 sm:w-5"
+            class="relative inline-flex size-5 items-center justify-center text-dimmed hover:text-muted after:absolute after:-inset-3 after:content-['']"
             aria-label="More information"
         >
             <UIcon name="i-lucide-help-circle" class="size-4" />

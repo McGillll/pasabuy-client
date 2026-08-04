@@ -96,7 +96,7 @@
                     <button
                         v-if="leafCanScrollLeft"
                         type="button"
-                        class="absolute left-0 top-1/2 hidden size-9 -translate-x-1/3 -translate-y-1/2 items-center justify-center rounded-full bg-default text-highlighted shadow-md ring ring-default hover:bg-elevated sm:flex"
+                        class="absolute left-0 top-1/2 hidden size-9 -translate-x-1/3 -translate-y-1/2 items-center justify-center rounded-full bg-default text-highlighted shadow-sm ring ring-default hover:bg-elevated sm:flex"
                         aria-label="Scroll aisle left"
                         @click="scrollLeafBy(-1)"
                     >
@@ -105,7 +105,7 @@
                     <button
                         v-if="leafCanScrollRight"
                         type="button"
-                        class="absolute right-0 top-1/2 hidden size-9 translate-x-1/3 -translate-y-1/2 items-center justify-center rounded-full bg-default text-highlighted shadow-md ring ring-default hover:bg-elevated sm:flex"
+                        class="absolute right-0 top-1/2 hidden size-9 translate-x-1/3 -translate-y-1/2 items-center justify-center rounded-full bg-default text-highlighted shadow-sm ring ring-default hover:bg-elevated sm:flex"
                         aria-label="Scroll aisle right"
                         @click="scrollLeafBy(1)"
                     >

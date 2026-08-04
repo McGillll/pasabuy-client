@@ -1,5 +1,5 @@
 <template>
-    <svg viewBox="0 0 44 44" class="shrink-0" :class="sizeClass">
+    <svg viewBox="0 0 44 44" class="shrink-0" :class="sizeClass" aria-hidden="true">
         <circle cx="22" cy="22" r="18" fill="none" stroke-width="5" stroke="currentColor" class="text-elevated" />
         <circle
             cx="22"
