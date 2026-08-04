@@ -1,38 +1,40 @@
 <template>
     <div class="space-y-6">
-        <div class="sticky top-0 z-10 -mx-4 bg-default/95 px-4 py-3 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)] backdrop-blur-sm">
-            <BaseSearchInput
-                v-model="search"
-                :items="suggestionItems"
-                placeholder="Search products…"
-                class="w-full"
-                @select="onSuggestionSelect"
-            >
-                <template #item-leading="{ item }">
-                    <img
-                        v-if="item.product.image_url"
-                        :src="item.product.image_url"
-                        class="size-8 rounded-md object-cover"
-                        alt=""
-                    >
-                    <div v-else class="flex size-8 items-center justify-center rounded-md bg-elevated text-dimmed">
-                        <UIcon name="i-lucide-image" class="size-4" />
-                    </div>
-                </template>
-                <template #item-trailing="{ item }">
-                    <UBadge v-if="item.product.default_product_status === 'b1t1'" color="success" variant="subtle" size="sm">
-                        B1T1
-                    </UBadge>
-                </template>
-                <template #empty="{ searchTerm: term }">
-                    <div v-if="suggestionsLoading" class="py-1 text-sm text-muted">
-                        Searching…
-                    </div>
-                    <template v-else>
-                        {{ term ? `No products match "${term}"` : 'No matching data' }}
+        <div class="md:hidden sticky top-0 z-10 -mx-4 bg-default/95 px-4 py-3 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)] backdrop-blur-sm">
+            <Teleport to="#customer-header-search-target" :disabled="!isDesktop">
+                <BaseSearchInput
+                    v-model="search"
+                    :items="suggestionItems"
+                    placeholder="Search products…"
+                    class="w-full"
+                    @select="onSuggestionSelect"
+                >
+                    <template #item-leading="{ item }">
+                        <img
+                            v-if="item.product.image_url"
+                            :src="item.product.image_url"
+                            class="size-8 rounded-md object-cover"
+                            alt=""
+                        >
+                        <div v-else class="flex size-8 items-center justify-center rounded-md bg-elevated text-dimmed">
+                            <UIcon name="i-lucide-image" class="size-4" />
+                        </div>
                     </template>
-                </template>
-            </BaseSearchInput>
+                    <template #item-trailing="{ item }">
+                        <UBadge v-if="item.product.default_product_status === 'b1t1'" color="success" variant="subtle" size="sm">
+                            B1T1
+                        </UBadge>
+                    </template>
+                    <template #empty="{ searchTerm: term }">
+                        <div v-if="suggestionsLoading" class="py-1 text-sm text-muted">
+                            Searching…
+                        </div>
+                        <template v-else>
+                            {{ term ? `No products match "${term}"` : 'No matching data' }}
+                        </template>
+                    </template>
+                </BaseSearchInput>
+            </Teleport>
         </div>
 
         <div v-if="!loading && !error && promoProducts.length" class="space-y-3">
@@ -179,6 +181,8 @@ import type { Product } from '@/types/Product'
 definePageMeta({ layout: 'customer', middleware: 'customer-auth' })
 
 useHead({ title: 'Pasabuy' })
+
+const isDesktop = useIsDesktop(768)
 
 const { data: promoData, ensure: ensurePromoLoaded } = useCachedFetch<Product[]>(
     'public-product-catalog-b1t1',
