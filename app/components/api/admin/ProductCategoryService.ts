@@ -3,7 +3,9 @@ import BaseAPIService from '@/components/api/BaseAPIService'
 export interface CategoryPayload {
     name: string
     description?: string
+    image_url?: string | null
     is_active?: boolean
+    parent_uuid?: string | null
 }
 
 class ProductCategoryService extends BaseAPIService {

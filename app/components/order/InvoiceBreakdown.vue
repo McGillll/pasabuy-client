@@ -32,6 +32,10 @@
                 <span class="text-muted">Markup</span>
                 <span>₱{{ invoice.markup_amount.toFixed(2) }}</span>
             </div>
+            <div v-if="invoice.handling_fee > 0" class="flex items-center justify-between">
+                <span class="text-muted">Handling fee</span>
+                <span>₱{{ invoice.handling_fee.toFixed(2) }}</span>
+            </div>
             <div class="flex items-center justify-between border-t border-dashed border-default pt-1 font-medium text-highlighted">
                 <span>Order total</span>
                 <span>₱{{ invoice.total.toFixed(2) }}</span>

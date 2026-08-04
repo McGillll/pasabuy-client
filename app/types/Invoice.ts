@@ -24,6 +24,7 @@ export interface Invoice {
     items: InvoiceItem[]
     subtotal: number
     markup_amount: number
+    handling_fee: number
     total: number
     due_date: string | null
     is_overdue: boolean

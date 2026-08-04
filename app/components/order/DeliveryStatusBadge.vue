@@ -1,9 +1,9 @@
 <template>
-    <StatusBadge :color="deliveryStatusColor[status]" :label="deliveryStatusLabel[status]" />
+    <BaseStatusBadge :color="deliveryStatusColor[status]" :label="deliveryStatusLabel[status]" dot />
 </template>
 
 <script setup lang="ts">
-import type { DeliveryStatus } from '@/composables/useOrderStatus'
+import { deliveryStatusColor, deliveryStatusLabel, type DeliveryStatus } from '@/composables/useOrderStatus'
 
 defineProps<{
     status: DeliveryStatus

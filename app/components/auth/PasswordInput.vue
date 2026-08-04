@@ -5,8 +5,9 @@
         :placeholder="placeholder"
         icon="i-lucide-lock"
         :autocomplete="autocomplete"
+        :disabled="disabled"
         size="xl"
-        class="w-full"
+        class="w-full h-11"
     >
         <template v-if="showToggle" #trailing>
             <BaseButton
@@ -15,7 +16,7 @@
                 size="xs"
                 :icon="internalVisible ? 'i-lucide-eye-off' : 'i-lucide-eye'"
                 :aria-label="internalVisible ? 'Hide password' : 'Show password'"
-                tabindex="-1"
+                :disabled="disabled"
                 @click="internalVisible = !internalVisible"
             />
         </template>
@@ -30,11 +31,13 @@ const props = withDefaults(defineProps<{
     autocomplete?: string
     showToggle?: boolean
     visible?: boolean
+    disabled?: boolean
 }>(), {
     placeholder: '••••••••',
     autocomplete: 'current-password',
     showToggle: true,
     visible: false,
+    disabled: false,
 })
 
 const internalVisible = ref(false)

@@ -20,6 +20,7 @@
                         v-if="!viewOnly"
                         :color="confirmColor"
                         :loading="loading"
+                        :disabled="confirmDisabled"
                         :type="formId ? 'submit' : 'button'"
                         :form="formId"
                         @click="formId ? undefined : emit('confirm')"
@@ -48,6 +49,7 @@ const props = withDefaults(defineProps<{
     cancelLabel?: string
     confirmColor?: ButtonProps['color']
     loading?: boolean
+    confirmDisabled?: boolean
 }>(), {
     title: undefined,
     description: undefined,
@@ -59,7 +61,8 @@ const props = withDefaults(defineProps<{
     confirmLabel: 'Save',
     cancelLabel: undefined,
     confirmColor: 'primary',
-    loading: false
+    loading: false,
+    confirmDisabled: false
 })
 
 const emit = defineEmits<{
@@ -76,9 +79,10 @@ const sizeClasses: Record<'sm' | 'md' | 'lg' | 'xl', string> = {
     xl: 'sm:max-w-2xl'
 }
 
-// Full-screen sheet on mobile (no floating dialog); restores the centered
+// Bottom sheet on mobile that sizes to its content (capped at 90dvh, scrolls
+// past that) instead of always stretching full-screen; restores the centered
 // floating dialog look from `sm:` up, where there's room for it.
-const FULLSCREEN_MOBILE_CONTENT = 'inset-0 translate-x-0 translate-y-0 w-full h-full max-w-full max-h-full rounded-none shadow-none ring-0'
+const FULLSCREEN_MOBILE_CONTENT = 'inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 w-full h-auto max-w-full max-h-[90dvh] rounded-t-xl rounded-b-none shadow-lg ring-0'
 const FLOATING_DESKTOP_CONTENT = 'sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-[calc(100vw-2rem)] sm:h-auto sm:max-h-[calc(100dvh-4rem)] sm:rounded-lg sm:shadow-lg sm:ring sm:ring-default'
 
 const mergedUi = computed<ModalProps['ui']>(() => ({

@@ -8,7 +8,6 @@ export interface ProductPayload {
     default_price: number
     default_product_status?: 'none' | 'b1t1' | 'out_of_stock'
     category_uuid?: string | null
-    brand_uuid?: string | null
 }
 
 class ProductService extends BaseAPIService {
@@ -38,6 +37,10 @@ class ProductService extends BaseAPIService {
         return await this.request(`/admin/products/${uuid}`, 'DELETE')
     }
 
+    async fetchTopSelling(params: object = {}): Promise<any> {
+        return await this.request('/admin/products/top-selling', 'GET', params)
+    }
+
     private buildFormData(payload: ProductPayload): FormData {
         const formData = new FormData()
         formData.append('name', payload.name)
@@ -47,7 +50,6 @@ class ProductService extends BaseAPIService {
         formData.append('default_price', String(payload.default_price))
         if (payload.default_product_status) formData.append('default_product_status', payload.default_product_status)
         if (payload.category_uuid) formData.append('category_uuid', payload.category_uuid)
-        if (payload.brand_uuid) formData.append('brand_uuid', payload.brand_uuid)
 
         return formData
     }

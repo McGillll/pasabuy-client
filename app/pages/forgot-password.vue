@@ -2,6 +2,8 @@
     <AuthPageShell subtitle="Reset your password">
         <UAlert
             v-if="submitted"
+            role="alert"
+            aria-live="polite"
             color="success"
             variant="subtle"
             icon="i-lucide-mail-check"
@@ -12,6 +14,8 @@
         <template v-else>
             <UAlert
                 v-if="requestError"
+                role="alert"
+                aria-live="assertive"
                 color="error"
                 variant="subtle"
                 icon="i-lucide-alert-circle"
@@ -19,23 +23,23 @@
                 class="mb-4"
             />
 
-            <UForm
+            <BaseForm
                 :state="state"
                 :validate="validate"
                 class="flex flex-col gap-5"
                 @submit="onSubmit"
             >
-                <UFormField label="Email" name="email" required>
-                    <UInput
+                <BaseFormField label="Email" name="email" required>
+                    <BaseInput
                         v-model="state.email"
                         type="email"
                         placeholder="you@example.com"
                         icon="i-lucide-mail"
                         autocomplete="email"
                         size="xl"
-                        class="w-full"
+                        :disabled="isSubmitting"
                     />
-                </UFormField>
+                </BaseFormField>
 
                 <BaseButton
                     type="submit"
@@ -45,12 +49,19 @@
                 >
                     Send reset link
                 </BaseButton>
-            </UForm>
+            </BaseForm>
         </template>
 
         <template #footer>
             <p class="mt-6 text-center text-sm text-dimmed">
-                <NuxtLink to="/login" class="text-primary hover:underline">Back to sign in</NuxtLink>
+                <NuxtLink
+                    to="/login"
+                    class="text-highlighted font-medium underline decoration-dimmed underline-offset-2 hover:decoration-highlighted"
+                    :class="{ 'pointer-events-none opacity-50': isSubmitting }"
+                    :tabindex="isSubmitting ? -1 : undefined"
+                >
+                    Back to sign in
+                </NuxtLink>
             </p>
 
             <p class="mt-4 text-center text-xs text-dimmed">
@@ -66,6 +77,7 @@ import APIError from '@/components/api/user/APIError'
 
 definePageMeta({
     layout: false,
+    middleware: 'guest',
 })
 
 useHead({ title: 'Forgot Password' })
@@ -81,9 +93,12 @@ const isSubmitting = ref(false)
 const submitted = ref(false)
 const requestError = ref<string | null>(null)
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 function validate(state: { email: string }): FormError[] {
     const errors: FormError[] = []
     if (!state.email) errors.push({ name: 'email', message: 'Email is required' })
+    else if (!EMAIL_PATTERN.test(state.email)) errors.push({ name: 'email', message: 'Enter a valid email address' })
     return errors
 }
 
@@ -94,7 +109,9 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
         await forgotPassword(event.data.email)
         submitted.value = true
     } catch (error) {
-        if (error instanceof APIError) {
+        const isGenuineServerFailure = error instanceof APIError && (error.status === undefined || error.status >= 500)
+        if (error instanceof APIError && !isGenuineServerFailure) {
+            // Anti-enumeration: don't reveal whether the email exists, only surface real server failures.
             submitted.value = true
         } else {
             requestError.value = 'Something went wrong. Please try again.'

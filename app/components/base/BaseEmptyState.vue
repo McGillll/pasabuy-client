@@ -2,6 +2,7 @@
     <div class="flex flex-col items-center gap-3" :class="padding">
         <UIcon :name="icon" class="size-8 text-dimmed" />
         <p class="text-sm text-muted text-center">{{ message }}</p>
+        <p v-if="description" class="text-xs text-dimmed text-center">{{ description }}</p>
         <BaseButton v-if="actionLabel" size="sm" icon="i-lucide-plus" @click="emit('action')">
             {{ actionLabel }}
         </BaseButton>
@@ -12,6 +13,7 @@
 withDefaults(defineProps<{
     icon: string
     message: string
+    description?: string
     actionLabel?: string
     padding?: string
 }>(), {

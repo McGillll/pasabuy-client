@@ -22,29 +22,13 @@
             </template>
         </UAlert>
 
-        <UCard>
-            <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-                <div>
-                    <p class="text-xs text-muted">Total orders</p>
-                    <p class="text-2xl font-semibold text-highlighted">{{ total }}</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                    <span v-for="stat in statusBreakdown" :key="stat.label" class="flex items-center gap-1.5 text-muted">
-                        <span class="size-2 rounded-full" :class="stat.dotClass" />
-                        {{ stat.label }} <span class="font-medium text-highlighted">{{ stat.count }}</span>
-                    </span>
-                </div>
-            </div>
-        </UCard>
-
         <div class="space-y-3">
             <div class="flex items-center gap-2">
-                <UInput
+                <BaseInput
                     v-model="search"
                     icon="i-lucide-search"
                     placeholder="Search by pasabuy title…"
                     class="flex-1 sm:w-72 sm:flex-none"
-                    :ui="{ base: 'h-11' }"
                 />
                 <BaseButton
                     class="sm:hidden shrink-0"
@@ -58,35 +42,84 @@
                 </BaseButton>
             </div>
 
-            <div class="hidden sm:grid grid-cols-2 gap-2 lg:grid-cols-5">
-                <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
-                <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full h-11" />
-                <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full h-11" />
-                <UInput v-model="dateFrom" type="date" placeholder="From" class="w-full" :ui="{ base: 'h-11' }" />
-                <UInput v-model="dateTo" type="date" placeholder="To" class="w-full" :ui="{ base: 'h-11' }" />
+            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden sm:hidden">
+                <button
+                    v-for="chip in statusChips"
+                    :key="chip.value"
+                    type="button"
+                    class="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium transition-colors"
+                    :class="statusFilter === chip.value
+                        ? 'border-primary bg-primary text-inverted font-semibold'
+                        : 'border-default text-muted hover:text-highlighted'"
+                    @click="statusFilter = chip.value"
+                >
+                    <span v-if="chip.dotClass" class="size-1.5 rounded-full" :class="chip.dotClass" />
+                    {{ chip.label }}
+                </button>
+            </div>
+
+            <div class="hidden sm:block space-y-2">
+                <div class="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                    <BaseSelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" />
+                    <BaseButton
+                        color="neutral"
+                        variant="outline"
+                        :trailing-icon="isAdvancedFiltersOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+                        @click="isAdvancedFiltersOpen = !isAdvancedFiltersOpen"
+                    >
+                        Advanced filters
+                        <UBadge v-if="advancedFilterCount" color="primary" variant="subtle" size="sm">{{ advancedFilterCount }}</UBadge>
+                    </BaseButton>
+                </div>
+                <UCollapsible v-model:open="isAdvancedFiltersOpen">
+                    <template #content>
+                        <div class="grid grid-cols-2 gap-2 lg:grid-cols-4 pt-2">
+                            <BaseSelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" />
+                            <BaseSelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" />
+                            <BaseInput v-model="dateFrom" type="date" placeholder="From" />
+                            <BaseInput v-model="dateTo" type="date" placeholder="To" />
+                        </div>
+                    </template>
+                </UCollapsible>
             </div>
         </div>
 
         <USlideover v-model:open="isFiltersOpen" side="bottom" title="Filters">
             <template #body>
                 <div class="space-y-4">
-                    <UFormField label="Status">
-                        <USelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" class="w-full h-11" />
-                    </UFormField>
-                    <UFormField label="Payment status">
-                        <USelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" class="w-full h-11" />
-                    </UFormField>
-                    <UFormField label="Delivery status">
-                        <USelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" class="w-full h-11" />
-                    </UFormField>
-                    <div class="grid grid-cols-2 gap-4">
-                        <UFormField label="From date">
-                            <UInput v-model="dateFrom" type="date" class="w-full" :ui="{ base: 'h-11' }" />
-                        </UFormField>
-                        <UFormField label="To date">
-                            <UInput v-model="dateTo" type="date" class="w-full" :ui="{ base: 'h-11' }" />
-                        </UFormField>
-                    </div>
+                    <BaseFormField label="Status">
+                        <BaseSelect v-model="statusFilter" :items="statusFilterOptions" value-key="value" />
+                    </BaseFormField>
+
+                    <UCollapsible v-model:open="isAdvancedFiltersOpen">
+                        <BaseButton
+                            block
+                            color="neutral"
+                            variant="outline"
+                            :trailing-icon="isAdvancedFiltersOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+                        >
+                            Advanced filters
+                            <UBadge v-if="advancedFilterCount" color="primary" variant="subtle" size="sm">{{ advancedFilterCount }}</UBadge>
+                        </BaseButton>
+                        <template #content>
+                            <div class="space-y-4 pt-4">
+                                <BaseFormField label="Payment status">
+                                    <BaseSelect v-model="paymentStatusFilter" :items="paymentStatusFilterOptions" value-key="value" />
+                                </BaseFormField>
+                                <BaseFormField label="Delivery status">
+                                    <BaseSelect v-model="deliveryStatusFilter" :items="deliveryStatusFilterOptions" value-key="value" />
+                                </BaseFormField>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <BaseFormField label="From date">
+                                        <BaseInput v-model="dateFrom" type="date" />
+                                    </BaseFormField>
+                                    <BaseFormField label="To date">
+                                        <BaseInput v-model="dateTo" type="date" />
+                                    </BaseFormField>
+                                </div>
+                            </div>
+                        </template>
+                    </UCollapsible>
                 </div>
             </template>
             <template #footer>
@@ -98,7 +131,7 @@
         </USlideover>
 
         <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <ResponsiveTable
+            <BaseTable
                 :data="orders"
                 :columns="columns"
                 :loading="loading"
@@ -115,7 +148,7 @@
                     <p class="font-mono text-xs text-dimmed">{{ row.original.order_no }}</p>
                 </template>
                 <template #total_amount-cell="{ row }">
-                    {{ orderDisplayAmount(row.original) }}
+                    <span class="font-mono tabular-nums">{{ orderDisplayAmount(row.original) }}</span>
                 </template>
                 <template #status-cell="{ row }">
                     <OrderStatusBadge :status="row.original.status" />
@@ -147,7 +180,7 @@
                             <span class="font-mono text-xs">{{ order.order_no }}</span>
                         </template>
                         <template #meta>
-                            <span class="font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
+                            <span class="font-mono tabular-nums font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
                             <span class="text-muted">{{ formatDate(order.created_at) }}</span>
                         </template>
                         <template #status>
@@ -160,12 +193,20 @@
                     </ListCard>
                 </template>
                 <template #empty>
-                    <div class="flex flex-col items-center gap-3 py-10">
-                        <UIcon name="i-lucide-receipt" class="size-8 text-dimmed" />
-                        <p class="text-sm text-muted">{{ emptyStateMessage }}</p>
+                    <div class="flex flex-col items-center gap-3 py-10 text-center">
+                        <div class="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                            <UIcon name="i-lucide-receipt" class="size-6" />
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-sm font-medium text-highlighted">{{ emptyStateTitle }}</p>
+                            <p class="max-w-64 text-sm text-muted">{{ emptyStateMessage }}</p>
+                        </div>
+                        <BaseButton v-if="!hasActiveFilters" trailing-icon="i-lucide-arrow-right" to="/customer/pasabuys">
+                            Browse pasabuys
+                        </BaseButton>
                     </div>
                 </template>
-            </ResponsiveTable>
+            </BaseTable>
         </UCard>
 
         <div v-if="total > perPage" class="flex justify-center">
@@ -215,12 +256,17 @@
 
                     <div class="flex items-center justify-between border-t border-default pt-3 font-medium text-highlighted">
                         <span>Total</span>
-                        <span>₱{{ selectedOrder.total_amount }}</span>
+                        <span class="font-mono tabular-nums">₱{{ selectedOrder.total_amount }}</span>
                     </div>
                 </template>
 
                 <div v-if="selectedOrder.is_cancellable" class="flex items-center justify-end gap-2">
-                    <CancelOrderControl :loading="cancellingOrder" @confirm="cancelSelectedOrder" />
+                    <CancelOrderControl
+                        :loading="cancellingOrder"
+                        :order-title="selectedOrder?.pasabuy_schedule?.title"
+                        :order-total="selectedOrder?.total_amount"
+                        @confirm="cancelSelectedOrder"
+                    />
                 </div>
             </div>
         </BaseModal>
@@ -279,6 +325,9 @@ const deliveryStatusFilter = ref('all')
 const dateFrom = ref('')
 const dateTo = ref('')
 const isFiltersOpen = ref(false)
+const isAdvancedFiltersOpen = ref(
+    paymentStatusFilter.value !== 'all' || deliveryStatusFilter.value !== 'all' || !!dateFrom.value || !!dateTo.value
+)
 
 const statusFilterOptions = [
     { label: 'All statuses', value: 'all' },
@@ -305,6 +354,11 @@ const activeFilterCount = computed(() =>
         .filter(Boolean).length
 )
 
+const advancedFilterCount = computed(() =>
+    [paymentStatusFilter.value !== 'all', deliveryStatusFilter.value !== 'all', !!dateFrom.value, !!dateTo.value]
+        .filter(Boolean).length
+)
+
 function clearFilters() {
     statusFilter.value = 'all'
     paymentStatusFilter.value = 'all'
@@ -327,11 +381,12 @@ function orderDisplayAmount(order: Order) {
     return order.pasabuy_schedule?.status === 'finished' ? order.amount_due : order.total_amount
 }
 
-const statusBreakdown = computed(() => [
-    { label: 'Pending', count: orders.value.filter((o) => o.status === 'pending').length, dotClass: 'bg-warning' },
-    { label: 'Confirmed', count: orders.value.filter((o) => o.status === 'confirmed').length, dotClass: 'bg-success' },
-    { label: 'Cancelled', count: orders.value.filter((o) => o.status === 'cancelled').length, dotClass: 'bg-error' }
-])
+const statusChips: { label: string; value: typeof statusFilter.value; dotClass?: string }[] = [
+    { label: 'All', value: 'all' },
+    { label: customerOrderStatusLabel.pending, value: 'pending', dotClass: 'bg-warning' },
+    { label: customerOrderStatusLabel.confirmed, value: 'confirmed', dotClass: 'bg-success' },
+    { label: customerOrderStatusLabel.cancelled, value: 'cancelled', dotClass: 'bg-error' }
+]
 
 const attentionOrder = computed(() => {
     const candidates = orders.value.filter((o) => o.pasabuy_schedule?.status === 'finished' && o.amount_due > 0)
@@ -339,9 +394,13 @@ const attentionOrder = computed(() => {
     return candidates.reduce((highest, order) => (order.amount_due > highest.amount_due ? order : highest))
 })
 
+const hasActiveFilters = computed(() => statusFilter.value !== 'all' || !!search.value || !!activeFilterCount.value)
+
+const emptyStateTitle = computed(() => (hasActiveFilters.value ? 'No orders match this filter' : 'No orders yet'))
+
 const emptyStateMessage = computed(() => {
-    if (statusFilter.value !== 'all' || search.value || activeFilterCount.value) return 'No orders match this filter.'
-    return "You haven't placed any orders yet."
+    if (hasActiveFilters.value) return 'Try a different search term or clear your filters.'
+    return "When you join a pasabuy run, your orders and their status will show up here."
 })
 
 async function loadOrders() {

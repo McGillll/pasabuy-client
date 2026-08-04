@@ -3,10 +3,10 @@
         Cancel order
     </BaseButton>
 
-    <ConfirmDialogModal
+    <BaseConfirmModal
         v-model:open="open"
         title="Cancel order?"
-        description="This cannot be undone."
+        :description="description"
         confirm-label="Yes, cancel"
         color="error"
         :loading="loading"
@@ -15,11 +15,21 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
     loading?: boolean
+    orderTitle?: string
+    orderTotal?: string
 }>()
 
 const emit = defineEmits<{ confirm: [] }>()
 
 const open = ref(false)
+
+const description = computed(() => {
+    if (props.orderTitle && props.orderTotal) {
+        return `Canceling ${props.orderTitle} (₱${props.orderTotal}) cannot be undone.`
+    }
+
+    return 'This cannot be undone.'
+})
 </script>

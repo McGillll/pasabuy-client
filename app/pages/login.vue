@@ -1,7 +1,9 @@
 <template>
-    <AuthPageShell subtitle="Sign in">
+    <AuthPageShell subtitle="Sign in to browse open pasabuys">
         <UAlert
             v-if="authError"
+            role="alert"
+            aria-live="assertive"
             color="error"
             variant="subtle"
             icon="i-lucide-alert-circle"
@@ -9,31 +11,38 @@
             class="mb-4"
         />
 
-        <UForm
+        <BaseForm
             :state="state"
             :validate="validate"
             class="flex flex-col gap-5"
             @submit="onSubmit"
         >
-            <UFormField label="Email" name="email" :error="emailError" required>
-                <UInput
+            <BaseFormField label="Email" name="email" :error="emailError" required>
+                <BaseInput
                     v-model="state.email"
                     type="email"
                     placeholder="you@example.com"
                     icon="i-lucide-mail"
                     autocomplete="email"
                     size="xl"
-                    class="w-full"
+                    :disabled="isSubmitting"
                 />
-            </UFormField>
+            </BaseFormField>
 
-            <UFormField label="Password" name="password" :error="passwordError" required>
-                <PasswordInput v-model="state.password" autocomplete="current-password" />
-            </UFormField>
+            <BaseFormField label="Password" name="password" :error="passwordError" required>
+                <PasswordInput v-model="state.password" autocomplete="current-password" :disabled="isSubmitting" />
+            </BaseFormField>
 
-            <div class="flex items-center justify-between">
-                <UCheckbox v-model="state.rememberMe" label="Remember me" size="lg" />
-                <NuxtLink to="/forgot-password" class="text-sm text-primary hover:underline">Forgot password?</NuxtLink>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <BaseCheckbox v-model="state.rememberMe" label="Remember me" size="lg" :disabled="isSubmitting" />
+                <NuxtLink
+                    to="/forgot-password"
+                    class="text-sm text-highlighted underline decoration-dimmed underline-offset-2 hover:decoration-highlighted"
+                    :class="{ 'pointer-events-none opacity-50': isSubmitting }"
+                    :tabindex="isSubmitting ? -1 : undefined"
+                >
+                    Forgot password?
+                </NuxtLink>
             </div>
 
             <BaseButton
@@ -44,12 +53,19 @@
             >
                 Sign in
             </BaseButton>
-        </UForm>
+        </BaseForm>
 
         <template #footer>
             <p class="mt-6 text-center text-sm text-dimmed">
                 New customer?
-                <NuxtLink :to="registerLink" class="text-primary hover:underline">Create an account</NuxtLink>
+                <NuxtLink
+                    :to="registerLink"
+                    class="text-highlighted font-medium underline decoration-dimmed underline-offset-2 hover:decoration-highlighted"
+                    :class="{ 'pointer-events-none opacity-50': isSubmitting }"
+                    :tabindex="isSubmitting ? -1 : undefined"
+                >
+                    Create an account
+                </NuxtLink>
             </p>
 
             <p class="mt-4 text-center text-xs text-dimmed">
@@ -76,4 +92,6 @@ const registerLink = computed(() => {
 })
 
 const { state, isSubmitting, authError, emailError, passwordError, validate, onSubmit } = useLoginForm()
+
+onMounted(prefetchWelcomeVerse)
 </script>

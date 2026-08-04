@@ -1,123 +1,66 @@
 <template>
     <div class="space-y-6">
-        <div>
-            <h1 class="text-xl font-semibold text-highlighted">Dashboard</h1>
-            <p class="text-sm text-muted mt-1">A quick look at your catalog, schedules, and orders that need action.</p>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            <UCard v-for="stat in stats" :key="stat.label">
-                <div class="flex items-center gap-3">
-                    <div class="flex items-center justify-center size-10 rounded-lg bg-elevated text-primary">
-                        <UIcon :name="stat.icon" class="size-5" />
-                    </div>
-                    <div>
-                        <p class="text-xs text-muted">{{ stat.label }}</p>
-                        <p class="text-2xl font-semibold text-highlighted">{{ stat.value }}</p>
-                    </div>
-                </div>
-            </UCard>
-        </div>
-
-        <UCard>
-            <template #header>
-                <div class="flex items-center justify-between">
-                    <h2 class="font-medium">Needs attention</h2>
-                    <UBadge v-if="pendingOrders.length" color="warning" variant="subtle">
-                        {{ pendingOrders.length }} pending
-                    </UBadge>
-                </div>
-            </template>
-
-            <p v-if="!loading && pendingOrders.length === 0" class="text-sm text-muted py-6 text-center">
-                No pending orders right now.
-            </p>
-
-            <template v-else>
-                <div class="hidden sm:block max-h-80 overflow-y-auto">
-                    <UTable :data="pendingOrders" :columns="orderColumns" :loading="loading">
-                        <template #schedule-cell="{ row }">
-                            <NuxtLink :to="`/admin/schedules/${row.original.scheduleUuid}`" class="text-primary hover:underline">
-                                {{ row.original.scheduleTitle }}
-                            </NuxtLink>
-                        </template>
-                        <template #actions-cell="{ row }">
-                            <div class="flex items-center gap-2">
-                                <BaseButton
-                                    v-if="row.original.scheduleStatus === 'closed'"
-                                    size="xs"
-                                    color="success"
-                                    variant="soft"
-                                    :loading="actingOn === row.original.uuid"
-                                    @click="setOrderStatus(row.original, 'confirmed')"
-                                >
-                                    Confirm
-                                </BaseButton>
-                                <span v-else class="text-xs text-dimmed">Close schedule to confirm</span>
-                                <BaseButton
-                                    size="xs"
-                                    color="error"
-                                    variant="soft"
-                                    :loading="actingOn === row.original.uuid"
-                                    @click="cancelOrder(row.original)"
-                                >
-                                    Cancel
-                                </BaseButton>
-                            </div>
-                        </template>
-                    </UTable>
-                </div>
-                <div class="sm:hidden space-y-2 p-2 max-h-80 overflow-y-auto">
-                    <ListCard v-for="order in pendingOrders" :key="order.uuid" :actions="pendingOrderActions(order)">
-                        <template #title>
-                            <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
-                        </template>
-                        <template #subtitle>
-                            <NuxtLink :to="`/admin/schedules/${order.scheduleUuid}`" class="text-primary hover:underline">
-                                {{ order.scheduleTitle }}
-                            </NuxtLink>
-                        </template>
-                        <template #meta>
-                            <span class="font-medium text-highlighted">₱{{ order.total_amount }}</span>
-                        </template>
-                    </ListCard>
-                </div>
-            </template>
-        </UCard>
-
-        <UCard>
-            <template #header>
-                <div class="flex items-center justify-between">
-                    <h2 class="font-medium">Recent schedules</h2>
-                    <BaseButton to="/admin/schedules" size="xs" color="neutral" variant="ghost">View all</BaseButton>
-                </div>
-            </template>
-
-            <div class="divide-y divide-default">
-                <NuxtLink
-                    v-for="schedule in recentSchedules"
-                    :key="schedule.uuid"
-                    :to="`/admin/schedules/${schedule.uuid}`"
-                    class="flex items-center justify-between py-3 first:pt-0 last:pb-0 hover:text-highlighted"
-                >
-                    <span class="text-sm">{{ schedule.title }}</span>
-                    <StatusBadge :color="scheduleStatusColor[schedule.status]" :label="schedule.status" />
-                </NuxtLink>
-                <p v-if="!loading && recentSchedules.length === 0" class="text-sm text-muted py-6 text-center">
-                    No schedules yet.
-                </p>
-            </div>
-        </UCard>
-
-        <ConfirmDialogModal
-            v-model:open="confirmDialog.open"
-            :title="confirmDialog.title"
-            :description="confirmDialog.description"
-            :color="confirmDialog.color"
-            :confirm-label="confirmDialog.confirmLabel"
-            :loading="confirming"
-            @confirm="confirmDialogAccept"
+        <PageHeader
+            title="Dashboard"
+            subtitle="A quick look at your catalog, schedules, and orders that need action."
+            primary-label="New schedule"
+            primary-icon="i-lucide-calendar-plus"
+            secondary-label="Add product"
+            secondary-icon="i-lucide-plus"
+            @primary-click="navigateTo('/admin/schedules')"
+            @secondary-click="navigateTo('/admin/products')"
         />
+
+        <DailyVerseCard />
+
+        <div class="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-6">
+            <div class="space-y-6">
+                <AttentionQueue
+                    title="Needs attention"
+                    hint="Orders waiting on confirm or cancel"
+                    help-text="Orders land here while they're still pending, meaning you haven't confirmed or cancelled them yet. Confirm or cancel each one from its menu to clear it from this list."
+                    :count="pendingOrders.length"
+                    :items="attentionQueueItems"
+                    view-all-href="/admin/schedules"
+                    :loading="loading"
+                />
+
+                <SchedulePreviewList
+                    title="Recent schedules"
+                    :items="scheduleRowItems"
+                    view-all-href="/admin/schedules"
+                    :loading="loading"
+                />
+            </div>
+
+            <div class="space-y-6">
+                <KpiStrip :items="kpiItems" :loading="loading" />
+
+                <PipelineBar
+                    title="Order pipeline"
+                    help-text="How many orders across all your schedules are currently pending, confirmed, or cancelled."
+                    :stages="pipelineStages"
+                    :loading="loading"
+                />
+
+                <RankedList
+                    :title="rankingTabs.find((tab) => tab.value === rankingTab)?.label ?? 'Rankings'"
+                    :help-text="rankingTab === 'products'
+                        ? 'Ranked by total quantity ordered in the selected month, across all your schedules.'
+                        : 'Ranked by total amount spent in the selected month, across all your schedules.'"
+                    :tabs="rankingTabs"
+                    :active-tab="rankingTab"
+                    @update:active-tab="(value) => (rankingTab = value as 'products' | 'buyers')"
+                    :month="rankingMonth"
+                    :year="rankingYear"
+                    :items="rankingTab === 'products' ? topProductItems : topBuyerItems"
+                    :loading="loadingRankings"
+                    :empty-message="rankingTab === 'products' ? 'Product rankings aren\'t available yet' : 'No buyer rankings yet'"
+                    :empty-description="rankingTab === 'products' ? 'We\'ll show your best-selling products here once order data is available.' : 'We\'ll show your best customers here once order data is available.'"
+                    @change-month="onChangeRankingMonth"
+                />
+            </div>
+        </div>
     </div>
 </template>
 
@@ -127,19 +70,15 @@ import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleSe
 import { orderService } from '@/components/api/admin/OrderService'
 import { customerService } from '@/components/api/admin/CustomerService'
 import APIError from '@/components/api/user/APIError'
-import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
+import type { DropdownMenuItem } from '@nuxt/ui'
+import type { PipelineStage } from '@/components/PipelineBar.vue'
+import type { TopProduct } from '@/types/Product'
+import type { TopBuyer } from '@/types/User'
+import type { ScheduleBrowseItem } from '@/types/Schedule'
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
 useHead({ title: 'Dashboard' })
-
-interface Schedule {
-    uuid: string
-    title: string
-    status: 'open' | 'closed' | 'finished'
-    is_open: boolean
-    created_at: string
-}
 
 interface Order {
     uuid: string
@@ -151,35 +90,79 @@ interface Order {
     pasabuy_schedule: {
         uuid: string
         title: string
-        status: Schedule['status']
+        status: ScheduleBrowseItem['status']
     }
 }
 
 interface PendingOrder extends Order {
     scheduleUuid: string
     scheduleTitle: string
-    scheduleStatus: Schedule['status']
+    scheduleStatus: ScheduleBrowseItem['status']
 }
 
 const toast = useToast()
+const { setOrderStatusUndoable } = useOrderUndoAction()
 const loading = ref(true)
-const actingOn = ref<string | null>(null)
 
 const totalProducts = ref(0)
 const totalMembers = ref(0)
-const { data: schedules, ensure: ensureSchedulesLoaded } = useCachedFetch<Schedule[]>(
+const { data: schedules, ensure: ensureSchedulesLoaded } = useCachedFetch<ScheduleBrowseItem[]>(
     'admin-pasabuy-schedules',
     (etag) => pasabuyScheduleService.fetchSchedulesCacheable({ per_page: 100 }, etag)
 )
 const pendingOrders = ref<PendingOrder[]>([])
+const loadingRankings = ref(true)
+const topProducts = ref<TopProduct[]>([])
+const topBuyers = ref<TopBuyer[]>([])
+const rankingTab = ref<'products' | 'buyers'>('products')
+const rankingTabs = [
+    { label: 'Top products', value: 'products' },
+    { label: 'Top buyers', value: 'buyers' }
+]
+const rankingMonth = ref(new Date().getMonth() + 1)
+const rankingYear = ref(new Date().getFullYear())
+
+function onChangeRankingMonth(delta: number) {
+    let month = rankingMonth.value + delta
+    let year = rankingYear.value
+
+    if (month < 1) {
+        month = 12
+        year -= 1
+    } else if (month > 12) {
+        month = 1
+        year += 1
+    }
+
+    rankingMonth.value = month
+    rankingYear.value = year
+}
 
 const stats = computed(() => [
-    { label: 'Total members', value: totalMembers.value, icon: 'i-lucide-users' },
+    {
+        label: 'Total members',
+        value: totalMembers.value,
+        icon: 'i-lucide-users',
+        tooltip: 'Customers you\'ve approved to place orders. Pending signups aren\'t counted until you approve them in Members.'
+    },
     { label: 'Total products', value: totalProducts.value, icon: 'i-lucide-package' },
-    { label: 'Open schedules', value: (schedules.value ?? []).filter((s) => s.status === 'open').length, icon: 'i-lucide-calendar-clock' },
-    { label: 'Finished schedules', value: (schedules.value ?? []).filter((s) => s.status === 'finished').length, icon: 'i-lucide-check-circle' },
-    { label: 'Pending orders', value: pendingOrders.value.length, icon: 'i-lucide-clock-alert' }
+    {
+        label: 'Open schedules',
+        value: (schedules.value ?? []).filter((s) => s.status === 'open').length,
+        icon: 'i-lucide-calendar-clock',
+        tooltip: 'Schedules still accepting orders. A schedule moves to Closed once its schedule date passes.'
+    },
+    {
+        label: 'Finished schedules',
+        value: (schedules.value ?? []).filter((s) => s.status === 'finished').length,
+        icon: 'i-lucide-check-circle',
+        tooltip: 'Schedules you\'ve marked complete after fulfilling all orders, the final stage after Closed.'
+    }
 ])
+
+const kpiColors = ['info', 'primary', 'success', 'neutral'] as const
+
+const kpiItems = computed(() => stats.value.map((stat, index) => ({ ...stat, color: kpiColors[index] })))
 
 const recentSchedules = computed(() =>
     [...(schedules.value ?? [])]
@@ -187,21 +170,86 @@ const recentSchedules = computed(() =>
         .slice(0, 5)
 )
 
-const orderColumns: TableColumn<PendingOrder>[] = [
-    { accessorKey: 'customer_name', header: 'Customer' },
-    { id: 'schedule', header: 'Schedule' },
-    { accessorKey: 'total_amount', header: 'Total' },
-    { id: 'actions', header: '' }
-]
+const attentionQueueItems = computed(() =>
+    pendingOrders.value.slice(0, 3).map((order) => ({
+        uuid: order.uuid,
+        name: order.customer_name,
+        subtitleLabel: order.scheduleTitle,
+        subtitleHref: `/admin/schedules/${order.scheduleUuid}`,
+        timestamp: new Date(order.created_at).toLocaleDateString(),
+        amount: `₱${order.total_amount}`,
+        menuItems: pendingOrderActions(order)
+    }))
+)
+
+function scheduleClosingSoon(schedule: ScheduleBrowseItem): { closingSoon: boolean; note?: string } {
+    if (!schedule.is_open || !schedule.pasabuy_schedule_date) return { closingSoon: false }
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const cutoff = new Date(schedule.pasabuy_schedule_date)
+    const daysUntilCutoff = Math.round((cutoff.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+    if (daysUntilCutoff <= 0) return { closingSoon: true, note: 'Closes today' }
+    if (daysUntilCutoff === 1) return { closingSoon: true, note: 'Closes tomorrow' }
+    return { closingSoon: false }
+}
+
+const scheduleRowItems = computed(() =>
+    recentSchedules.value.map((schedule) => ({
+        uuid: schedule.uuid,
+        title: schedule.title,
+        status: schedule.status,
+        statusColor: scheduleStatusColor[schedule.status],
+        statusLabel: schedule.status,
+        href: `/admin/schedules/${schedule.uuid}`,
+        ...scheduleClosingSoon(schedule)
+    }))
+)
+
+const pipelineStages = ref<PipelineStage[]>([])
+
+const topProductItems = computed(() => {
+    const topQuantity = topProducts.value[0]?.total_quantity ?? 0
+    return topProducts.value.map((product, index) => ({
+        productId: product.uuid,
+        rank: index + 1,
+        name: product.name,
+        progressPct: topQuantity > 0 ? (product.total_quantity / topQuantity) * 100 : 0,
+        qty: product.total_quantity,
+        unit: 'ordered'
+    }))
+})
+
+const topBuyerItems = computed(() => {
+    const topSpend = Number(topBuyers.value[0]?.total_spend ?? 0)
+    return topBuyers.value.map((buyer, index) => ({
+        productId: buyer.uuid,
+        rank: index + 1,
+        name: buyer.name,
+        progressPct: topSpend > 0 ? (Number(buyer.total_spend) / topSpend) * 100 : 0,
+        qty: `₱${buyer.total_spend}`,
+        unit: `${buyer.order_count} orders`
+    }))
+})
 
 async function loadDashboard(force = false) {
     loading.value = true
     try {
-        const [productsResponse, , ordersResponse, customersResponse] = await Promise.all([
+        const [
+            productsResponse,
+            ,
+            ordersResponse,
+            customersResponse,
+            confirmedOrdersResponse,
+            cancelledOrdersResponse
+        ] = await Promise.all([
             productService.fetchProducts({ per_page: 1 }),
             ensureSchedulesLoaded(force),
             orderService.fetchOrders({ status: 'pending', per_page: 100 }),
-            customerService.fetchCustomers({ per_page: 1, is_approved: '1' })
+            customerService.fetchCustomers({ per_page: 1, is_approved: '1' }),
+            orderService.fetchOrders({ status: 'confirmed', per_page: 1 }),
+            orderService.fetchOrders({ status: 'cancelled', per_page: 1 })
         ])
 
         totalProducts.value = productsResponse.data.total
@@ -215,47 +263,74 @@ async function loadDashboard(force = false) {
                 scheduleStatus: order.pasabuy_schedule.status
             }))
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+        pipelineStages.value = [
+            { label: 'Pending', count: ordersResponse.data.total, color: 'bg-warning' },
+            { label: 'Confirmed', count: confirmedOrdersResponse.data.total, color: 'bg-success' },
+            { label: 'Cancelled', count: cancelledOrdersResponse.data.total, color: 'bg-error' }
+        ]
     } catch (error) {
-        toast.add({ title: 'Failed to load dashboard', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load dashboard',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => loadDashboard(true) }]
+        })
     } finally {
         loading.value = false
     }
 }
 
-async function setOrderStatus(order: PendingOrder, status: 'confirmed' | 'cancelled') {
-    actingOn.value = order.uuid
+async function loadRankings() {
+    loadingRankings.value = true
     try {
-        await pasabuyScheduleService.updateOrderStatus(order.uuid, status)
-        pendingOrders.value = pendingOrders.value.filter((o) => o.uuid !== order.uuid)
-        toast.add({ title: `Order ${status}`, color: 'success' })
+        const [topProductsResponse, topBuyersResponse] = await Promise.all([
+            productService.fetchTopSelling({ month: rankingMonth.value, year: rankingYear.value }),
+            customerService.fetchTopBuyers({ month: rankingMonth.value, year: rankingYear.value })
+        ])
+
+        topProducts.value = topProductsResponse.data
+        topBuyers.value = topBuyersResponse.data
     } catch (error) {
-        toast.add({ title: 'Update failed', description: (error as APIError).message, color: 'error' })
+        toast.add({
+            title: 'Failed to load rankings',
+            description: (error as APIError).message,
+            color: 'error',
+            actions: [{ label: 'Retry', onClick: () => loadRankings() }]
+        })
     } finally {
-        actingOn.value = null
+        loadingRankings.value = false
     }
 }
 
-const { confirmDialog, confirming, askConfirm, confirmDialogAccept } = useConfirmDialog()
+watch([rankingMonth, rankingYear], loadRankings)
+
+function setOrderStatus(order: PendingOrder, status: 'confirmed' | 'cancelled') {
+    setOrderStatusUndoable(order, status, {
+        onApply: () => { pendingOrders.value = pendingOrders.value.filter((o) => o.uuid !== order.uuid) },
+        onRevert: () => { pendingOrders.value = [order, ...pendingOrders.value] }
+    })
+}
 
 function cancelOrder(order: PendingOrder) {
-    askConfirm({
-        title: 'Cancel order?',
-        description: `Cancel ${order.customer_name}'s order? This cannot be undone.`,
-        confirmLabel: 'Cancel order',
-        color: 'error',
-        action: () => setOrderStatus(order, 'cancelled')
-    })
+    setOrderStatus(order, 'cancelled')
 }
 
 function pendingOrderActions(order: PendingOrder): DropdownMenuItem[] {
     return [
         ...(order.scheduleStatus === 'closed'
-            ? [{ label: 'Confirm order', icon: 'i-lucide-check', color: 'success' as const, loading: actingOn.value === order.uuid, onSelect: () => setOrderStatus(order, 'confirmed') }]
+            ? [{ label: 'Confirm order', icon: 'i-lucide-check', color: 'success' as const, onSelect: () => setOrderStatus(order, 'confirmed') }]
             : []),
-        { label: 'Cancel order', icon: 'i-lucide-x', color: 'error', loading: actingOn.value === order.uuid, onSelect: () => cancelOrder(order) }
+        { label: 'Cancel order', icon: 'i-lucide-x', color: 'error', onSelect: () => cancelOrder(order) }
     ]
 }
 
-onMounted(() => loadDashboard())
-onPullToRefresh(() => loadDashboard(true))
+onMounted(() => {
+    loadDashboard()
+    loadRankings()
+})
+onPullToRefresh(() => {
+    loadDashboard(true)
+    loadRankings()
+})
 </script>

@@ -1,4 +1,5 @@
 import BaseAPIService from '@/components/api/BaseAPIService'
+import type { ScheduleBrowseItem } from '@/types/Schedule'
 
 export interface SchedulePayload {
     title: string
@@ -22,7 +23,7 @@ class PasabuyScheduleService extends BaseAPIService {
         return await this.request('/admin/pasabuy-schedules', 'GET', params)
     }
 
-    async fetchSchedulesCacheable(params: object, etag: string | null): Promise<{ data: any[]; etag: string | null } | 'not-modified'> {
+    async fetchSchedulesCacheable(params: object, etag: string | null): Promise<{ data: ScheduleBrowseItem[]; etag: string | null } | 'not-modified'> {
         const result = await this.requestCacheable<any>('/admin/pasabuy-schedules', params, etag)
         if (result === 'not-modified') return result
         return { data: result.data.items, etag: result.etag }
@@ -58,8 +59,8 @@ class PasabuyScheduleService extends BaseAPIService {
         return await this.request(`/admin/pasabuy-schedules/${uuid}/reopen`, 'POST')
     }
 
-    async finishSchedule(uuid: string): Promise<any> {
-        return await this.request(`/admin/pasabuy-schedules/${uuid}/finish`, 'POST')
+    async finishSchedule(uuid: string, payload: { due_date: string }): Promise<any> {
+        return await this.request(`/admin/pasabuy-schedules/${uuid}/finish`, 'POST', payload)
     }
 
     async confirmProductPrice(uuid: string, scheduleProductUuid: string, payload: ConfirmPricePayload): Promise<any> {

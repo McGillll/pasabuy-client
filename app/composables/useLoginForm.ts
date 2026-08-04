@@ -16,9 +16,12 @@ export function useLoginForm() {
     const emailError = ref<string | null>(null)
     const passwordError = ref<string | null>(null)
 
+    const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
     function validate(state: { email: string, password: string }): FormError[] {
         const errors: FormError[] = []
         if (!state.email) errors.push({ name: 'email', message: 'Email is required' })
+        else if (!EMAIL_PATTERN.test(state.email)) errors.push({ name: 'email', message: 'Enter a valid email address' })
         if (!state.password) errors.push({ name: 'password', message: 'Password is required' })
         return errors
     }
@@ -37,9 +40,14 @@ export function useLoginForm() {
                 return
             }
 
-            const homePath = user.value?.role === 'admin' ? '/admin' : '/customer'
+            const isAdmin = user.value?.role === 'admin'
+            const namespace = isAdmin ? '/admin' : '/customer'
+            const defaultTarget = isAdmin ? '/admin' : '/customer'
             const redirect = route.query.redirect as string | undefined
-            const target = redirect && redirect.startsWith(homePath) ? redirect : homePath
+            const target = redirect && redirect.startsWith(namespace) ? redirect : defaultTarget
+
+            if (!isAdmin) await prepareWelcomeOverlay()
+
             await navigateTo(target)
         } catch (error) {
             if (error instanceof APIError && error.errors) {
