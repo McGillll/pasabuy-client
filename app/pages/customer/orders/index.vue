@@ -1,10 +1,8 @@
 <template>
     <div class="space-y-6">
-        <div>
-            <h1 class="text-xl font-semibold text-highlighted">
-                {{ user?.first_name ? `Hi, ${user.first_name}` : 'My Orders' }}
-            </h1>
-            <p class="mt-1 text-sm text-muted">A history of every pasabuy order you've placed.</p>
+        <div class="hidden items-center gap-2 md:flex">
+            <UIcon name="i-lucide-receipt" class="size-5 text-primary" />
+            <h1 class="text-xl font-semibold text-highlighted">Order</h1>
         </div>
 
         <UAlert

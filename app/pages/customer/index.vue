@@ -1,6 +1,11 @@
 <template>
     <div class="space-y-6">
-        <div class="md:hidden sticky top-0 z-10 -mx-4 bg-default px-4 py-3 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
+        <div class="hidden items-center gap-2 md:flex">
+            <UIcon name="i-lucide-layout-dashboard" class="size-5 text-primary" />
+            <h1 class="text-xl font-semibold text-highlighted">Home</h1>
+        </div>
+
+        <div class="md:hidden sticky top-0 z-10 -mx-4 bg-default px-4 py-2 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
             <Teleport to="#customer-header-search-target" :disabled="!isDesktop">
                 <BaseSearchInput
                     v-model="search"
@@ -37,80 +42,82 @@
             </Teleport>
         </div>
 
-        <div v-if="!loading && !error && promoProducts.length" class="space-y-3">
-            <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
-                    <UIcon name="i-lucide-tag" class="size-4 text-primary" />
-                    <h2 class="text-sm font-semibold text-highlighted">Buy 1 Take 1</h2>
-                </div>
-                <BaseButton size="xs" color="neutral" variant="link" trailing-icon="i-lucide-chevron-right" to="/customer/products/b1t1">
-                    View all
-                </BaseButton>
-            </div>
-
-            <div class="relative -mx-4">
-                <div
-                    ref="promoScrollEl"
-                    class="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden"
-                >
-                    <ProductShowcaseCard
-                        v-for="product in promoProducts"
-                        :key="product.uuid"
-                        :product="product"
-                        class="w-36 shrink-0 snap-start sm:w-40"
-                        @select="openProduct"
-                    />
+        <div class="-mt-3 md:mt-0">
+            <div v-if="!loading && !error && promoProducts.length" class="space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <UIcon name="i-lucide-tag" class="size-4 text-primary" />
+                        <h2 class="text-sm font-semibold text-highlighted">Buy 1 Take 1</h2>
+                    </div>
+                    <BaseButton size="xs" color="neutral" variant="link" trailing-icon="i-lucide-chevron-right" to="/customer/products/b1t1">
+                        View all
+                    </BaseButton>
                 </div>
 
-                <button
-                    v-if="promoCanScrollLeft"
-                    type="button"
-                    class="absolute left-0 top-1/2 hidden size-9 -translate-x-1/3 -translate-y-1/2 items-center justify-center rounded-full bg-default text-highlighted shadow-md ring ring-default hover:bg-elevated sm:flex"
-                    aria-label="Scroll promotions left"
-                    @click="scrollPromoBy(-1)"
-                >
-                    <UIcon name="i-lucide-chevron-left" class="size-5" />
-                </button>
-                <button
-                    v-if="promoCanScrollRight"
-                    type="button"
-                    class="absolute right-0 top-1/2 hidden size-9 translate-x-1/3 -translate-y-1/2 items-center justify-center rounded-full bg-default text-highlighted shadow-md ring ring-default hover:bg-elevated sm:flex"
-                    aria-label="Scroll promotions right"
-                    @click="scrollPromoBy(1)"
-                >
-                    <UIcon name="i-lucide-chevron-right" class="size-5" />
-                </button>
-            </div>
-        </div>
+                <div class="relative -mx-4">
+                    <div
+                        ref="promoScrollEl"
+                        class="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden"
+                    >
+                        <ProductShowcaseCard
+                            v-for="product in promoProducts"
+                            :key="product.uuid"
+                            :product="product"
+                            class="w-36 shrink-0 snap-start sm:w-40"
+                            @select="openProduct"
+                        />
+                    </div>
 
-        <div v-else-if="loading" class="space-y-3">
-            <USkeleton class="h-5 w-32" />
-            <div class="flex gap-3 overflow-hidden">
-                <div v-for="n in 4" :key="n" class="w-36 shrink-0 space-y-2 sm:w-40">
-                    <USkeleton class="aspect-square w-full rounded-xl" />
-                    <USkeleton class="h-4 w-2/3" />
-                    <USkeleton class="h-4 w-1/3" />
+                    <button
+                        v-if="promoCanScrollLeft"
+                        type="button"
+                        class="absolute left-0 top-1/2 hidden size-9 -translate-x-1/3 -translate-y-1/2 items-center justify-center rounded-full bg-default text-highlighted shadow-md ring ring-default hover:bg-elevated sm:flex"
+                        aria-label="Scroll promotions left"
+                        @click="scrollPromoBy(-1)"
+                    >
+                        <UIcon name="i-lucide-chevron-left" class="size-5" />
+                    </button>
+                    <button
+                        v-if="promoCanScrollRight"
+                        type="button"
+                        class="absolute right-0 top-1/2 hidden size-9 translate-x-1/3 -translate-y-1/2 items-center justify-center rounded-full bg-default text-highlighted shadow-md ring ring-default hover:bg-elevated sm:flex"
+                        aria-label="Scroll promotions right"
+                        @click="scrollPromoBy(1)"
+                    >
+                        <UIcon name="i-lucide-chevron-right" class="size-5" />
+                    </button>
                 </div>
             </div>
-        </div>
 
-        <UAlert
-            v-else-if="error"
-            color="error"
-            variant="subtle"
-            title="Failed to load products"
-            :description="error"
-        >
-            <template #actions>
-                <BaseButton size="xs" color="error" variant="soft" @click="loadCatalog(true)">
-                    Retry
-                </BaseButton>
-            </template>
-        </UAlert>
+            <div v-else-if="loading" class="space-y-3">
+                <USkeleton class="h-5 w-32" />
+                <div class="flex gap-3 overflow-hidden">
+                    <div v-for="n in 4" :key="n" class="w-36 shrink-0 space-y-2 sm:w-40">
+                        <USkeleton class="aspect-square w-full rounded-xl" />
+                        <USkeleton class="h-4 w-2/3" />
+                        <USkeleton class="h-4 w-1/3" />
+                    </div>
+                </div>
+            </div>
 
-        <div v-else class="flex flex-col items-center gap-3 py-10">
-            <UIcon name="i-lucide-tag" class="size-8 text-dimmed" />
-            <p class="text-sm text-muted">No Buy 1 Take 1 products right now. Check back soon.</p>
+            <UAlert
+                v-else-if="error"
+                color="error"
+                variant="subtle"
+                title="Failed to load products"
+                :description="error"
+            >
+                <template #actions>
+                    <BaseButton size="xs" color="error" variant="soft" @click="loadCatalog(true)">
+                        Retry
+                    </BaseButton>
+                </template>
+            </UAlert>
+
+            <div v-else class="flex flex-col items-center gap-3 py-10">
+                <UIcon name="i-lucide-tag" class="size-8 text-dimmed" />
+                <p class="text-sm text-muted">No Buy 1 Take 1 products right now. Check back soon.</p>
+            </div>
         </div>
 
         <div v-if="!loading && !error && topSellingProducts.length" class="space-y-3">

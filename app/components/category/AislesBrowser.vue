@@ -5,12 +5,12 @@
                 Back
             </BaseButton>
 
-            <div v-if="!notFound" class="mb-2 flex items-center gap-2">
+            <div v-if="!notFound" class="mb-2 items-center gap-2" :class="categoryUuid ? 'flex' : 'hidden md:flex'">
                 <UIcon name="i-lucide-shopping-basket" class="size-5 text-primary" />
                 <h1 class="text-xl font-semibold text-highlighted">{{ title }}</h1>
             </div>
 
-            <div v-if="!categoryUuid" class="md:hidden">
+            <div v-if="!categoryUuid" class="md:hidden sticky top-0 z-10 -mx-4 bg-default px-4 py-2 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
                 <Teleport to="#customer-header-search-target" :disabled="!isDesktop">
                     <BaseSearchInput
                         v-model="search"

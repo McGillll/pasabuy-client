@@ -1,8 +1,8 @@
 <template>
     <div class="space-y-6">
-        <div>
-            <h1 class="text-xl font-semibold text-highlighted">Open Pasabuys</h1>
-            <p class="mt-1 text-sm text-muted">Browse what's currently open for ordering.</p>
+        <div class="hidden items-center gap-2 md:flex">
+            <UIcon name="i-lucide-package-search" class="size-5 text-primary" />
+            <h1 class="text-xl font-semibold text-highlighted">Pasabuy</h1>
         </div>
 
         <div v-if="loading" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
