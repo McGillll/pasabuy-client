@@ -63,7 +63,10 @@
                     <p class="font-mono text-xs text-dimmed">{{ row.original.order_no }}</p>
                 </template>
                 <template #total_amount-cell="{ row }">
-                    <span class="font-mono tabular-nums">{{ orderDisplayAmount(row.original) }}</span>
+                    <div class="flex flex-col items-end">
+                        <span class="font-mono tabular-nums">{{ orderDisplayAmount(row.original) }}</span>
+                        <span v-if="row.original.pasabuy_schedule?.status === 'finished'" class="text-xs text-muted">Balance due</span>
+                    </div>
                 </template>
                 <template #status-cell="{ row }">
                     <OrderStatusBadge :status="row.original.status" />
@@ -96,6 +99,7 @@
                         </template>
                         <template #meta>
                             <span class="font-mono tabular-nums font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
+                            <span v-if="order.pasabuy_schedule?.status === 'finished'" class="text-xs text-muted">Balance due</span>
                             <span class="text-muted">{{ formatDate(order.created_at) }}</span>
                         </template>
                         <template #status>

@@ -130,7 +130,10 @@
                     <span v-else class="text-muted">-</span>
                 </template>
                 <template #total_amount-cell="{ row }">
-                    <span class="font-mono tabular-nums">{{ workspace.orderDisplayAmount(row.original) }}</span>
+                    <div class="flex flex-col items-end">
+                        <span class="font-mono tabular-nums">{{ workspace.orderDisplayAmount(row.original) }}</span>
+                        <span v-if="workspace.isFinished" class="text-xs text-muted">Balance due</span>
+                    </div>
                 </template>
                 <template #actions-cell="{ row }">
                     <div class="flex justify-end gap-1">
@@ -204,6 +207,7 @@
                             </template>
                             <template #meta>
                                 <span class="font-medium text-highlighted font-mono tabular-nums">₱{{ workspace.orderDisplayAmount(order) }}</span>
+                                <span v-if="workspace.isFinished" class="text-xs text-muted">Balance due</span>
                             </template>
                             <template #status>
                                 <OrderStatusBadge :status="order.status" />
