@@ -1,9 +1,12 @@
 <template>
     <div class="space-y-6">
         <div>
-            <BaseButton v-if="categoryUuid" size="sm" color="neutral" variant="ghost" icon="i-lucide-arrow-left" :to="backTo" class="-ml-2">
-                Back
-            </BaseButton>
+            <template v-if="categoryUuid && !notFound">
+                <BaseButton size="sm" color="neutral" variant="ghost" icon="i-lucide-arrow-left" class="-ml-2 mb-2 md:hidden" @click="goBack(backTo)">
+                    Back
+                </BaseButton>
+                <BaseBreadcrumb :items="crumbs" class="mb-2 hidden md:block" />
+            </template>
 
             <div v-if="!notFound" class="mb-2 items-center gap-2" :class="categoryUuid ? 'flex' : 'hidden md:flex'">
                 <UIcon name="i-lucide-shopping-basket" class="size-5 text-primary" />
@@ -168,6 +171,7 @@
 import { publicProductCategoryService } from '@/components/api/public/PublicProductCategoryService'
 import { publicProductService } from '@/components/api/public/PublicProductService'
 import APIError from '@/components/api/user/APIError'
+import type { BaseBreadcrumbItem } from '@/components/base/BaseBreadcrumb.vue'
 import type { InputMenuItem } from '@nuxt/ui'
 import type { Category } from '@/types/Category'
 import type { Product } from '@/types/Product'
@@ -196,9 +200,25 @@ function isOddLastTile(index: number) {
 
 const title = computed(() => category.value?.name ?? 'Aisles')
 
+useHead({ title: computed(() => title.value) })
+
+const { ancestors, resolve: resolveAncestors } = useCategoryAncestors()
+const { goBack } = useSmartBack()
+
 const backTo = computed(() => (category.value?.parent_uuid ? `/customer/aisles/${category.value.parent_uuid}` : '/customer/aisles'))
 
-useHead({ title: computed(() => title.value) })
+const crumbs = computed<BaseBreadcrumbItem[]>(() => {
+    const trail: BaseBreadcrumbItem[] = [
+        { label: 'Aisles', to: '/customer/aisles', onBack: () => goBack('/customer/aisles') },
+        ...ancestors.value.map((ancestor) => ({
+            label: ancestor.name,
+            to: `/customer/aisles/${ancestor.uuid}`,
+            onBack: () => goBack(`/customer/aisles/${ancestor.uuid}`)
+        }))
+    ]
+    if (category.value) trail.push({ label: category.value.name })
+    return trail
+})
 
 const {
     el: leafScrollEl,
@@ -271,6 +291,7 @@ async function load(force = false) {
         if (props.categoryUuid) {
             const result = await publicProductCategoryService.fetchByUuidCacheable(props.categoryUuid, null)
             if (result !== 'not-modified') category.value = result.data as Category
+            resolveAncestors(category.value)
         } else {
             category.value = null
         }
