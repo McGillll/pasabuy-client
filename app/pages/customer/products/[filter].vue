@@ -28,6 +28,8 @@
                 :loading="loading"
                 :error="error"
                 :empty-message="`No products in ${collectionTitle} right now. Check back soon.`"
+                empty-action-to="/customer/aisles"
+                empty-action-label="Browse aisles"
                 @select="openProduct"
                 @retry="loadCollection"
             />

@@ -3,7 +3,7 @@
         <button
             type="button"
             class="relative inline-flex size-5 items-center justify-center text-dimmed hover:text-muted after:absolute after:-inset-3 after:content-['']"
-            aria-label="More information"
+            :aria-label="ariaLabel"
         >
             <UIcon name="i-lucide-help-circle" class="size-4" />
         </button>
@@ -15,3 +15,11 @@
         </template>
     </UPopover>
 </template>
+
+<script setup lang="ts">
+withDefaults(defineProps<{
+    ariaLabel?: string
+}>(), {
+    ariaLabel: 'More information'
+})
+</script>

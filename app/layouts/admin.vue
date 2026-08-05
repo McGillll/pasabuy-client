@@ -85,7 +85,7 @@
         </aside>
 
         <div class="flex-1 min-w-0 min-h-0 flex flex-col">
-            <header class="md:hidden border-b border-default bg-muted shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
+            <header class="md:hidden border-b border-default bg-muted shadow-chrome">
                 <div class="flex items-center justify-between px-4 py-3">
                     <div class="flex items-center gap-2">
                         <div class="flex items-center justify-center size-11 rounded-2xl bg-primary text-inverted font-bold text-sm">

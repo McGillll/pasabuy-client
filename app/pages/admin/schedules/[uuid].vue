@@ -16,7 +16,7 @@
     />
 
     <div v-else class="min-h-full space-y-6" @touchstart="onTabsTouchStart" @touchmove="onTabsTouchMove" @touchend="onTabsTouchEnd">
-        <div class="sticky top-0 z-10 -mx-6 flex items-center gap-2 border-b border-default bg-default px-6 py-3 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
+        <div class="sticky top-0 z-10 -mx-6 flex items-center gap-2 border-b border-default bg-default px-6 py-3 shadow-chrome">
             <h1 class="truncate text-xl font-semibold text-highlighted">{{ workspace.schedule.title }}</h1>
             <UBadge :color="scheduleStatusColor" variant="subtle" class="shrink-0">
                 {{ scheduleStatusLabel }}

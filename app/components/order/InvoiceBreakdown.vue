@@ -12,10 +12,10 @@
                 <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-2">
                         <p class="text-highlighted">{{ item.product_name }}</p>
-                        <UBadge v-if="item.bonus_quantity > 0" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
+                        <UBadge v-if="item.bonus_quantity > 0" color="success" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
                     </div>
                     <p class="text-xs text-muted"><span class="font-mono tabular-nums">₱{{ item.unit_price.toFixed(2) }} × {{ item.quantity }}</span></p>
-                    <UBadge v-if="item.bonus_quantity > 0" color="warning" variant="subtle" size="sm" icon="i-lucide-sparkles" class="mt-1">
+                    <UBadge v-if="item.bonus_quantity > 0" color="success" variant="subtle" size="sm" icon="i-lucide-sparkles" class="mt-1">
                         +{{ item.bonus_quantity }} free
                     </UBadge>
                 </div>

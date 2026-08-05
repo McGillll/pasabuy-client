@@ -1,6 +1,6 @@
 <template>
     <div class="min-h-screen bg-default">
-        <header class="border-b border-default shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
+        <header class="border-b border-default shadow-chrome">
             <div class="bg-muted">
                 <div class="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
                     <NuxtLink to="/customer" class="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
@@ -37,7 +37,7 @@
                         {{ link.label }}
                     </NuxtLink>
                     <span
-                        class="pointer-events-none absolute bottom-0 h-[2.5px] rounded-t-full bg-primary transition-[left,width] duration-320 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+                        class="pointer-events-none absolute bottom-0 h-[2.5px] rounded-t-full bg-primary transition-opacity duration-150 ease-linear motion-reduce:transition-none"
                         :style="{ left: `${underlineLeft}px`, width: `${underlineWidth}px` }"
                     />
                 </div>
@@ -57,7 +57,7 @@
                 class="group relative z-1 flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 py-2 text-muted transition-colors duration-200 motion-reduce:transition-none"
                 active-class="text-primary"
             >
-                <span class="flex size-11 items-center justify-center rounded-full transition-all duration-480 ease-[cubic-bezier(0.3,1.32,0.42,1)] motion-reduce:transition-none motion-reduce:transform-none group-[.text-primary]:size-13 group-[.text-primary]:-translate-y-4.5 group-[.text-primary]:bg-primary group-[.text-primary]:shadow-md">
+                <span class="flex size-11 items-center justify-center rounded-full transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none motion-reduce:transform-none group-[.text-primary]:size-13 group-[.text-primary]:-translate-y-4.5 group-[.text-primary]:bg-primary group-[.text-primary]:shadow-md">
                     <UIcon :name="link.icon" class="size-5 transition-transform duration-300 motion-reduce:transition-none group-[.text-primary]:scale-110 group-[.text-primary]:text-inverted" />
                 </span>
                 <span class="text-xs leading-tight transition-colors duration-200 motion-reduce:transition-none group-[.text-primary]:font-semibold">{{ link.label }}</span>

@@ -1,8 +1,11 @@
 <template>
-    <button
-        type="button"
-        class="group flex min-h-11 flex-col overflow-hidden rounded-xl border border-default bg-default text-left shadow-sm transition-colors hover:bg-elevated/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    <div
+        role="button"
+        tabindex="0"
+        class="group flex min-h-11 cursor-pointer flex-col overflow-hidden rounded-xl border border-default bg-default text-left shadow-sm transition-colors hover:bg-elevated/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         @click="emit('select', product)"
+        @keydown.enter="emit('select', product)"
+        @keydown.space.prevent="emit('select', product)"
     >
         <div class="relative aspect-square w-full overflow-hidden bg-elevated" :class="{ 'opacity-60': isOutOfStock }">
             <img
@@ -17,16 +20,19 @@
                 <UIcon name="i-lucide-image" class="size-8" />
             </div>
 
-            <UBadge
-                v-if="isB1T1"
-                color="success"
-                variant="solid"
-                size="sm"
-                class="absolute left-2 top-2"
-                title="Buy 1 Take 1: order one, get an extra unit free"
-            >
-                B1T1
-            </UBadge>
+            <div v-if="isB1T1" class="absolute left-2 top-2 flex items-center gap-1">
+                <UBadge
+                    color="success"
+                    variant="solid"
+                    size="sm"
+                    title="Buy 1 Take 1: order one, get an extra unit free"
+                >
+                    B1T1
+                </UBadge>
+                <BaseHelpTooltip ariaLabel="What is B1T1?" @click.stop>
+                    Buy 1 Take 1: order one, get an extra unit free.
+                </BaseHelpTooltip>
+            </div>
             <UBadge v-else-if="isOutOfStock" color="error" variant="solid" size="sm" class="absolute left-2 top-2">
                 Out of stock
             </UBadge>
@@ -39,7 +45,7 @@
                 ₱{{ product.default_price }}
             </p>
         </div>
-    </button>
+    </div>
 </template>
 
 <script setup lang="ts">

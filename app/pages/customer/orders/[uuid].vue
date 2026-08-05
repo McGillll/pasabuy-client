@@ -1,13 +1,35 @@
 <template>
     <div class="mx-auto max-w-2xl space-y-6">
-        <Transition
-            enter-active-class="transition-opacity duration-300"
-            leave-active-class="transition-opacity duration-300"
-            enter-from-class="opacity-0"
-            leave-to-class="opacity-0"
-        >
-            <SplashScreen v-if="loading" />
-        </Transition>
+        <div v-if="loading" class="space-y-6">
+            <div class="flex items-center justify-between gap-3">
+                <div class="space-y-2">
+                    <USkeleton class="h-6 w-40" />
+                    <USkeleton class="h-4 w-28" />
+                </div>
+                <USkeleton class="h-6 w-20 rounded-full" />
+            </div>
+
+            <div class="rounded-xl ring ring-default">
+                <div class="divide-y divide-default">
+                    <div v-for="n in 3" :key="n" class="flex items-center justify-between gap-3 p-4">
+                        <div class="space-y-2">
+                            <USkeleton class="h-4 w-32" />
+                            <USkeleton class="h-3 w-20" />
+                        </div>
+                        <USkeleton class="h-4 w-14" />
+                    </div>
+                </div>
+                <div class="flex items-center justify-between p-4">
+                    <USkeleton class="h-4 w-12" />
+                    <USkeleton class="h-4 w-16" />
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <USkeleton class="h-9 w-28 rounded-lg" />
+                <USkeleton class="h-9 w-24 rounded-lg" />
+            </div>
+        </div>
 
         <UAlert v-if="!loading && notFound" color="error" variant="subtle" title="Order not found" description="This order doesn't exist or isn't yours." />
 

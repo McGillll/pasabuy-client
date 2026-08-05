@@ -27,9 +27,12 @@
             </template>
         </UAlert>
 
-        <div v-else-if="schedules.length === 0" class="flex flex-col items-center gap-3 py-10">
+        <div v-else-if="schedules.length === 0" class="flex flex-col items-center gap-3 py-10 text-center">
             <UIcon name="i-lucide-package-search" class="size-8 text-dimmed" />
             <p class="text-sm text-muted">No pasabuys are open right now. Check back soon.</p>
+            <BaseButton size="sm" color="neutral" variant="soft" to="/customer/aisles">
+                Browse products in the meantime
+            </BaseButton>
         </div>
 
         <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

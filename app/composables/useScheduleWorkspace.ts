@@ -94,7 +94,7 @@ export function useScheduleWorkspace(uuid: string) {
     function closeSchedule() {
         askConfirm({
             title: 'Close schedule?',
-            description: 'Customers will no longer be able to order or edit their orders.',
+            description: 'Customers will no longer be able to order or edit their orders. You can reopen it later if needed.',
             confirmLabel: 'Close schedule',
             action: async () => {
                 changingStatus.value = true
@@ -619,11 +619,23 @@ export function useScheduleWorkspace(uuid: string) {
     }
 
     function confirmOrder(order: Order) {
-        setOrderStatusUndoable(order, 'confirmed', { onApply: () => removeOrderFromSelection(order.uuid) })
+        askConfirm({
+            title: 'Confirm order?',
+            description: `Confirm ${order.customer_name}'s order? Let them know it's locked in.`,
+            confirmLabel: 'Confirm order',
+            color: 'success',
+            action: () => setOrderStatusUndoable(order, 'confirmed', { onApply: () => removeOrderFromSelection(order.uuid) })
+        })
     }
 
     function cancelOrder(order: Order) {
-        setOrderStatusUndoable(order, 'cancelled', { onApply: () => removeOrderFromSelection(order.uuid) })
+        askConfirm({
+            title: 'Cancel order?',
+            description: `Cancel ${order.customer_name}'s order? They will need to place a new one if they change their mind.`,
+            confirmLabel: 'Cancel order',
+            color: 'error',
+            action: () => setOrderStatusUndoable(order, 'cancelled', { onApply: () => removeOrderFromSelection(order.uuid) })
+        })
     }
 
     async function setDeliveryStatus(order: Order, deliveryStatus: 'not_delivered' | 'delivered') {

@@ -10,7 +10,7 @@
                 <h1 class="text-xl font-semibold text-highlighted">{{ title }}</h1>
             </div>
 
-            <div v-if="!categoryUuid" class="md:hidden sticky top-0 z-10 -mx-4 bg-default px-4 py-2 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
+            <div v-if="!categoryUuid" class="md:hidden sticky top-0 z-10 -mx-4 bg-default px-4 py-2 shadow-chrome">
                 <Teleport to="#customer-header-search-target" :disabled="!isDesktop">
                     <BaseSearchInput
                         v-model="search"
@@ -124,9 +124,12 @@
                     Explore aisle
                 </BaseButton>
 
-                <div v-if="!leafProducts.length" class="flex flex-col items-center gap-3 py-10">
+                <div v-if="!leafProducts.length" class="flex flex-col items-center gap-3 py-10 text-center">
                     <UIcon name="i-lucide-package-search" class="size-8 text-dimmed" />
                     <p class="text-sm text-muted">No products in this aisle yet. Check back soon.</p>
+                    <BaseButton size="sm" color="neutral" variant="soft" to="/customer/pasabuys">
+                        See open pasabuys
+                    </BaseButton>
                 </div>
             </div>
 
@@ -150,9 +153,12 @@
                 />
             </div>
 
-            <div v-else class="flex flex-col items-center gap-3 py-10">
+            <div v-else class="flex flex-col items-center gap-3 py-10 text-center">
                 <UIcon name="i-lucide-shopping-basket" class="size-8 text-dimmed" />
                 <p class="text-sm text-muted">No aisles to browse right now. Check back soon.</p>
+                <BaseButton size="sm" color="neutral" variant="soft" to="/customer/pasabuys">
+                    See open pasabuys
+                </BaseButton>
             </div>
         </div>
     </div>

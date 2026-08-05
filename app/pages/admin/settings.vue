@@ -5,12 +5,12 @@
             <p class="mt-1 text-sm text-muted">Manage your business information and invoice rules.</p>
         </div>
 
-        <nav class="sticky top-0 z-10 -mx-6 flex gap-2 overflow-x-auto border-b border-default bg-default px-6 py-2 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
+        <nav class="sticky top-0 z-10 -mx-6 flex gap-2 overflow-x-auto border-b border-default bg-default px-6 py-2 shadow-chrome">
             <button
                 v-for="section in sections"
                 :key="section.id"
                 type="button"
-                class="shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                class="flex min-h-11 shrink-0 items-center rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
                 :class="activeSection === section.id
                     ? 'border-primary bg-primary text-inverted'
                     : 'border-default bg-elevated text-muted hover:text-highlighted'"

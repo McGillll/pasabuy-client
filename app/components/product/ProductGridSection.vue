@@ -23,11 +23,20 @@
         </UAlert>
 
         <template v-else>
-            <div v-if="visibleProducts.length === 0" class="flex flex-col items-center gap-3 py-10">
+            <div v-if="visibleProducts.length === 0" class="flex flex-col items-center gap-3 py-10 text-center">
                 <UIcon name="i-lucide-package-search" class="size-8 text-dimmed" />
                 <p class="text-sm text-muted">
                     {{ products.length === 0 ? emptyMessage : "No products match your search." }}
                 </p>
+                <BaseButton
+                    v-if="products.length === 0 && emptyActionTo"
+                    size="sm"
+                    color="neutral"
+                    variant="soft"
+                    :to="emptyActionTo"
+                >
+                    {{ emptyActionLabel }}
+                </BaseButton>
             </div>
 
             <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -57,8 +66,11 @@ const props = withDefaults(defineProps<{
     loading: boolean
     error: string
     emptyMessage?: string
+    emptyActionTo?: string
+    emptyActionLabel?: string
 }>(), {
-    emptyMessage: 'No products yet. Check back soon.'
+    emptyMessage: 'No products yet. Check back soon.',
+    emptyActionLabel: 'Browse other products'
 })
 
 const emit = defineEmits<{

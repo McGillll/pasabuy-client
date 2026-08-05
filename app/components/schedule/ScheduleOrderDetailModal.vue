@@ -50,12 +50,12 @@
                         <div class="min-w-0">
                             <div class="flex flex-wrap items-center gap-2">
                                 <p class="font-medium text-highlighted">{{ item.product_name }}</p>
-                                <UBadge v-if="item.bonus_quantity > 0" color="warning" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
+                                <UBadge v-if="item.bonus_quantity > 0" color="success" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
                             </div>
                             <p class="mt-0.5 font-mono text-sm tabular-nums text-muted">₱{{ item.actual_price ?? item.estimated_price }} × {{ workspace.getLineQuantity(item) }}</p>
                             <p
                                 v-if="item.bonus_quantity > 0"
-                                class="mt-1.5 inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"
+                                class="mt-1.5 inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success"
                             >
                                 <UIcon name="i-lucide-sparkles" class="size-3" />
                                 +{{ item.bonus_quantity }} free

@@ -8,7 +8,7 @@
             <template #approved>
                 <div class="overflow-x-clip">
                 <div class="mt-4 space-y-4" ref="panelEl">
-                    <div class="sticky top-0 z-10 -mx-6 border-b border-default bg-default px-6 py-2 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
+                    <div class="sticky top-0 z-10 -mx-6 border-b border-default bg-default px-6 py-2 shadow-chrome">
                         <BaseSearchInput v-model="search" placeholder="Search customers…" />
                     </div>
 

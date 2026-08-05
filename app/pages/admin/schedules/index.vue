@@ -270,7 +270,7 @@ const { confirmDialog, confirming, askConfirm, confirmDialogAccept } = useConfir
 function closeSchedule(scheduleRow: Schedule) {
     askConfirm({
         title: 'Close schedule?',
-        description: `Close "${scheduleRow.title}"? It can no longer be edited while closed.`,
+        description: `Close "${scheduleRow.title}"? It can no longer be edited while closed. You can reopen it later if needed.`,
         confirmLabel: 'Close schedule',
         color: 'primary',
         action: async () => {
