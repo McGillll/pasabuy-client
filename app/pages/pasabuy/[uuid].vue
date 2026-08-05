@@ -1,7 +1,7 @@
 <template>
     <div class="min-h-screen bg-default px-4 py-8" :class="{ 'pb-32 lg:pb-8': showBottomBar }">
         <div class="mx-auto max-w-2xl space-y-6 lg:max-w-5xl lg:grid lg:grid-cols-[1fr_320px] lg:items-start lg:gap-8 lg:space-y-0">
-        <div class="space-y-6">
+        <div class="min-w-0 space-y-6">
             <Transition
                 enter-active-class="transition-opacity duration-300"
                 leave-active-class="transition-opacity duration-300"
@@ -374,6 +374,17 @@
                     <BaseButton
                         block
                         class="mt-3"
+                        color="neutral"
+                        variant="soft"
+                        icon="i-lucide-shopping-cart"
+                        :disabled="!hasItems"
+                        @click="isCartOpen = true"
+                    >
+                        View cart
+                    </BaseButton>
+                    <BaseButton
+                        block
+                        class="mt-2"
                         size="lg"
                         :loading="submitting"
                         :disabled="!schedule?.is_open || !hasItems"
@@ -428,8 +439,8 @@
             </div>
         </div>
 
-        <USlideover v-model:open="isQuickAddOpen" side="bottom" :title="quickAddProduct ? displayName(quickAddProduct) : undefined">
-            <template #body>
+        <BaseModal :open="isQuickAddOpen" :title="quickAddProduct ? displayName(quickAddProduct) : undefined" @update:open="isQuickAddOpen = $event">
+            <template #default>
                 <div v-if="quickAddProduct" class="space-y-4">
                     <img
                         v-if="quickAddProduct.image_url && !imageLoadFailed[quickAddProduct.uuid]"
@@ -477,7 +488,7 @@
                     Done
                 </BaseButton>
             </template>
-        </USlideover>
+        </BaseModal>
 
         <USlideover
             v-model:open="isCartOpen"
@@ -493,30 +504,37 @@
 
                 <div v-else class="divide-y divide-default">
                     <div v-for="product in cartItems" :key="product.uuid" class="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
-                        <img
-                            v-if="product.image_url && !imageLoadFailed[product.uuid]"
-                            :src="product.image_url"
-                            loading="lazy"
-                            class="size-12 shrink-0 rounded-lg object-cover"
-                            alt=""
-                            @error="onImageError(product.uuid)"
+                        <button
+                            type="button"
+                            class="flex min-w-0 flex-1 items-center gap-4 text-left"
+                            :aria-label="`View ${displayName(product)}`"
+                            @click="viewCartItem(product)"
                         >
-                        <div v-else class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-elevated text-dimmed">
-                            <UIcon name="i-lucide-image" class="size-5" />
-                        </div>
+                            <img
+                                v-if="product.image_url && !imageLoadFailed[product.uuid]"
+                                :src="product.image_url"
+                                loading="lazy"
+                                class="size-12 shrink-0 rounded-lg object-cover"
+                                alt=""
+                                @error="onImageError(product.uuid)"
+                            >
+                            <div v-else class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-elevated text-dimmed">
+                                <UIcon name="i-lucide-image" class="size-5" />
+                            </div>
 
-                        <div class="min-w-0 flex-1">
-                            <p class="truncate font-medium text-highlighted">{{ displayName(product) }}</p>
-                            <p class="font-mono tabular-nums text-sm font-medium text-highlighted">
-                                ₱{{ (Number(resolvedPrice(product)) * quantities[product.uuid]!).toFixed(2) }}
-                            </p>
-                            <UBadge v-if="resolvedStatus(product) === 'out_of_stock'" color="error" variant="subtle" size="sm" class="mt-1">
-                                Out of stock
-                            </UBadge>
-                            <UBadge v-else-if="resolvedStatus(product) === 'b1t1'" color="success" variant="subtle" size="sm" class="mt-1">
-                                B1T1
-                            </UBadge>
-                        </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate font-medium text-highlighted">{{ displayName(product) }}</p>
+                                <p class="font-mono tabular-nums text-sm font-medium text-highlighted">
+                                    ₱{{ (Number(resolvedPrice(product)) * quantities[product.uuid]!).toFixed(2) }}
+                                </p>
+                                <UBadge v-if="resolvedStatus(product) === 'out_of_stock'" color="error" variant="subtle" size="sm" class="mt-1">
+                                    Out of stock
+                                </UBadge>
+                                <UBadge v-else-if="resolvedStatus(product) === 'b1t1'" color="success" variant="subtle" size="sm" class="mt-1">
+                                    B1T1
+                                </UBadge>
+                            </div>
+                        </button>
 
                         <div class="flex shrink-0 items-center gap-2">
                             <BaseButton
@@ -936,6 +954,11 @@ const quickAddProduct = ref<Product | null>(null)
 function openQuickAdd(product: Product) {
     quickAddProduct.value = product
     isQuickAddOpen.value = true
+}
+
+function viewCartItem(product: Product) {
+    isCartOpen.value = false
+    openQuickAdd(product)
 }
 
 /**

@@ -2,7 +2,7 @@
     <div class="min-h-screen bg-default">
         <header class="border-b border-default shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)]">
             <div class="bg-muted">
-                <div class="mx-auto flex max-w-4xl items-center gap-4 px-4 py-3">
+                <div class="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
                     <NuxtLink to="/customer" class="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                         <div class="flex items-center justify-center size-11 rounded-2xl bg-primary text-inverted font-bold">
                             P
@@ -25,7 +25,7 @@
             </div>
 
             <nav ref="desktopNavEl" class="relative hidden border-t border-default bg-default md:flex">
-                <div class="mx-auto flex max-w-4xl items-center px-4">
+                <div class="mx-auto flex max-w-7xl items-center px-4">
                     <NuxtLink
                         v-for="link in mobileLinks"
                         :key="link.label"
@@ -44,7 +44,7 @@
             </nav>
         </header>
 
-        <main class="mx-auto max-w-4xl px-4 py-6 pb-24 md:pb-6">
+        <main class="mx-auto max-w-7xl px-4 py-6 pb-24 md:pb-6">
             <VerifyEmailBanner />
             <slot />
         </main>
