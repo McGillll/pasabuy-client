@@ -59,7 +59,7 @@
                     </BaseFormField>
                 </div>
                 <BaseFormField label="Paid on" required>
-                    <BaseInput v-model="paymentForm.paid_at" type="date" required />
+                    <BaseDatePicker v-model="paymentForm.paid_at" />
                 </BaseFormField>
                 <BaseFormField label="Reference number">
                     <BaseInput v-model="paymentForm.reference_number" placeholder="e.g. GCash reference no." />

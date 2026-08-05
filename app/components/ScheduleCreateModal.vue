@@ -15,7 +15,7 @@
                 <BaseTextarea v-model="form.description" placeholder="Optional notes for this pasabuy" />
             </BaseFormField>
             <BaseFormField label="Pasabuy date" hint="The date you'll go to the store" required>
-                <BaseInput v-model="form.pasabuy_schedule_date" type="date" required />
+                <BaseDatePicker v-model="form.pasabuy_schedule_date" min="today" />
             </BaseFormField>
         </form>
     </BaseModal>

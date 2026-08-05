@@ -38,7 +38,7 @@
                         <BaseTextarea v-model="workspace.detailsForm.description" placeholder="Optional notes for this pasabuy" />
                     </BaseFormField>
                     <BaseFormField label="Pasabuy date" hint="The date you'll go to the store; ordering closes once this date arrives" required>
-                        <BaseInput v-model="workspace.detailsForm.pasabuyScheduleDate" type="date" required />
+                        <BaseDatePicker v-model="workspace.detailsForm.pasabuyScheduleDate" min="today" />
                     </BaseFormField>
                     <BaseButton type="submit" :loading="workspace.savingDetails">
                         Save details
@@ -83,7 +83,7 @@
                         <BaseTextarea v-model="workspace.detailsForm.description" disabled />
                     </BaseFormField>
                     <BaseFormField label="Pasabuy date" hint="The date you'll go to the store; ordering closes once this date arrives" required>
-                        <BaseInput v-model="workspace.detailsForm.pasabuyScheduleDate" type="date" disabled />
+                        <BaseDatePicker v-model="workspace.detailsForm.pasabuyScheduleDate" min="today" disabled />
                     </BaseFormField>
                     <BaseButton type="submit" disabled>
                         Save details
