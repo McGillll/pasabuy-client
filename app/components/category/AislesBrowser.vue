@@ -9,7 +9,7 @@
             </template>
 
             <div v-if="!notFound" class="mb-2 items-center gap-2" :class="categoryUuid ? 'flex' : 'hidden md:flex'">
-                <UIcon name="i-lucide-shopping-basket" class="size-5 text-primary" />
+                <UIcon name="i-lucide-list-tree" class="size-5 text-primary" />
                 <h1 class="text-xl font-semibold text-highlighted">{{ title }}</h1>
             </div>
 
@@ -157,7 +157,7 @@
             </div>
 
             <div v-else class="flex flex-col items-center gap-3 py-10 text-center">
-                <UIcon name="i-lucide-shopping-basket" class="size-8 text-dimmed" />
+                <UIcon name="i-lucide-list-tree" class="size-8 text-dimmed" />
                 <p class="text-sm text-muted">No aisles to browse right now. Check back soon.</p>
                 <BaseButton size="sm" color="neutral" variant="soft" to="/customer/pasabuys">
                     See open pasabuys

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@internationalized/date": "^3.12.2",
+    "@lottiefiles/dotlottie-vue": "^0.11.23",
     "@nuxt/ui": "^4.9.0",
     "laravel-echo": "^2.3.7",
     "nuxt": "^4.4.8",

@@ -33,8 +33,29 @@
                         class="flex items-center gap-2 px-4 py-3 text-sm font-medium text-muted transition-colors duration-200 hover:text-highlighted"
                         active-class="text-primary hover:text-primary"
                     >
-                        <UIcon :name="link.icon" class="size-4" />
+                        <UIcon
+                            :name="link.icon"
+                            class="size-4 motion-reduce:animate-none"
+                            :class="isBasketLink(link) && cartBouncing ? 'animate-cart-bounce' : ''"
+                        />
                         {{ link.label }}
+                        <Transition
+                            enter-active-class="transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+                            enter-from-class="opacity-0 scale-50"
+                            leave-active-class="transition duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+                            leave-to-class="opacity-0 scale-50"
+                        >
+                            <UBadge
+                                v-if="isBasketLink(link) && itemCount > 0"
+                                color="error"
+                                variant="solid"
+                                size="sm"
+                                class="rounded-full font-mono tabular-nums transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+                                :class="badgePulsing ? 'scale-125' : 'scale-100'"
+                            >
+                                {{ itemCount > 99 ? '99+' : itemCount }}
+                            </UBadge>
+                        </Transition>
                     </NuxtLink>
                     <span
                         class="pointer-events-none absolute bottom-0 h-[2.5px] rounded-t-full bg-primary transition-opacity duration-150 ease-linear motion-reduce:transition-none"
@@ -57,8 +78,50 @@
                 class="group relative z-1 flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 py-2 text-muted transition-colors duration-200 motion-reduce:transition-none"
                 active-class="text-primary"
             >
-                <span class="flex size-11 items-center justify-center rounded-full transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none motion-reduce:transform-none group-[.text-primary]:size-13 group-[.text-primary]:-translate-y-4.5 group-[.text-primary]:bg-primary group-[.text-primary]:shadow-md">
-                    <UIcon :name="link.icon" class="size-5 transition-transform duration-300 motion-reduce:transition-none group-[.text-primary]:scale-110 group-[.text-primary]:text-inverted" />
+                <span
+                    class="relative flex items-center justify-center rounded-full"
+                    :class="isBasketLink(link) ? 'size-16 -translate-y-5 bg-elevated p-1.5' : 'size-11'"
+                >
+                    <!-- Blue Basket is the only element on this bar that ever raises into a
+                    filled circle: it sits in its own "cradle" (a moat ring one token lighter
+                    than the bar itself, per DESIGN.md's Ring Not Shadow Rule) topped with the
+                    documented Brand Glow (shadow-primary/30) instead of an off-system black
+                    shadow, so it reads as a permanent fixture and the one halo on the bar.
+                    Siblings signal "active" with a real bounce (icon lift + scale, the
+                    system's one signature motion) but never a filled circle, so Storefront
+                    Blue's raised-circle treatment is never duplicated (One Signal Rule). The
+                    resting `-translate-y-5`/`-translate-y-1` offsets below are structural, not
+                    decorative, so only `transition`/`duration` are gated behind
+                    `motion-reduce:*` -- never `transform` itself. -->
+                    <span v-if="isBasketLink(link)" class="relative flex size-full items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30">
+                        <UIcon
+                            :name="link.icon"
+                            class="size-5 scale-110 text-inverted motion-reduce:animate-none"
+                            :class="cartBouncing ? 'animate-cart-bounce' : ''"
+                        />
+                        <Transition
+                            enter-active-class="transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+                            enter-from-class="opacity-0 scale-50"
+                            leave-active-class="transition duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+                            leave-to-class="opacity-0 scale-50"
+                        >
+                            <UBadge
+                                v-if="itemCount > 0"
+                                color="error"
+                                variant="solid"
+                                size="sm"
+                                class="absolute -top-1 -right-1 min-w-4 justify-center rounded-full px-1 font-mono tabular-nums ring-2 ring-elevated transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+                                :class="badgePulsing ? 'scale-125' : 'scale-100'"
+                            >
+                                {{ itemCount > 99 ? '99+' : itemCount }}
+                            </UBadge>
+                        </Transition>
+                    </span>
+                    <UIcon
+                        v-else
+                        :name="link.icon"
+                        class="size-5 transition-transform duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none group-[.text-primary]:-translate-y-1 group-[.text-primary]:scale-110"
+                    />
                 </span>
                 <span class="text-xs leading-tight transition-colors duration-200 motion-reduce:transition-none group-[.text-primary]:font-semibold">{{ link.label }}</span>
             </NuxtLink>
@@ -74,15 +137,42 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 const { user } = useAuth()
 const pendingWelcome = useWelcomeOverlay()
 const route = useRoute()
+const { itemCount, load: loadBasket } = useBasket()
+
+const badgePulsing = ref(false)
+let badgePulseTimeout: ReturnType<typeof setTimeout> | null = null
+
+const cartBouncing = ref(false)
+let cartBounceTimeout: ReturnType<typeof setTimeout> | null = null
+
+watch(itemCount, (next, prev) => {
+    if (next <= prev) return
+    badgePulsing.value = false
+    cartBouncing.value = false
+    nextTick(() => {
+        badgePulsing.value = true
+        if (badgePulseTimeout) clearTimeout(badgePulseTimeout)
+        badgePulseTimeout = setTimeout(() => { badgePulsing.value = false }, 260)
+
+        cartBouncing.value = true
+        if (cartBounceTimeout) clearTimeout(cartBounceTimeout)
+        cartBounceTimeout = setTimeout(() => { cartBouncing.value = false }, 500)
+    })
+})
 
 const fullName = computed(() => `${user.value?.first_name ?? ''} ${user.value?.last_name ?? ''}`.trim())
 
 const mobileLinks: NavigationMenuItem[] = [
     { label: 'Home', icon: 'i-lucide-layout-dashboard', to: '/customer' },
-    { label: 'Aisles', icon: 'i-lucide-shopping-basket', to: '/customer/aisles' },
+    { label: 'Aisles', icon: 'i-lucide-list-tree', to: '/customer/aisles' },
+    { label: 'Blue Basket', icon: 'i-lucide-shopping-basket', to: '/customer/basket' },
     { label: 'Pasabuys', icon: 'i-lucide-package-search', to: '/customer/pasabuys' },
     { label: 'My Orders', icon: 'i-lucide-receipt', to: '/customer/orders' }
 ]
+
+function isBasketLink(link: NavigationMenuItem) {
+    return link.label === 'Blue Basket'
+}
 
 const activeLinkIndex = computed(() => {
     let bestIndex = 0
@@ -118,9 +208,12 @@ watch(activeLinkIndex, () => nextTick(updateUnderline))
 onMounted(() => {
     updateUnderline()
     window.addEventListener('resize', updateUnderline)
+    loadBasket()
 })
 
 onUnmounted(() => {
     window.removeEventListener('resize', updateUnderline)
+    if (badgePulseTimeout) clearTimeout(badgePulseTimeout)
+    if (cartBounceTimeout) clearTimeout(cartBounceTimeout)
 })
 </script>

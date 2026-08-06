@@ -247,7 +247,7 @@
                         </BaseButton>
 
                         <div v-if="!categoryTreeNotFound" class="flex items-center gap-2">
-                            <UIcon name="i-lucide-shopping-basket" class="size-5 text-dimmed" />
+                            <UIcon name="i-lucide-list-tree" class="size-5 text-dimmed" />
                             <h2 class="text-lg font-semibold text-highlighted">{{ currentCategory?.name ?? 'Browse by category' }}</h2>
                         </div>
                     </div>
@@ -331,7 +331,7 @@
                     </template>
 
                     <div v-else class="flex flex-col items-center gap-3 py-10">
-                        <UIcon name="i-lucide-shopping-basket" class="size-8 text-dimmed" />
+                        <UIcon name="i-lucide-list-tree" class="size-8 text-dimmed" />
                         <p class="text-sm text-muted">No aisles to browse right now. Check back soon.</p>
                     </div>
                 </template>
@@ -376,11 +376,11 @@
                         class="mt-3"
                         color="neutral"
                         variant="soft"
-                        icon="i-lucide-shopping-cart"
+                        icon="i-lucide-shopping-basket"
                         :disabled="!hasItems"
                         @click="isCartOpen = true"
                     >
-                        View cart
+                        View basket
                     </BaseButton>
                     <BaseButton
                         block
@@ -428,11 +428,11 @@
                         </div>
                         <BaseButton
                             size="lg"
-                            icon="i-lucide-shopping-cart"
+                            icon="i-lucide-shopping-basket"
                             :disabled="!schedule?.is_open || !hasItems"
                             @click="isCartOpen = true"
                         >
-                            View cart
+                            View basket
                         </BaseButton>
                     </div>
                 </template>
@@ -493,13 +493,13 @@
         <USlideover
             v-model:open="isCartOpen"
             side="bottom"
-            title="Your cart"
+            title="Your basket"
             :description="`${itemCount} item${itemCount === 1 ? '' : 's'}`"
         >
             <template #body>
                 <div v-if="cartItems.length === 0" class="flex flex-col items-center gap-3 py-10">
-                    <UIcon name="i-lucide-shopping-cart" class="size-8 text-dimmed" />
-                    <p class="text-sm text-muted">Your cart is empty.</p>
+                    <UIcon name="i-lucide-shopping-basket" class="size-8 text-dimmed" />
+                    <p class="text-sm text-muted">Your basket is empty.</p>
                 </div>
 
                 <div v-else class="divide-y divide-default">
@@ -962,6 +962,44 @@ function viewCartItem(product: Product) {
 }
 
 /**
+ * Deep-link support for "Send to a pasabuy" on the Blue Basket page: ?basket=1
+ * seeds every basket item's quantity into this schedule's cart (matched by
+ * product uuid against the shared global catalog) and opens the cart drawer
+ * directly, since multiple items are involved rather than a single product.
+ */
+async function applyBasketSeed() {
+    if (route.query.basket !== '1') return
+
+    const { basket: basketItems } = useBasket()
+    const items = basketItems.value?.items ?? []
+    let skipped = 0
+
+    for (const item of items) {
+        const product = knownProducts.value[item.product_uuid]
+        if (!product) {
+            skipped++
+            continue
+        }
+        quantities.value[product.uuid] = (quantities.value[product.uuid] || 0) + item.quantity
+    }
+
+    if (items.length > 0) {
+        isCartOpen.value = true
+    }
+
+    if (skipped > 0) {
+        toast.add({
+            title: `${skipped} item${skipped === 1 ? '' : 's'} couldn't be added`,
+            description: "They aren't available in this pasabuy",
+            color: 'warning'
+        })
+    }
+
+    const { basket: _omit, ...rest } = route.query
+    router.replace({ query: rest })
+}
+
+/**
  * Deep-link support for "Order this in a pasabuy" on the product detail
  * page: ?product={uuid} pre-opens quick-add for that exact product, so a
  * customer never has to remember its name and hunt for it in the catalog.
@@ -1093,6 +1131,12 @@ function setQuantity(product: Product, value: number | null) {
     quantities.value[product.uuid] = Math.max(0, Math.floor(value ?? 0))
 }
 
+async function clearBasketAfterCheckout() {
+    const { clear: clearBasket } = useBasket()
+    await clearBasket()
+    cameFromBasket.value = false
+}
+
 async function submitOrder() {
     submitError.value = null
     submitting.value = true
@@ -1106,9 +1150,11 @@ async function submitOrder() {
             myOrder.value = response.data
             editingOrder.value = false
             isCartOpen.value = false
+            if (cameFromBasket.value) await clearBasketAfterCheckout()
             toast.add({ title: 'Order updated', color: 'success' })
         } else {
             const response = await customerOrderService.placeOrder(uuid, items)
+            if (cameFromBasket.value) await clearBasketAfterCheckout()
             toast.add({ title: 'Order placed!', color: 'success' })
             await navigateTo(`/customer/orders/${response.data.uuid}?placed=1`)
         }
@@ -1152,11 +1198,17 @@ watch(myOrder, () => {
     }
 })
 
+const cameFromBasket = ref(false)
+
 onMounted(async () => {
     await restoreSession()
     await Promise.all([load(), loadCategoryLevel()])
     if (isLoggedIn.value && isApproved.value) {
         await loadMyOrder()
+    }
+    if (route.query.basket === '1') {
+        cameFromBasket.value = true
+        await applyBasketSeed()
     }
     await applyPreselectedProduct()
 })

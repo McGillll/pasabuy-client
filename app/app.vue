@@ -1,5 +1,5 @@
 <template>
-    <UApp>
+    <UApp :toaster="{ position: 'top-center', duration: 4000 }">
         <PullToRefresh />
         <NuxtLayout>
             <NuxtPage />

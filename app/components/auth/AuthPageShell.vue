@@ -7,8 +7,8 @@
 
         <div class="relative w-full max-w-sm">
             <div class="flex flex-col items-center gap-3 mb-8">
-                <div class="flex items-center justify-center size-11 rounded-2xl bg-primary text-inverted font-bold text-2xl shadow-lg shadow-primary/30">
-                    P
+                <div class="relative flex size-16 items-center justify-center overflow-hidden rounded-2xl bg-primary shadow-lg shadow-primary/30">
+                    <DotLottieVue src="/lotties/logo-mark.lottie" autoplay loop class="size-16 scale-[1.45]" />
                 </div>
                 <div class="text-center">
                     <h1 class="text-xl font-semibold text-highlighted">Pasabuy</h1>
@@ -26,6 +26,8 @@
 </template>
 
 <script setup lang="ts">
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
+
 defineProps<{
     subtitle: string
 }>()
