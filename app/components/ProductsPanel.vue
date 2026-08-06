@@ -184,7 +184,7 @@
                             </BaseInput>
                         </BaseFormField>
                         <BaseFormField label="Category">
-                            <BaseSelect v-model="form.category_id" :items="categoryOptions" />
+                            <BaseSelectMenu v-model="form.category_id" :items="categoryOptions" class="h-11" />
                         </BaseFormField>
                         <BaseFormField>
                             <template #label>
