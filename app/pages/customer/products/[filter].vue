@@ -1,7 +1,13 @@
 <template>
     <div class="space-y-6">
         <div>
-            <BaseButton size="sm" color="neutral" variant="ghost" icon="i-lucide-arrow-left" to="/customer" class="-ml-2">
+            <template v-if="isCategoryFilter">
+                <BaseButton size="sm" color="neutral" variant="ghost" icon="i-lucide-arrow-left" class="-ml-2 mb-2 md:hidden" @click="goBack(backTo)">
+                    Back
+                </BaseButton>
+                <BaseBreadcrumb :items="crumbs" class="mb-2 hidden md:block" />
+            </template>
+            <BaseButton v-else size="sm" color="neutral" variant="ghost" icon="i-lucide-arrow-left" to="/customer" class="-ml-2">
                 Home
             </BaseButton>
 
@@ -40,6 +46,7 @@
 <script setup lang="ts">
 import { publicProductService } from '@/components/api/public/PublicProductService'
 import APIError from '@/components/api/user/APIError'
+import type { BaseBreadcrumbItem } from '@/components/base/BaseBreadcrumb.vue'
 import type { Product } from '@/types/Product'
 
 definePageMeta({ layout: 'customer', middleware: 'customer-auth' })
@@ -49,6 +56,25 @@ const filterKey = computed(() => route.params.filter as string)
 
 const isB1T1 = computed(() => filterKey.value === 'b1t1')
 const isTopSelling = computed(() => filterKey.value === 'top-selling')
+const isCategoryFilter = computed(() => !isB1T1.value && !isTopSelling.value)
+
+const { ancestors, resolve: resolveAncestors } = useCategoryAncestors()
+const { goBack } = useSmartBack()
+
+const backTo = computed(() => (matchedCategory.value?.parent_uuid ? `/customer/aisles/${matchedCategory.value.parent_uuid}` : '/customer/aisles'))
+
+const crumbs = computed<BaseBreadcrumbItem[]>(() => {
+    const trail: BaseBreadcrumbItem[] = [
+        { label: 'Aisles', to: '/customer/aisles', onBack: () => goBack('/customer/aisles') },
+        ...ancestors.value.map((ancestor) => ({
+            label: ancestor.name,
+            to: `/customer/aisles/${ancestor.uuid}`,
+            onBack: () => goBack(`/customer/aisles/${ancestor.uuid}`)
+        }))
+    ]
+    if (matchedCategory.value) trail.push({ label: matchedCategory.value.name })
+    return trail
+})
 
 const products = ref<Product[]>([])
 const matchedCategory = ref<Product['category']>(null)
@@ -101,6 +127,7 @@ async function loadCollection() {
         }
         products.value = items
         matchedCategory.value = (isB1T1.value || isTopSelling.value) ? null : (items[0]?.category ?? null)
+        await resolveAncestors(matchedCategory.value)
     } catch (err) {
         error.value = err instanceof APIError ? err.message : 'Something went wrong loading products.'
     } finally {
