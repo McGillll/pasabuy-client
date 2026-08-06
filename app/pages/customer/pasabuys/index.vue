@@ -1,7 +1,7 @@
 <template>
     <div class="space-y-6">
         <div class="hidden items-center gap-2 md:flex">
-            <UIcon name="i-lucide-package-search" class="size-5 text-primary" />
+            <IconPasabuys class="size-5 text-primary" />
             <h1 class="text-xl font-semibold text-highlighted">Pasabuy</h1>
         </div>
 
@@ -28,7 +28,7 @@
         </UAlert>
 
         <div v-else-if="schedules.length === 0" class="flex flex-col items-center gap-3 py-10 text-center">
-            <UIcon name="i-lucide-package-search" class="size-8 text-dimmed" />
+            <IconPasabuys class="size-8 text-dimmed" />
             <p class="text-sm text-muted">No pasabuys are open right now. Check back soon.</p>
             <BaseButton size="sm" color="neutral" variant="soft" to="/customer/aisles">
                 Browse products in the meantime

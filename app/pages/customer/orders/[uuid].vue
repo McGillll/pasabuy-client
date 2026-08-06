@@ -86,7 +86,10 @@
             </UCard>
 
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <BaseButton color="neutral" variant="soft" icon="i-lucide-receipt" to="/customer/orders">
+                <BaseButton color="neutral" variant="soft" to="/customer/orders">
+                    <template #leading>
+                        <IconOrders class="size-5" />
+                    </template>
                     All orders
                 </BaseButton>
 

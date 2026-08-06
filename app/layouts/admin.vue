@@ -71,7 +71,7 @@
                     class="flex items-center justify-center size-11 rounded-lg text-muted hover:bg-elevated hover:text-highlighted transition-colors"
                     active-class="bg-primary/10 text-primary"
                 >
-                    <UIcon :name="link.icon!" class="size-6" />
+                    <component :is="iconComponents[link.to as string]" class="size-6" />
                 </NuxtLink>
             </nav>
 
@@ -121,7 +121,7 @@
                 active-class="text-primary"
             >
                 <span class="flex size-10 items-center justify-center rounded-full transition-all duration-480 ease-[cubic-bezier(0.3,1.32,0.42,1)] motion-reduce:transition-none motion-reduce:transform-none group-[.text-primary]:size-11 group-[.text-primary]:-translate-y-3.25 group-[.text-primary]:bg-primary group-[.text-primary]:shadow-[0_14px_24px_-10px_rgba(0,0,0,0.45),0_4px_10px_-4px_rgba(0,0,0,0.3)]">
-                    <UIcon :name="link.icon" class="size-4.5 transition-transform duration-300 motion-reduce:transition-none group-[.text-primary]:scale-110 group-[.text-primary]:text-inverted" />
+                    <component :is="iconComponents[link.to as string]" class="size-4.5 transition-transform duration-300 motion-reduce:transition-none group-[.text-primary]:scale-110 group-[.text-primary]:text-inverted" />
                 </span>
                 <span class="text-xs leading-tight transition-colors duration-200 motion-reduce:transition-none group-[.text-primary]:font-semibold">{{ link.label }}</span>
             </NuxtLink>
@@ -130,7 +130,12 @@
 </template>
 
 <script setup lang="ts">
+import type { Component } from 'vue'
 import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
+import IconDashboard from '@/components/icons/IconDashboard.vue'
+import IconProducts from '@/components/icons/IconProducts.vue'
+import IconSchedules from '@/components/icons/IconSchedules.vue'
+import IconCustomers from '@/components/icons/IconCustomers.vue'
 
 const { user, logout } = useAuth()
 const sidebarMode = useSidebarMode()
@@ -160,4 +165,11 @@ const mobileLinks: NavigationMenuItem[] = [
     { label: 'Schedules', icon: 'i-lucide-calendar-clock', to: '/admin/schedules' },
     { label: 'Customers', icon: 'i-lucide-users', to: '/admin/customers' }
 ]
+
+const iconComponents: Record<string, Component> = {
+    '/admin': IconDashboard,
+    '/admin/products': IconProducts,
+    '/admin/schedules': IconSchedules,
+    '/admin/customers': IconCustomers
+}
 </script>

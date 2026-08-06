@@ -33,8 +33,8 @@
                         class="flex items-center gap-2 px-4 py-3 text-sm font-medium text-muted transition-colors duration-200 hover:text-highlighted"
                         active-class="text-primary hover:text-primary"
                     >
-                        <UIcon
-                            :name="link.icon"
+                        <component
+                            :is="link.icon"
                             class="size-4 motion-reduce:animate-none"
                             :class="isBasketLink(link) && cartBouncing ? 'animate-cart-bounce' : ''"
                         />
@@ -65,7 +65,7 @@
             </nav>
         </header>
 
-        <main class="mx-auto max-w-7xl px-4 py-6 pb-24 md:pb-6">
+        <main class="mx-auto max-w-7xl px-4 py-6 pb-32 md:pb-6">
             <VerifyEmailBanner />
             <slot />
         </main>
@@ -94,8 +94,8 @@
                     decorative, so only `transition`/`duration` are gated behind
                     `motion-reduce:*` -- never `transform` itself. -->
                     <span v-if="isBasketLink(link)" class="relative flex size-full items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30">
-                        <UIcon
-                            :name="link.icon"
+                        <component
+                            :is="link.icon"
                             class="size-5 scale-110 text-inverted motion-reduce:animate-none"
                             :class="cartBouncing ? 'animate-cart-bounce' : ''"
                         />
@@ -117,9 +117,9 @@
                             </UBadge>
                         </Transition>
                     </span>
-                    <UIcon
+                    <component
                         v-else
-                        :name="link.icon"
+                        :is="link.icon"
                         class="size-5 transition-transform duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none group-[.text-primary]:-translate-y-1 group-[.text-primary]:scale-110"
                     />
                 </span>
@@ -132,7 +132,18 @@
 </template>
 
 <script setup lang="ts">
-import type { NavigationMenuItem } from '@nuxt/ui'
+import type { Component } from 'vue'
+import IconHome from '@/components/icons/IconHome.vue'
+import IconAisles from '@/components/icons/IconAisles.vue'
+import IconBasket from '@/components/icons/IconBasket.vue'
+import IconPasabuys from '@/components/icons/IconPasabuys.vue'
+import IconOrders from '@/components/icons/IconOrders.vue'
+
+interface MobileNavLink {
+    label: string
+    icon: Component
+    to: string
+}
 
 const { user } = useAuth()
 const pendingWelcome = useWelcomeOverlay()
@@ -162,15 +173,15 @@ watch(itemCount, (next, prev) => {
 
 const fullName = computed(() => `${user.value?.first_name ?? ''} ${user.value?.last_name ?? ''}`.trim())
 
-const mobileLinks: NavigationMenuItem[] = [
-    { label: 'Home', icon: 'i-lucide-layout-dashboard', to: '/customer' },
-    { label: 'Aisles', icon: 'i-lucide-list-tree', to: '/customer/aisles' },
-    { label: 'Blue Basket', icon: 'i-lucide-shopping-basket', to: '/customer/basket' },
-    { label: 'Pasabuys', icon: 'i-lucide-package-search', to: '/customer/pasabuys' },
-    { label: 'My Orders', icon: 'i-lucide-receipt', to: '/customer/orders' }
+const mobileLinks: MobileNavLink[] = [
+    { label: 'Home', icon: IconHome, to: '/customer' },
+    { label: 'Aisles', icon: IconAisles, to: '/customer/aisles' },
+    { label: 'Blue Basket', icon: IconBasket, to: '/customer/basket' },
+    { label: 'Pasabuys', icon: IconPasabuys, to: '/customer/pasabuys' },
+    { label: 'My Orders', icon: IconOrders, to: '/customer/orders' }
 ]
 
-function isBasketLink(link: NavigationMenuItem) {
+function isBasketLink(link: MobileNavLink) {
     return link.label === 'Blue Basket'
 }
 

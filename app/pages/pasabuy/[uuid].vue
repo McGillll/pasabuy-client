@@ -37,7 +37,10 @@
                             </span>
                         </div>
                     </div>
-                    <BaseButton v-if="isLoggedIn" size="sm" color="neutral" variant="soft" icon="i-lucide-receipt" to="/customer/orders" class="self-start">
+                    <BaseButton v-if="isLoggedIn" size="sm" color="neutral" variant="soft" to="/customer/orders" class="self-start">
+                        <template #leading>
+                            <IconOrders class="size-5" />
+                        </template>
                         My Orders
                     </BaseButton>
                 </div>
@@ -247,7 +250,7 @@
                         </BaseButton>
 
                         <div v-if="!categoryTreeNotFound" class="flex items-center gap-2">
-                            <UIcon name="i-lucide-list-tree" class="size-5 text-dimmed" />
+                            <IconAisles class="size-5 text-dimmed" />
                             <h2 class="text-lg font-semibold text-highlighted">{{ currentCategory?.name ?? 'Browse by category' }}</h2>
                         </div>
                     </div>
@@ -331,7 +334,7 @@
                     </template>
 
                     <div v-else class="flex flex-col items-center gap-3 py-10">
-                        <UIcon name="i-lucide-list-tree" class="size-8 text-dimmed" />
+                        <IconAisles class="size-8 text-dimmed" />
                         <p class="text-sm text-muted">No aisles to browse right now. Check back soon.</p>
                     </div>
                 </template>
@@ -376,10 +379,12 @@
                         class="mt-3"
                         color="neutral"
                         variant="soft"
-                        icon="i-lucide-shopping-basket"
                         :disabled="!hasItems"
                         @click="isCartOpen = true"
                     >
+                        <template #leading>
+                            <IconBasket class="size-5" />
+                        </template>
                         View basket
                     </BaseButton>
                     <BaseButton
@@ -428,10 +433,12 @@
                         </div>
                         <BaseButton
                             size="lg"
-                            icon="i-lucide-shopping-basket"
                             :disabled="!schedule?.is_open || !hasItems"
                             @click="isCartOpen = true"
                         >
+                            <template #leading>
+                                <IconBasket class="size-5" />
+                            </template>
                             View basket
                         </BaseButton>
                     </div>
@@ -498,7 +505,7 @@
         >
             <template #body>
                 <div v-if="cartItems.length === 0" class="flex flex-col items-center gap-3 py-10">
-                    <UIcon name="i-lucide-shopping-basket" class="size-8 text-dimmed" />
+                    <IconBasket class="size-8 text-dimmed" />
                     <p class="text-sm text-muted">Your basket is empty.</p>
                 </div>
 

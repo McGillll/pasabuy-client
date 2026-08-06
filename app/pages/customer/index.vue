@@ -1,7 +1,7 @@
 <template>
     <div class="space-y-6">
         <div class="hidden items-center gap-2 md:flex">
-            <UIcon name="i-lucide-layout-dashboard" class="size-5 text-primary" />
+            <IconHome class="size-5 text-primary" />
             <h1 class="text-xl font-semibold text-highlighted">Home</h1>
         </div>
 

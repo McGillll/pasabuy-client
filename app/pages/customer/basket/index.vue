@@ -2,7 +2,7 @@
     <div class="mx-auto max-w-2xl space-y-6">
         <div class="flex items-center justify-end md:justify-between">
             <div class="hidden items-center gap-2 md:flex">
-                <UIcon name="i-lucide-shopping-basket" class="size-5 text-primary" />
+                <IconBasket class="size-5 text-primary" />
                 <h1 class="text-xl font-semibold text-highlighted">Blue Basket</h1>
             </div>
             <BaseButton v-if="items.length" size="xs" color="neutral" variant="ghost" :loading="clearing" @click="onClear">
@@ -15,7 +15,7 @@
         </div>
 
         <div v-else-if="items.length === 0" class="flex flex-col items-center gap-3 rounded-xl border border-default bg-elevated/50 px-4 py-12 text-center">
-            <UIcon name="i-lucide-shopping-basket" class="size-8 text-dimmed" />
+            <IconBasket class="size-8 text-dimmed" />
             <p class="text-sm text-muted">Your basket is empty.</p>
             <BaseButton color="neutral" variant="soft" to="/customer/aisles">
                 Browse aisles
@@ -89,7 +89,7 @@
                 </div>
 
                 <div v-else-if="openSchedules.length === 0" class="flex flex-col items-center gap-2 rounded-xl border border-default bg-elevated/50 px-4 py-6 text-center">
-                    <UIcon name="i-lucide-package-search" class="size-6 text-dimmed" />
+                    <IconPasabuys class="size-6 text-dimmed" />
                     <p class="text-sm text-muted">No pasabuys are open right now.</p>
                     <BaseButton size="sm" color="neutral" variant="soft" to="/customer/pasabuys">
                         Browse pasabuys

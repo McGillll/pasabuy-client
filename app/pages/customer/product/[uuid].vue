@@ -98,7 +98,10 @@
                             class="w-28 shrink-0"
                             :aria-label="`Quantity of ${product.name} to add to Blue Basket`"
                         />
-                        <BaseButton color="primary" size="lg" class="flex-1" icon="i-lucide-shopping-basket" :loading="addingToBasket" @click="addToBlueBasket">
+                        <BaseButton color="primary" size="lg" class="flex-1" :loading="addingToBasket" @click="addToBlueBasket">
+                            <template #leading>
+                                <IconBasket class="size-5" />
+                            </template>
                             Add to Basket
                         </BaseButton>
                     </div>

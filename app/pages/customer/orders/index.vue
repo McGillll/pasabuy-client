@@ -1,7 +1,7 @@
 <template>
     <div class="space-y-6">
         <div class="hidden items-center gap-2 md:flex">
-            <UIcon name="i-lucide-receipt" class="size-5 text-primary" />
+            <IconOrders class="size-5 text-primary" />
             <h1 class="text-xl font-semibold text-highlighted">Order</h1>
         </div>
 
@@ -114,7 +114,7 @@
                 <template #empty>
                     <div class="flex flex-col items-center gap-3 py-10 text-center">
                         <div class="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                            <UIcon name="i-lucide-receipt" class="size-6" />
+                            <IconOrders class="size-6" />
                         </div>
                         <div class="space-y-1">
                             <p class="text-sm font-medium text-highlighted">{{ emptyStateTitle }}</p>
