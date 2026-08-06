@@ -370,6 +370,22 @@
                     />
                 </template>
 
+                <template v-else-if="isBlockedByReceivable">
+                    <UAlert
+                        color="warning"
+                        variant="subtle"
+                        icon="i-lucide-circle-alert"
+                        title="Settle your balance to order"
+                        :description="`You have ₱${receivable.toFixed(2)} in unpaid orders. Settle it before placing a new one.`"
+                    >
+                        <template #actions>
+                            <BaseButton size="xs" color="warning" variant="solid" to="/customer/orders">
+                                View my orders
+                            </BaseButton>
+                        </template>
+                    </UAlert>
+                </template>
+
                 <template v-else>
                     <UAlert v-if="submitError" color="error" variant="subtle" :title="submitError" class="mb-3" />
                     <p class="text-xs text-muted">{{ itemCount }} item{{ itemCount === 1 ? '' : 's' }}</p>
@@ -423,6 +439,18 @@
                         <UIcon name="i-lucide-clock" class="size-4 shrink-0" />
                         Waiting on admin approval. You can order once approved, keep browsing meanwhile.
                     </p>
+                </template>
+
+                <template v-else-if="isBlockedByReceivable">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="flex items-center gap-1.5 text-sm text-warning">
+                            <UIcon name="i-lucide-circle-alert" class="size-4 shrink-0" />
+                            ₱{{ receivable.toFixed(2) }} unpaid. Settle to order again.
+                        </p>
+                        <BaseButton size="sm" color="warning" variant="soft" to="/customer/orders" class="shrink-0">
+                            View orders
+                        </BaseButton>
+                    </div>
                 </template>
 
                 <template v-else>
@@ -572,20 +600,37 @@
 
             <template #footer>
                 <div class="w-full space-y-3">
-                    <UAlert v-if="submitError" color="error" variant="subtle" :title="submitError" />
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm text-muted">Total</p>
-                        <p class="font-mono tabular-nums text-lg font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
-                    </div>
-                    <BaseButton
-                        block
-                        size="lg"
-                        :loading="submitting"
-                        :disabled="!schedule?.is_open || !hasItems"
-                        @click="submitOrder"
+                    <UAlert
+                        v-if="isBlockedByReceivable"
+                        color="warning"
+                        variant="subtle"
+                        icon="i-lucide-circle-alert"
+                        title="Settle your balance to order"
+                        :description="`You have ₱${receivable.toFixed(2)} in unpaid orders. Settle it before placing a new one.`"
                     >
-                        {{ editingOrder ? 'Update order' : 'Place order' }}
-                    </BaseButton>
+                        <template #actions>
+                            <BaseButton size="xs" color="warning" variant="solid" to="/customer/orders">
+                                View my orders
+                            </BaseButton>
+                        </template>
+                    </UAlert>
+
+                    <template v-else>
+                        <UAlert v-if="submitError" color="error" variant="subtle" :title="submitError" />
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm text-muted">Total</p>
+                            <p class="font-mono tabular-nums text-lg font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
+                        </div>
+                        <BaseButton
+                            block
+                            size="lg"
+                            :loading="submitting"
+                            :disabled="!schedule?.is_open || !hasItems"
+                            @click="submitOrder"
+                        >
+                            {{ editingOrder ? 'Update order' : 'Place order' }}
+                        </BaseButton>
+                    </template>
                 </div>
             </template>
         </USlideover>
@@ -725,6 +770,16 @@ const editingOrder = ref(false)
 
 const isLoggedIn = computed(() => !!user.value)
 const isApproved = computed(() => user.value?.is_approved === true)
+
+const isValidToOrder = computed(() => user.value?.is_valid_to_order !== false)
+const receivable = computed(() => Number(user.value?.receivable ?? 0))
+
+/**
+ * Editing an already-placed order is always allowed regardless of receivable
+ * (the backend only gates *new* order creation on it), so the blocked state
+ * below must not apply while editingOrder is true.
+ */
+const isBlockedByReceivable = computed(() => isValidToOrder.value === false && !editingOrder.value)
 
 const PRICING_NOTE_DISMISSED_KEY = 'pasabuy-pricing-note-dismissed'
 const pricingNoteDismissed = ref(false)
@@ -971,14 +1026,17 @@ function viewCartItem(product: Product) {
 /**
  * Deep-link support for "Send to a pasabuy" on the Blue Basket page: ?basket=1
  * seeds every basket item's quantity into this schedule's cart (matched by
- * product uuid against the shared global catalog) and opens the cart drawer
- * directly, since multiple items are involved rather than a single product.
+ * product uuid against the shared global catalog). The cart drawer is left
+ * closed — auto-opening it used to skip straight to "Place order" for
+ * customers who are currently blocked by an unpaid balance, bypassing the
+ * warning state entirely. A toast confirms the items landed instead.
  */
 async function applyBasketSeed() {
     if (route.query.basket !== '1') return
 
     const { basket: basketItems } = useBasket()
     const items = basketItems.value?.items ?? []
+    let added = 0
     let skipped = 0
 
     for (const item of items) {
@@ -988,10 +1046,15 @@ async function applyBasketSeed() {
             continue
         }
         quantities.value[product.uuid] = (quantities.value[product.uuid] || 0) + item.quantity
+        added++
     }
 
-    if (items.length > 0) {
-        isCartOpen.value = true
+    if (added > 0) {
+        toast.add({
+            title: `${added} item${added === 1 ? '' : 's'} added to your basket`,
+            description: schedule.value?.title,
+            color: 'success'
+        })
     }
 
     if (skipped > 0) {
@@ -1162,6 +1225,7 @@ async function submitOrder() {
         } else {
             const response = await customerOrderService.placeOrder(uuid, items)
             if (cameFromBasket.value) await clearBasketAfterCheckout()
+            await fetchCurrentUser()
             toast.add({ title: 'Order placed!', color: 'success' })
             await navigateTo(`/customer/orders/${response.data.uuid}?placed=1`)
         }

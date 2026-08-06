@@ -6,6 +6,8 @@ export interface User {
     role: string
     is_approved: boolean
     is_verified: boolean
+    receivable: number
+    is_valid_to_order: boolean
 }
 
 export interface TopBuyer {

@@ -5,132 +5,162 @@
             <h1 class="text-xl font-semibold text-highlighted">Order</h1>
         </div>
 
-        <UAlert
-            v-if="attentionOrder"
-            color="warning"
-            variant="subtle"
-            icon="i-lucide-circle-alert"
-            title="Needs your attention"
-            :description="`${attentionOrder.pasabuy_schedule?.title} has an outstanding balance of ₱${attentionOrder.amount_due}.`"
-        >
-            <template #actions>
-                <BaseButton size="xs" color="warning" variant="solid" @click="viewOrder(attentionOrder)">
-                    View order
-                </BaseButton>
-            </template>
-        </UAlert>
+        <KpiCard
+            :icon="owedTotal > 0 ? 'i-lucide-circle-alert' : 'i-lucide-circle-check'"
+            :color="owedTotal > 0 ? 'error' : 'success'"
+            :label="owedTotal > 0 ? 'Balance due' : 'All settled'"
+            :value="owedTotal > 0 ? currency(owedTotal) : currency(paidTotal)"
+            :delta="owedDelta"
+            :loading="loading"
+        />
 
-        <div class="space-y-3">
-            <BaseInput
-                v-model="search"
-                icon="i-lucide-search"
-                placeholder="Search by pasabuy title…"
-                class="w-full sm:w-72"
-            />
-
-            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden">
-                <button
-                    v-for="chip in statusChips"
-                    :key="chip.value"
-                    type="button"
-                    class="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium transition-colors"
-                    :class="statusFilter === chip.value
-                        ? 'border-primary bg-primary text-inverted font-semibold'
-                        : 'border-default text-muted hover:text-highlighted'"
-                    @click="statusFilter = chip.value"
-                >
-                    <span v-if="chip.dotClass" class="size-1.5 rounded-full" :class="chip.dotClass" />
-                    {{ chip.label }}
-                </button>
+        <div class="sticky top-0 z-10 -mx-4 space-y-2 bg-default/95 px-4 py-2 backdrop-blur-sm">
+            <div class="flex items-center gap-2">
+                <div class="flex shrink-0 items-center gap-1 rounded-lg ring-1 ring-default">
+                    <BaseButton
+                        icon="i-lucide-chevron-left"
+                        size="sm"
+                        color="neutral"
+                        variant="ghost"
+                        class="min-h-11 min-w-11"
+                        aria-label="Previous year"
+                        @click="year -= 1"
+                    />
+                    <span class="min-w-12 text-center font-mono text-sm font-semibold tabular-nums text-highlighted">{{ year }}</span>
+                    <BaseButton
+                        icon="i-lucide-chevron-right"
+                        size="sm"
+                        color="neutral"
+                        variant="ghost"
+                        class="min-h-11 min-w-11"
+                        aria-label="Next year"
+                        :disabled="year >= currentYear"
+                        @click="year += 1"
+                    />
+                </div>
+                <BaseButton
+                    icon="i-lucide-list-filter"
+                    size="sm"
+                    color="neutral"
+                    :variant="statusFilter === 'all' ? 'outline' : 'subtle'"
+                    class="min-h-11 min-w-11 shrink-0"
+                    :aria-label="statusFilter === 'all' ? 'Filter by status' : `Filter by status, currently ${statusFilterItems.find((i) => i.value === statusFilter)?.label}`"
+                    @click="isStatusFilterOpen = true"
+                />
             </div>
         </div>
 
-        <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <BaseTable
-                :data="orders"
-                :columns="columns"
-                :loading="loading"
-                :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
-            >
-                <template #schedule-cell="{ row }">
-                    <NuxtLink
-                        v-if="row.original.pasabuy_schedule"
-                        :to="`/pasabuy/${row.original.pasabuy_schedule.uuid}`"
-                        class="font-medium text-highlighted hover:text-primary"
+        <USlideover v-model:open="isStatusFilterOpen" side="bottom" title="Filter by status">
+            <template #body>
+                <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Filter by status">
+                    <button
+                        v-for="item in statusFilterItems"
+                        :key="item.value"
+                        type="button"
+                        role="radio"
+                        :aria-checked="statusFilter === item.value"
+                        class="flex min-h-11 items-center justify-between rounded-lg px-3 text-left text-sm font-medium ring-1 ring-default transition-colors"
+                        :class="statusFilter === item.value ? 'bg-primary/10 text-primary ring-primary' : 'text-muted hover:text-highlighted'"
+                        @click="selectStatusFilter(item.value)"
                     >
-                        {{ row.original.pasabuy_schedule.title }}
-                    </NuxtLink>
-                    <p class="font-mono text-xs text-dimmed">{{ row.original.order_no }}</p>
-                </template>
-                <template #total_amount-cell="{ row }">
-                    <div class="flex flex-col items-end">
-                        <span class="font-mono tabular-nums">{{ orderDisplayAmount(row.original) }}</span>
-                        <span v-if="row.original.pasabuy_schedule?.status === 'finished'" class="text-xs text-muted">Balance due</span>
-                    </div>
-                </template>
-                <template #status-cell="{ row }">
-                    <OrderStatusBadge :status="row.original.status" />
-                </template>
-                <template #payment_status-cell="{ row }">
-                    <PaymentStatusBadge v-if="row.original.pasabuy_schedule?.status === 'finished'" :status="row.original.payment_status" />
-                    <span v-else class="text-muted">-</span>
-                </template>
-                <template #delivery_status-cell="{ row }">
-                    <DeliveryStatusBadge v-if="row.original.pasabuy_schedule?.status === 'finished'" :status="row.original.delivery_status" />
-                    <span v-else class="text-muted">-</span>
-                </template>
-                <template #created_at-cell="{ row }">
-                    <span class="text-muted">{{ formatDate(row.original.created_at) }}</span>
-                </template>
-                <template #actions-cell="{ row }">
-                    <BaseButton size="sm" color="neutral" variant="ghost" @click="viewOrder(row.original)">
-                        View
+                        {{ item.label }}
+                        <UIcon v-if="statusFilter === item.value" name="i-lucide-check" class="size-4" />
+                    </button>
+                </div>
+            </template>
+        </USlideover>
+
+        <BaseButton
+            v-if="priorityOrder"
+            block
+            :color="priorityOrder.is_overdue ? 'error' : 'warning'"
+            variant="soft"
+            :icon="priorityOrder.is_overdue ? 'i-lucide-alarm-clock' : 'i-lucide-wallet'"
+            class="-mt-2 justify-start"
+            @click="viewOrder(priorityOrder)"
+        >
+            <span class="flex flex-col items-start text-left">
+                <span class="text-xs font-medium">{{ priorityOrder.is_overdue ? 'Oldest overdue balance' : 'Oldest unpaid balance' }} &middot; all statuses</span>
+                <span class="text-sm font-semibold">
+                    {{ priorityOrder.pasabuy_schedule?.title }} &middot; <span class="font-mono tabular-nums">₱{{ currency(priorityOrder.amount_due) }}</span>
+                </span>
+            </span>
+        </BaseButton>
+
+        <template v-if="loading">
+            <div class="space-y-3">
+                <USkeleton v-for="n in 3" :key="n" class="h-24 w-full rounded-xl" />
+            </div>
+        </template>
+
+        <template v-else-if="ordersError">
+            <UAlert
+                color="error"
+                variant="subtle"
+                title="Failed to load orders"
+                :description="ordersError"
+            >
+                <template #actions>
+                    <BaseButton size="xs" color="error" variant="soft" @click="loadOrders">
+                        Retry
                     </BaseButton>
                 </template>
-                <template #list-item="{ item: order }">
-                    <ListCard clickable @click="viewOrder(order)">
-                        <template #title>
-                            <span v-if="order.pasabuy_schedule" class="font-medium text-highlighted">
-                                {{ order.pasabuy_schedule.title }}
-                            </span>
-                        </template>
-                        <template #subtitle>
-                            <span class="font-mono text-xs">{{ order.order_no }}</span>
-                        </template>
-                        <template #meta>
-                            <span class="font-mono tabular-nums font-medium text-highlighted">₱{{ orderDisplayAmount(order) }}</span>
-                            <span v-if="order.pasabuy_schedule?.status === 'finished'" class="text-xs text-muted">Balance due</span>
-                            <span class="text-muted">{{ formatDate(order.created_at) }}</span>
-                        </template>
-                        <template #status>
-                            <OrderStatusBadge :status="order.status" />
-                            <template v-if="order.pasabuy_schedule?.status === 'finished'">
-                                <PaymentStatusBadge :status="order.payment_status" />
-                                <DeliveryStatusBadge :status="order.delivery_status" />
-                            </template>
-                        </template>
-                    </ListCard>
-                </template>
-                <template #empty>
-                    <div class="flex flex-col items-center gap-3 py-10 text-center">
-                        <div class="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                            <IconOrders class="size-6" />
-                        </div>
-                        <div class="space-y-1">
-                            <p class="text-sm font-medium text-highlighted">{{ emptyStateTitle }}</p>
-                            <p class="max-w-64 text-sm text-muted">{{ emptyStateMessage }}</p>
-                        </div>
-                        <BaseButton v-if="!hasActiveFilters" trailing-icon="i-lucide-arrow-right" to="/customer/pasabuys">
-                            Browse pasabuys
-                        </BaseButton>
-                    </div>
-                </template>
-            </BaseTable>
-        </UCard>
+            </UAlert>
+        </template>
 
-        <div v-if="total > perPage" class="flex justify-center">
-            <UPagination v-model:page="page" :total="total" :items-per-page="perPage" />
-        </div>
+        <template v-else-if="!scopedOrders.length">
+            <BaseEmptyState icon="i-lucide-inbox" :message="emptyStateTitle" :description="emptyStateMessage" />
+        </template>
+
+        <template v-else>
+            <template v-for="key in GROUP_ORDER" :key="key">
+                <div v-if="groups[key].length" class="space-y-2">
+                    <button
+                        type="button"
+                        class="flex w-full items-baseline justify-between gap-3 px-1 text-left"
+                        :aria-expanded="expandedGroups[key]"
+                        :aria-controls="`group-${key}`"
+                        @click="expandedGroups[key] = !expandedGroups[key]"
+                    >
+                        <span class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-dimmed">
+                            <UIcon name="i-lucide-chevron-right" class="size-3.5 transition-transform" :class="expandedGroups[key] ? 'rotate-90' : ''" />
+                            <UIcon :name="GROUP_META[key].icon" class="size-3.5" />
+                            {{ GROUP_META[key].label }}
+                            <span class="font-mono tabular-nums">{{ groups[key].length }}</span>
+                        </span>
+                        <span v-if="groupTotal(key) !== null" class="font-mono text-sm font-semibold tabular-nums" :class="GROUP_TEXT_CLASSES[key]">
+                            ₱{{ currency(groupTotal(key)!) }}
+                        </span>
+                    </button>
+
+                    <div v-if="expandedGroups[key]" :id="`group-${key}`" class="space-y-2">
+                        <ListCard v-for="order in groups[key]" :key="order.uuid" clickable @click="viewOrder(order)">
+                            <template #title>
+                                <span v-if="order.pasabuy_schedule" class="font-medium text-highlighted">{{ order.pasabuy_schedule.title }}</span>
+                            </template>
+                            <template #subtitle>
+                                <span class="font-mono text-xs">{{ order.order_no }}</span>
+                                <span v-if="groupSubtext(key, order)"> &middot; {{ groupSubtext(key, order) }}</span>
+                            </template>
+                            <template #meta>
+                                <span v-if="key === 'overdue' || key === 'unpaid'" class="flex items-baseline gap-1">
+                                    <span class="text-xs text-dimmed">Due</span>
+                                    <span class="font-mono tabular-nums font-medium" :class="GROUP_TEXT_CLASSES[key]">₱{{ currency(order.amount_due) }}</span>
+                                </span>
+                                <span v-else-if="key === 'paid'" class="flex items-baseline gap-1">
+                                    <span class="text-xs text-dimmed">Paid</span>
+                                    <span class="font-mono tabular-nums font-medium" :class="GROUP_TEXT_CLASSES[key]">₱{{ currency(order.amount_paid) }}</span>
+                                </span>
+                                <span v-else-if="key === 'cancelled'" class="flex items-baseline gap-1">
+                                    <span class="text-xs text-dimmed">Total</span>
+                                    <span class="font-mono tabular-nums text-muted">₱{{ currency(Number(order.total_amount)) }}</span>
+                                </span>
+                            </template>
+                        </ListCard>
+                    </div>
+                </div>
+            </template>
+        </template>
 
         <BaseModal
             v-model:open="isDetailOpen"
@@ -196,7 +226,6 @@
 import { customerOrderService } from '@/components/api/customer/CustomerOrderService'
 import APIError from '@/components/api/user/APIError'
 import type { Invoice } from '@/types/Invoice'
-import type { TableColumn } from '@nuxt/ui'
 
 definePageMeta({ layout: 'customer', middleware: 'customer-auth' })
 
@@ -223,6 +252,8 @@ interface Order {
     total_amount: string
     amount_paid: number
     amount_due: number
+    due_date: string | null
+    is_overdue: boolean | null
     is_editable: boolean
     is_cancellable: boolean
     pasabuy_schedule: { uuid: string; title: string; status: 'open' | 'closed' | 'finished' } | null
@@ -230,81 +261,182 @@ interface Order {
     created_at: string
 }
 
-const { user } = useAuth()
+type PaymentGroupKey = 'overdue' | 'unpaid' | 'awaiting' | 'paid' | 'cancelled'
+
+const GROUP_ORDER: PaymentGroupKey[] = ['overdue', 'unpaid', 'awaiting', 'paid', 'cancelled']
+
+const GROUP_META: Record<PaymentGroupKey, { label: string; icon: string }> = {
+    overdue: { label: 'Overdue', icon: 'i-lucide-alarm-clock' },
+    unpaid: { label: 'Unpaid', icon: 'i-lucide-wallet' },
+    awaiting: { label: 'Awaiting confirmation', icon: 'i-lucide-clock' },
+    paid: { label: 'Paid', icon: 'i-lucide-circle-check' },
+    cancelled: { label: 'Cancelled', icon: 'i-lucide-ban' }
+}
+
+// Literal Tailwind classes per group (written out per-key, not built from a template string,
+// so Tailwind's scanner can see them). Color now lives only on the section total figure and
+// each row's own amount, not repeated across an icon tile + label + count + total.
+const GROUP_TEXT_CLASSES: Record<PaymentGroupKey, string> = {
+    overdue: 'text-error',
+    unpaid: 'text-warning',
+    awaiting: 'text-muted',
+    paid: 'text-success',
+    cancelled: 'text-muted'
+}
+
+const DEFAULT_EXPANDED: Record<PaymentGroupKey, boolean> = {
+    overdue: true,
+    unpaid: true,
+    awaiting: false,
+    paid: false,
+    cancelled: false
+}
+
+type LifecycleStatusFilter = 'all' | 'pending' | 'confirmed' | 'cancelled'
+
 const toast = useToast()
 const orders = ref<Order[]>([])
 const loading = ref(false)
-const page = ref(1)
-const perPage = 15
-const total = ref(0)
-const search = ref('')
-const statusFilter = ref<'all' | 'pending' | 'confirmed' | 'cancelled'>('all')
+const ordersError = ref('')
+const expandedGroups = reactive<Record<PaymentGroupKey, boolean>>({ ...DEFAULT_EXPANDED })
+const statusFilter = ref<LifecycleStatusFilter>('all')
+const isStatusFilterOpen = ref(false)
 
-const columns: TableColumn<Order>[] = [
-    { id: 'schedule', header: 'Pasabuy' },
-    { accessorKey: 'total_amount', header: 'Total' },
-    { accessorKey: 'status', header: 'Status' },
-    { accessorKey: 'payment_status', header: 'Payment' },
-    { accessorKey: 'delivery_status', header: 'Delivery' },
-    { accessorKey: 'created_at', header: 'Date' },
-    { id: 'actions', header: '' }
-]
-
-function orderDisplayAmount(order: Order) {
-    return order.pasabuy_schedule?.status === 'finished' ? order.amount_due : order.total_amount
+function selectStatusFilter(value: LifecycleStatusFilter) {
+    statusFilter.value = value
+    isStatusFilterOpen.value = false
 }
 
-const statusChips: { label: string; value: typeof statusFilter.value; dotClass?: string }[] = [
+const currentYear = new Date().getFullYear()
+const year = ref(currentYear)
+
+const statusFilterItems: { label: string; value: LifecycleStatusFilter }[] = [
     { label: 'All', value: 'all' },
-    { label: customerOrderStatusLabel.pending, value: 'pending', dotClass: 'bg-warning' },
-    { label: customerOrderStatusLabel.confirmed, value: 'confirmed', dotClass: 'bg-success' },
-    { label: customerOrderStatusLabel.cancelled, value: 'cancelled', dotClass: 'bg-error' }
+    { label: customerOrderStatusLabel.pending, value: 'pending' },
+    { label: customerOrderStatusLabel.confirmed, value: 'confirmed' },
+    { label: customerOrderStatusLabel.cancelled, value: 'cancelled' }
 ]
 
-const attentionOrder = computed(() => {
-    const candidates = orders.value.filter((o) => o.pasabuy_schedule?.status === 'finished' && o.amount_due > 0)
-    if (candidates.length === 0) return null
-    return candidates.reduce((highest, order) => (order.amount_due > highest.amount_due ? order : highest))
+function currency(value: number) {
+    return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function bucketFor(order: Order): PaymentGroupKey {
+    if (order.status === 'cancelled') return 'cancelled'
+    if (order.status === 'pending') return 'awaiting'
+    if (order.is_overdue) return 'overdue'
+    if (order.payment_status !== 'paid') return 'unpaid'
+    return 'paid'
+}
+
+function bucketize(list: Order[]) {
+    const buckets: Record<PaymentGroupKey, Order[]> = { overdue: [], unpaid: [], awaiting: [], paid: [], cancelled: [] }
+    for (const order of list) buckets[bucketFor(order)].push(order)
+    return buckets
+}
+
+function totalFor(list: Order[], key: PaymentGroupKey): number | null {
+    if (key === 'awaiting' || key === 'cancelled') return null
+    if (key === 'paid') return list.reduce((sum, order) => sum + Number(order.amount_paid), 0)
+    return list.reduce((sum, order) => sum + Number(order.amount_due), 0)
+}
+
+/**
+ * The visible list respects the lifecycle-status filter; the KPI balance and the "settle"
+ * shortcut do not — a customer filtering to "Pending" or "Cancelled" must still see their true
+ * year-to-date balance, not a figure that reads "All settled" just because the current filter
+ * happens to hide every unpaid order.
+ */
+const scopedOrders = computed(() => {
+    if (statusFilter.value === 'all') return orders.value.filter((order) => order.status !== 'cancelled')
+    return orders.value.filter((order) => order.status === statusFilter.value)
 })
 
-const hasActiveFilters = computed(() => statusFilter.value !== 'all' || !!search.value)
+const groups = computed(() => bucketize(scopedOrders.value))
 
-const emptyStateTitle = computed(() => (hasActiveFilters.value ? 'No orders match this filter' : 'No orders yet'))
+const allGroups = computed(() => bucketize(orders.value.filter((order) => order.status !== 'cancelled')))
+
+function groupTotal(key: PaymentGroupKey): number | null {
+    return totalFor(groups.value[key], key)
+}
+
+function daysBetween(dateStr: string) {
+    const due = new Date(dateStr)
+    const now = new Date()
+    return Math.floor((now.getTime() - due.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+function groupSubtext(key: PaymentGroupKey, order: Order) {
+    if (key === 'overdue' && order.due_date) {
+        const days = daysBetween(order.due_date)
+        return `${days} day${days === 1 ? '' : 's'} overdue`
+    }
+    if (key === 'unpaid' && order.due_date) {
+        const days = -daysBetween(order.due_date)
+        return days > 0 ? `Due in ${days} day${days === 1 ? '' : 's'}` : `Due ${formatDate(order.due_date)}`
+    }
+    if (key === 'awaiting') return "Seller hasn't confirmed pricing yet"
+    return null
+}
+
+const owedTotal = computed(() => (totalFor(allGroups.value.overdue, 'overdue') ?? 0) + (totalFor(allGroups.value.unpaid, 'unpaid') ?? 0))
+const owedCount = computed(() => allGroups.value.overdue.length + allGroups.value.unpaid.length)
+const paidTotal = computed(() => totalFor(allGroups.value.paid, 'paid') ?? 0)
+
+const owedDelta = computed(() => {
+    const parts: string[] = []
+    if (owedCount.value > 0) parts.push(`${owedCount.value} unsettled`)
+    if (allGroups.value.paid.length > 0) parts.push(`${allGroups.value.paid.length} paid this year`)
+    return parts.length ? parts.join(' · ') : undefined
+})
+
+function byOldestDueDate(a: Order, b: Order) {
+    return new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime()
+}
+
+function byOldestCreated(a: Order, b: Order) {
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+}
+
+const priorityOrder = computed(() => {
+    const candidates = [...allGroups.value.overdue, ...allGroups.value.unpaid]
+    if (!candidates.length) return null
+
+    // A missing due_date is not "infinitely old" — exclude those from the date sort so they can't
+    // silently outrank a genuinely older dated balance, then fall back to oldest-placed among them.
+    const dated = candidates.filter((order) => order.due_date).sort(byOldestDueDate)
+    if (dated.length) return dated[0]
+
+    return [...candidates].sort(byOldestCreated)[0] ?? null
+})
+
+const hasActiveFilters = computed(() => statusFilter.value !== 'all')
+
+const emptyStateTitle = computed(() => (hasActiveFilters.value ? 'No orders match this filter' : `No orders in ${year.value}`))
 
 const emptyStateMessage = computed(() => {
-    if (hasActiveFilters.value) return 'Try a different search term or clear your filters.'
+    if (hasActiveFilters.value) return 'Try a different filter.'
     return "When you join a pasabuy run, your orders and their status will show up here."
 })
 
 async function loadOrders() {
     loading.value = true
+    ordersError.value = ''
     try {
         const response = await customerOrderService.fetchMyOrders({
-            page: page.value,
-            per_page: perPage,
-            status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
-            schedule_title: search.value || undefined
+            per_page: 50,
+            date_from: `${year.value}-01-01`,
+            date_to: `${year.value}-12-31`
         })
         orders.value = response.data.items
-        total.value = response.data.total
     } catch (error) {
-        toast.add({ title: 'Failed to load orders', description: (error as APIError).message, color: 'error' })
+        ordersError.value = (error as APIError).message
     } finally {
         loading.value = false
     }
 }
 
-watch(page, loadOrders)
-
-watch(statusFilter, () => {
-    page.value = 1
-    loadOrders()
-})
-
-useSearchDebounce(search, () => {
-    page.value = 1
-    loadOrders()
-})
+watch(year, loadOrders)
 
 const isDetailOpen = ref(false)
 const selectedOrder = ref<Order | null>(null)

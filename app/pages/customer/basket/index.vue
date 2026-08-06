@@ -25,22 +25,29 @@
         <template v-else>
             <div class="divide-y divide-default rounded-xl border border-default bg-elevated/50 px-4">
                 <div v-for="item in items" :key="item.uuid" class="flex items-center gap-4 py-3 first:pt-4 last:pb-4">
-                    <img
-                        v-if="item.product_image_url && !imageLoadFailed[item.uuid]"
-                        :src="item.product_image_url"
-                        loading="lazy"
-                        class="size-12 shrink-0 rounded-lg object-cover"
-                        alt=""
-                        @error="imageLoadFailed[item.uuid] = true"
+                    <button
+                        type="button"
+                        class="flex min-w-0 flex-1 items-center gap-4 text-left"
+                        :aria-label="`View ${item.product_name}`"
+                        @click="viewItem(item)"
                     >
-                    <div v-else class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-elevated text-dimmed">
-                        <UIcon name="i-lucide-image" class="size-5" />
-                    </div>
+                        <img
+                            v-if="item.product_image_url && !imageLoadFailed[item.uuid]"
+                            :src="item.product_image_url"
+                            loading="lazy"
+                            class="size-12 shrink-0 rounded-lg object-cover"
+                            alt=""
+                            @error="imageLoadFailed[item.uuid] = true"
+                        >
+                        <div v-else class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-elevated text-dimmed">
+                            <UIcon name="i-lucide-image" class="size-5" />
+                        </div>
 
-                    <div class="min-w-0 flex-1">
-                        <p class="truncate font-medium text-highlighted">{{ item.product_name }}</p>
-                        <p class="font-mono tabular-nums text-sm font-medium text-highlighted">₱{{ item.subtotal.toFixed(2) }}</p>
-                    </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate font-medium text-highlighted">{{ item.product_name }}</p>
+                            <p class="font-mono tabular-nums text-sm font-medium text-highlighted">₱{{ item.subtotal.toFixed(2) }}</p>
+                        </div>
+                    </button>
 
                     <div class="flex shrink-0 items-center gap-2">
                         <BaseButton
@@ -115,6 +122,55 @@
                 </template>
             </div>
         </template>
+
+        <BaseModal
+            :open="isViewOpen"
+            :title="viewedItem?.product_name"
+            view-only
+            @update:open="isViewOpen = $event"
+        >
+            <div v-if="viewedItem" class="space-y-4">
+                <img
+                    v-if="viewedItem.product_image_url && !imageLoadFailed[viewedItem.uuid]"
+                    :src="viewedItem.product_image_url"
+                    class="max-h-64 w-full rounded-lg bg-elevated object-contain"
+                    :alt="viewedItem.product_name"
+                    @error="imageLoadFailed[viewedItem.uuid] = true"
+                >
+                <div v-else class="flex h-40 items-center justify-center rounded-lg bg-elevated text-dimmed">
+                    <UIcon name="i-lucide-image-off" class="size-8" />
+                </div>
+
+                <p class="font-mono tabular-nums text-lg font-semibold text-highlighted">
+                    ₱{{ viewedItem.price }} <span class="text-xs font-normal text-dimmed">each</span>
+                </p>
+
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <BaseButton
+                            icon="i-lucide-minus"
+                            size="xs"
+                            color="neutral"
+                            variant="soft"
+                            class="min-h-11 min-w-11"
+                            :aria-label="`Decrease quantity for ${viewedItem.product_name}`"
+                            @click="onDecrement(viewedItem)"
+                        />
+                        <span class="w-6 text-center font-mono tabular-nums font-medium">{{ viewedItem.quantity }}</span>
+                        <BaseButton
+                            icon="i-lucide-plus"
+                            size="xs"
+                            color="neutral"
+                            variant="soft"
+                            class="min-h-11 min-w-11"
+                            :aria-label="`Increase quantity for ${viewedItem.product_name}`"
+                            @click="onIncrement(viewedItem)"
+                        />
+                    </div>
+                    <p class="font-mono tabular-nums text-lg font-semibold text-highlighted">₱{{ viewedItem.subtotal.toFixed(2) }}</p>
+                </div>
+            </div>
+        </BaseModal>
     </div>
 </template>
 
@@ -135,6 +191,19 @@ const imageLoadFailed = ref<Record<string, boolean>>({})
 const items = computed(() => basket.value?.items ?? [])
 const totalItems = computed(() => basket.value?.total_items ?? 0)
 const totalAmount = computed(() => basket.value?.total_amount ?? 0)
+
+const isViewOpen = ref(false)
+const viewedItemUuid = ref<string | null>(null)
+const viewedItem = computed(() => items.value.find(item => item.uuid === viewedItemUuid.value) ?? null)
+
+function viewItem(item: BasketItem) {
+    viewedItemUuid.value = item.uuid
+    isViewOpen.value = true
+}
+
+watch(viewedItem, (item) => {
+    if (!item) isViewOpen.value = false
+})
 
 async function onIncrement(item: BasketItem) {
     await updateQuantity(item.uuid, item.quantity + 1)
