@@ -51,7 +51,7 @@
             </div>
         </div>
 
-        <div class="md:rounded-2xl md:border md:border-default md:bg-muted md:p-6 md:shadow-sm">
+        <div class="md:p-6">
             <UAlert
                 v-if="notFound"
                 color="error"

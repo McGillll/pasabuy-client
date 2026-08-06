@@ -32,6 +32,15 @@
                     class="w-36 shrink-0 snap-start sm:w-40"
                     @select="emit('select', $event)"
                 />
+
+                <NuxtLink
+                    v-if="hasMore"
+                    :to="`/customer/products/${category.uuid}`"
+                    class="flex aspect-square w-36 shrink-0 snap-start flex-col items-center justify-center gap-1 rounded-xl border border-default bg-elevated/50 text-center text-highlighted transition-colors hover:bg-elevated sm:w-40"
+                >
+                    <UIcon name="i-lucide-circle-chevron-right" class="size-6 text-primary" />
+                    <span class="text-sm font-medium">See more</span>
+                </NuxtLink>
             </div>
 
             <button
@@ -72,6 +81,7 @@ const emit = defineEmits<{
 }>()
 
 const products = ref<Product[]>([])
+const hasMore = ref(false)
 const loading = ref(true)
 const error = ref(false)
 
@@ -81,8 +91,10 @@ watch(products, () => nextTick(updateScroll))
 
 onMounted(async () => {
     try {
-        const result = await publicProductService.fetchCatalog({ category_uuid: props.category.uuid, per_page: 10 })
-        products.value = result.data.items as Product[]
+        const result = await publicProductService.fetchCatalog({ category_uuid: props.category.uuid, per_page: 11 })
+        const items = result.data.items as Product[]
+        hasMore.value = items.length > 10
+        products.value = items.slice(0, 10)
     } catch {
         error.value = true
     } finally {
