@@ -73,7 +73,7 @@
                             </p>
                             <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <BaseFormField label="Threshold amount" name="markup_threshold_amount" description="Splits fixed vs percentage markup" required>
-                                    <BaseInput v-model.number="invoiceState.markup_threshold_amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
+                                    <BaseInput v-model.number="invoiceState.markup_threshold_amount" type="number" currency inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
                                         <template #leading>
                                             <span class="text-sm text-dimmed">₱</span>
                                         </template>
@@ -87,14 +87,14 @@
                                     </BaseInput>
                                 </BaseFormField>
                                 <BaseFormField label="Fixed markup" name="markup_fixed_amount" description="Applied at or below threshold" required>
-                                    <BaseInput v-model.number="invoiceState.markup_fixed_amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
+                                    <BaseInput v-model.number="invoiceState.markup_fixed_amount" type="number" currency inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
                                         <template #leading>
                                             <span class="text-sm text-dimmed">₱</span>
                                         </template>
                                     </BaseInput>
                                 </BaseFormField>
                                 <BaseFormField label="Handling fee" name="handling_fee" description="Flat fee added on every order, on top of markup" required>
-                                    <BaseInput v-model.number="invoiceState.handling_fee" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
+                                    <BaseInput v-model.number="invoiceState.handling_fee" type="number" currency inputmode="decimal" min="0" step="0.01" placeholder="0.00" :disabled="invoiceLoading">
                                         <template #leading>
                                             <span class="text-sm text-dimmed">₱</span>
                                         </template>

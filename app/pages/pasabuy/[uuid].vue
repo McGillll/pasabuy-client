@@ -221,10 +221,10 @@
                                     </BaseFormField>
                                     <div class="grid grid-cols-2 gap-4">
                                         <BaseFormField label="Min price">
-                                            <BaseInput v-model.number="filters.draft.priceMin" type="number" min="0" step="0.01" placeholder="0.00" />
+                            <BaseInput v-model.number="filters.draft.priceMin" type="number" currency min="0" step="0.01" placeholder="0.00" />
                                         </BaseFormField>
                                         <BaseFormField label="Max price">
-                                            <BaseInput v-model.number="filters.draft.priceMax" type="number" min="0" step="0.01" placeholder="0.00" />
+                            <BaseInput v-model.number="filters.draft.priceMax" type="number" currency min="0" step="0.01" placeholder="0.00" />
                                         </BaseFormField>
                                     </div>
                                 </div>

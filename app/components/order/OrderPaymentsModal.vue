@@ -48,7 +48,7 @@
             <form class="space-y-3 border-t border-default pt-4" @submit.prevent="submitPayment">
                 <div class="grid grid-cols-2 gap-3">
                     <BaseFormField label="Amount" required>
-                        <BaseInput v-model.number="paymentForm.amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00">
+                        <BaseInput v-model.number="paymentForm.amount" type="number" currency :max="invoice?.balance_due" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00">
                             <template #leading>
                                 <span class="text-sm text-dimmed">₱</span>
                             </template>

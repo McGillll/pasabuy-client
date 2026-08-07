@@ -127,6 +127,7 @@
                 <BaseInput
                     v-model.number="confirmForm.actual_price"
                     type="number"
+                    currency
                     inputmode="decimal"
                     min="0"
                     step="0.01"

@@ -47,6 +47,7 @@
                             <BaseInput
                                 v-model.number="workspace.confirmForm.actual_price"
                                 type="number"
+                                currency
                                 inputmode="decimal"
                                 min="0"
                                 step="0.01"

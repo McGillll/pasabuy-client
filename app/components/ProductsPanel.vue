@@ -19,8 +19,8 @@
             <div class="hidden sm:grid grid-cols-4 gap-2">
                 <BaseSelect v-model="statusFilter" :items="statusFilterOptions" placeholder="Status" />
                 <BaseSelect v-model="sortByPrice" :items="sortByPriceOptions" placeholder="Sort by price" />
-                <BaseInput v-model.number="priceMin" type="number" min="0" step="0.01" placeholder="0" />
-                <BaseInput v-model.number="priceMax" type="number" min="0" step="0.01" placeholder="1000" />
+                <BaseInput v-model.number="priceMin" type="number" currency min="0" step="0.01" placeholder="0" />
+                <BaseInput v-model.number="priceMax" type="number" currency min="0" step="0.01" placeholder="1000" />
             </div>
         </EntityFilterBar>
 
@@ -35,10 +35,10 @@
                     </BaseFormField>
                     <div class="grid grid-cols-2 gap-4">
                         <BaseFormField label="Min price">
-                            <BaseInput v-model.number="priceMin" type="number" min="0" step="0.01" placeholder="0.00" />
+                            <BaseInput v-model.number="priceMin" type="number" currency min="0" step="0.01" placeholder="0.00" />
                         </BaseFormField>
                         <BaseFormField label="Max price">
-                            <BaseInput v-model.number="priceMax" type="number" min="0" step="0.01" placeholder="0.00" />
+                            <BaseInput v-model.number="priceMax" type="number" currency min="0" step="0.01" placeholder="0.00" />
                         </BaseFormField>
                     </div>
                 </div>
@@ -177,7 +177,7 @@
                                     </BaseHelpTooltip>
                                 </span>
                             </template>
-                            <BaseInput v-model.number="form.default_price" type="number" min="0" step="0.01" placeholder="0.00">
+                            <BaseInput v-model.number="form.default_price" type="number" currency min="0" step="0.01" placeholder="0.00">
                                 <template #leading>
                                     <span class="text-sm text-dimmed">₱</span>
                                 </template>
