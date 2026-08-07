@@ -39,11 +39,14 @@
                         <UBadge v-else-if="workspace.getScheduleProductStatus(row.original.product_uuid) === 'out_of_stock'" color="error" variant="subtle" size="sm">
                             Out of stock
                         </UBadge>
+                        <UBadge v-if="row.original.price_confirmed_at" color="success" variant="subtle" size="sm">
+                            Confirmed
+                        </UBadge>
                     </div>
                     <p class="text-sm text-muted">{{ row.original.category_name ?? '-' }}</p>
                 </template>
                 <template #default_price-cell="{ row }">
-                    <BaseNumber :value="row.original.default_price" prefix="₱" class="font-mono tabular-nums" />
+                    <BaseNumber :value="row.original.unit_price" prefix="₱" class="font-mono tabular-nums" />
                 </template>
                 <template #total_quantity-cell="{ row }">
                     <BaseNumber :value="workspace.getDisplayQuantity(row.original)" />
@@ -67,16 +70,21 @@
                             {{ item.category_name ?? '-' }}
                         </template>
                         <template #meta>
-                            <span class="text-muted"><BaseNumber :value="item.default_price" prefix="₱" class="font-mono tabular-nums" /> × <BaseNumber :value="workspace.getDisplayQuantity(item)" /></span>
+                            <span class="text-muted"><BaseNumber :value="item.unit_price" prefix="₱" class="font-mono tabular-nums" /> × <BaseNumber :value="workspace.getDisplayQuantity(item)" /></span>
                             <span v-if="workspace.getScheduleProductStatus(item.product_uuid) === 'out_of_stock'" class="font-medium text-error">
                                 Out of stock
                             </span>
                             <BaseNumber v-else :value="item.subtotal" prefix="₱" class="font-medium text-highlighted font-mono tabular-nums" />
                         </template>
-                        <template v-if="workspace.getScheduleProductStatus(item.product_uuid) === 'b1t1'" #status>
-                            <UBadge color="warning" variant="subtle" size="sm">
-                                B1T1
-                            </UBadge>
+                        <template v-if="workspace.getScheduleProductStatus(item.product_uuid) === 'b1t1' || item.price_confirmed_at" #status>
+                            <div class="flex flex-wrap items-center gap-1">
+                                <UBadge v-if="workspace.getScheduleProductStatus(item.product_uuid) === 'b1t1'" color="warning" variant="subtle" size="sm">
+                                    B1T1
+                                </UBadge>
+                                <UBadge v-if="item.price_confirmed_at" color="success" variant="subtle" size="sm">
+                                    Confirmed
+                                </UBadge>
+                            </div>
                         </template>
                     </ListCard>
                 </template>

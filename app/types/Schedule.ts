@@ -37,9 +37,13 @@ export interface ScheduleSummaryItem {
     product_uuid: string | null
     product_name: string
     category_name: string | null
-    default_price: string
+    default_price: string | number
+    unit_price: string | number
+    actual_price: string | number | null
+    price_confirmed_at: string | null
+    product_status: 'none' | 'b1t1' | 'out_of_stock'
     total_quantity: number
-    subtotal: string
+    subtotal: string | number
 }
 
 export interface ChecklistItem {
