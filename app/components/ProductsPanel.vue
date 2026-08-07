@@ -85,7 +85,7 @@
                         <span class="text-sm text-muted">{{ row.original.category?.name ?? '-' }}</span>
                     </template>
                     <template #default_price-cell="{ row }">
-                        <span class="font-medium text-highlighted font-mono tabular-nums">₱{{ row.original.default_price }}</span>
+                        <BaseNumber :value="row.original.default_price" prefix="₱" class="font-mono font-medium tabular-nums text-highlighted" />
                     </template>
                     <template #status-cell="{ row }">
                         <span class="text-sm text-dimmed">{{ row.original.is_active ? 'Active' : 'Inactive' }}</span>
@@ -417,7 +417,7 @@ function openEditModal(product: Product) {
     form.name = product.name
     form.description = product.description ?? ''
     form.is_active = product.is_active
-    form.default_price = Number(product.default_price)
+    form.default_price = toNumber(product.default_price)
     form.default_product_status = product.default_product_status
     form.category_id = product.category?.uuid ?? null
     form.image = null

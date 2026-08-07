@@ -177,7 +177,7 @@ const attentionQueueItems = computed(() =>
         subtitleLabel: order.scheduleTitle,
         subtitleHref: `/admin/schedules/${order.scheduleUuid}`,
         timestamp: new Date(order.created_at).toLocaleDateString(),
-        amount: `₱${order.total_amount}`,
+        amount: order.total_amount,
         menuItems: pendingOrderActions(order)
     }))
 )
@@ -222,14 +222,16 @@ const topProductItems = computed(() => {
 })
 
 const topBuyerItems = computed(() => {
-    const topSpend = Number(topBuyers.value[0]?.total_spend ?? 0)
+    const topSpend = toNumber(topBuyers.value[0]?.total_spend ?? 0)
     return topBuyers.value.map((buyer, index) => ({
         productId: buyer.uuid,
         rank: index + 1,
         name: buyer.name,
-        progressPct: topSpend > 0 ? (Number(buyer.total_spend) / topSpend) * 100 : 0,
-        qty: `₱${buyer.total_spend}`,
-        unit: `${buyer.order_count} orders`
+        progressPct: topSpend > 0 ? (toNumber(buyer.total_spend) / topSpend) * 100 : 0,
+        qty: buyer.total_spend,
+        qtyPrefix: '₱',
+        unitValue: buyer.order_count,
+        unitLabel: 'orders'
     }))
 })
 

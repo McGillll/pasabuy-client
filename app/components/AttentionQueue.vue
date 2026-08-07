@@ -15,7 +15,7 @@
                     </div>
                 </div>
                 <UBadge v-if="count && count > 0" color="warning" variant="subtle">
-                    {{ count }} pending
+                    <BaseNumber :value="count" :maximum-fraction-digits="0" /> pending
                 </UBadge>
             </div>
         </template>
@@ -67,7 +67,7 @@
 
         <template v-if="viewAllHref" #footer>
             <NuxtLink :to="viewAllHref" class="text-primary text-sm font-medium hover:underline">
-                {{ viewAllLabel }} ({{ count ?? items.length }})
+                {{ viewAllLabel }} (<BaseNumber :value="count ?? items.length" :maximum-fraction-digits="0" />)
             </NuxtLink>
         </template>
     </BaseCard>
@@ -82,7 +82,7 @@ interface AttentionQueueItem {
     subtitleLabel: string
     subtitleHref?: string
     timestamp: string
-    amount: string
+    amount: string | number
     menuItems: DropdownMenuItem[]
 }
 

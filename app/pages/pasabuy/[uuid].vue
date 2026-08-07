@@ -100,7 +100,7 @@
 
                     <template #footer>
                         <div class="flex items-center justify-between gap-3">
-                            <p class="font-semibold text-highlighted">Total: <span class="font-mono tabular-nums">₱{{ Number(myOrder.total_amount).toFixed(2) }}</span></p>
+                            <p class="font-semibold text-highlighted">Total: <BaseNumber :value="myOrder.total_amount" prefix="₱" class="font-mono tabular-nums" /></p>
                             <div class="flex items-center gap-2">
                                 <BaseButton v-if="myOrder.is_editable" variant="soft" icon="i-lucide-pencil" @click="startEditOrder">
                                     Edit order
@@ -178,7 +178,7 @@
                                 @click="isFiltersOpen = true"
                             >
                                 Filters
-                                <UBadge v-if="activeFilterCount" color="neutral" variant="subtle" size="sm">{{ activeFilterCount }}</UBadge>
+                                <UBadge v-if="activeFilterCount" color="neutral" variant="subtle" size="sm"><BaseNumber :value="activeFilterCount" :maximum-fraction-digits="0" /></UBadge>
                             </BaseButton>
                         </div>
                         <div v-if="showFilters" class="hidden sm:grid grid-cols-4 gap-2">
@@ -304,7 +304,7 @@
                         </div>
 
                         <div v-if="filteredProducts.length > 0" class="flex flex-col items-center gap-3 pt-2">
-                            <p class="text-sm text-muted">Showing {{ visibleProducts.length }} of {{ filteredProducts.length }} items</p>
+                            <p class="text-sm text-muted">Showing <BaseNumber :value="visibleProducts.length" :maximum-fraction-digits="0" /> of <BaseNumber :value="filteredProducts.length" :maximum-fraction-digits="0" /> items</p>
                             <BaseButton v-if="hasMoreProducts" color="neutral" variant="outline" @click="loadMoreProducts">
                                 Load more
                             </BaseButton>
@@ -376,7 +376,7 @@
                         variant="subtle"
                         icon="i-lucide-circle-alert"
                         title="Settle your balance to order"
-                        :description="`You have ₱${receivable.toFixed(2)} in unpaid orders. Settle it before placing a new one.`"
+                        :description="`You have ₱${formatNumber(receivable)} in unpaid orders. Settle it before placing a new one.`"
                     >
                         <template #actions>
                             <BaseButton size="xs" color="warning" variant="solid" to="/customer/orders">
@@ -388,8 +388,8 @@
 
                 <template v-else>
                     <UAlert v-if="submitError" color="error" variant="subtle" :title="submitError" class="mb-3" />
-                    <p class="text-xs text-muted">{{ itemCount }} item{{ itemCount === 1 ? '' : 's' }}</p>
-                    <p class="font-mono tabular-nums text-2xl font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
+                    <p class="text-xs text-muted"><BaseNumber :value="itemCount" :maximum-fraction-digits="0" /> item{{ itemCount === 1 ? '' : 's' }}</p>
+                    <BaseNumber :value="total" prefix="₱" class="font-mono text-2xl font-semibold tabular-nums text-highlighted" />
                     <BaseButton
                         block
                         class="mt-3"
@@ -445,7 +445,7 @@
                     <div class="flex items-center justify-between gap-3">
                         <p class="flex items-center gap-1.5 text-sm text-warning">
                             <UIcon name="i-lucide-circle-alert" class="size-4 shrink-0" />
-                            ₱{{ receivable.toFixed(2) }} unpaid. Settle to order again.
+                            <BaseNumber :value="receivable" prefix="₱" class="font-mono tabular-nums" /> unpaid. Settle to order again.
                         </p>
                         <BaseButton size="sm" color="warning" variant="soft" to="/customer/orders" class="shrink-0">
                             View orders
@@ -456,8 +456,8 @@
                 <template v-else>
                     <div class="flex items-center justify-between gap-3">
                         <div>
-                            <p class="text-xs text-muted">{{ itemCount }} item{{ itemCount === 1 ? '' : 's' }}</p>
-                            <p class="font-mono tabular-nums text-lg font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
+                            <p class="text-xs text-muted"><BaseNumber :value="itemCount" :maximum-fraction-digits="0" /> item{{ itemCount === 1 ? '' : 's' }}</p>
+                            <BaseNumber :value="total" prefix="₱" class="font-mono text-lg font-semibold tabular-nums text-highlighted" />
                         </div>
                         <BaseButton
                             size="lg"
@@ -490,7 +490,7 @@
 
                     <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <p class="text-lg font-semibold text-highlighted">
-                            <span class="font-mono tabular-nums">₱{{ resolvedPrice(quickAddProduct) }}</span>
+                            <BaseNumber :value="resolvedPrice(quickAddProduct)" prefix="₱" class="font-mono tabular-nums" />
                             <span class="text-xs font-normal text-dimmed">{{ isPriceConfirmed(quickAddProduct) ? 'confirmed' : 'estimated' }}</span>
                         </p>
                         <UBadge v-if="resolvedStatus(quickAddProduct) === 'b1t1'" color="success" variant="subtle" size="sm" icon="i-lucide-check">
@@ -512,9 +512,12 @@
                             :aria-label="`Quantity for ${displayName(quickAddProduct)}`"
                             @update:model-value="(value: number | null) => setQuantity(quickAddProduct!, value)"
                         />
-                        <p v-if="quantities[quickAddProduct.uuid]" class="font-mono tabular-nums text-lg font-semibold text-highlighted">
-                            ₱{{ (Number(resolvedPrice(quickAddProduct)) * quantities[quickAddProduct.uuid]!).toFixed(2) }}
-                        </p>
+                        <BaseNumber
+                            v-if="quantities[quickAddProduct.uuid]"
+                            :value="toNumber(resolvedPrice(quickAddProduct)) * quantities[quickAddProduct.uuid]!"
+                            prefix="₱"
+                            class="font-mono text-lg font-semibold tabular-nums text-highlighted"
+                        />
                     </div>
                 </div>
             </template>
@@ -559,9 +562,11 @@
 
                             <div class="min-w-0 flex-1">
                                 <p class="truncate font-medium text-highlighted">{{ displayName(product) }}</p>
-                                <p class="font-mono tabular-nums text-sm font-medium text-highlighted">
-                                    ₱{{ (Number(resolvedPrice(product)) * quantities[product.uuid]!).toFixed(2) }}
-                                </p>
+                                <BaseNumber
+                                    :value="toNumber(resolvedPrice(product)) * quantities[product.uuid]!"
+                                    prefix="₱"
+                                    class="font-mono text-sm font-medium tabular-nums text-highlighted"
+                                />
                                 <UBadge v-if="resolvedStatus(product) === 'out_of_stock'" color="error" variant="subtle" size="sm" class="mt-1">
                                     Out of stock
                                 </UBadge>
@@ -582,7 +587,7 @@
                                 :disabled="!schedule?.is_open"
                                 @click="decrement(product)"
                             />
-                            <span class="w-6 text-center font-mono tabular-nums font-medium">{{ quantities[product.uuid] || 0 }}</span>
+                            <BaseNumber :value="quantities[product.uuid] || 0" :maximum-fraction-digits="0" class="w-6 text-center font-medium" />
                             <BaseButton
                                 icon="i-lucide-plus"
                                 size="xs"
@@ -606,7 +611,7 @@
                         variant="subtle"
                         icon="i-lucide-circle-alert"
                         title="Settle your balance to order"
-                        :description="`You have ₱${receivable.toFixed(2)} in unpaid orders. Settle it before placing a new one.`"
+                        :description="`You have ₱${formatNumber(receivable)} in unpaid orders. Settle it before placing a new one.`"
                     >
                         <template #actions>
                             <BaseButton size="xs" color="warning" variant="solid" to="/customer/orders">
@@ -619,7 +624,7 @@
                         <UAlert v-if="submitError" color="error" variant="subtle" :title="submitError" />
                         <div class="flex items-center justify-between">
                             <p class="text-sm text-muted">Total</p>
-                            <p class="font-mono tabular-nums text-lg font-semibold text-highlighted">₱{{ total.toFixed(2) }}</p>
+                            <BaseNumber :value="total" prefix="₱" class="font-mono text-lg font-semibold tabular-nums text-highlighted" />
                         </div>
                         <BaseButton
                             block
@@ -772,7 +777,7 @@ const isLoggedIn = computed(() => !!user.value)
 const isApproved = computed(() => user.value?.is_approved === true)
 
 const isValidToOrder = computed(() => user.value?.is_valid_to_order !== false)
-const receivable = computed(() => Number(user.value?.receivable ?? 0))
+const receivable = computed(() => toNumber(user.value?.receivable ?? 0))
 
 /**
  * Editing an already-placed order is always allowed regardless of receivable
@@ -869,7 +874,7 @@ useSearchDebounce(productSearch, fetchSuggestions, 500)
 const searchSuggestionItems = computed<ProductSuggestionItem[]>(() =>
     suggestionProducts.value.map((product) => ({
         label: displayName(product),
-        description: `₱${resolvedPrice(product)}${product.category ? ` · ${product.category.name}` : ''}`,
+        description: `₱${formatNumber(resolvedPrice(product))}${product.category ? ` · ${product.category.name}` : ''}`,
         product
     }))
 )
@@ -955,7 +960,7 @@ function matchesCategory(product: Product): boolean {
 
 function matchesAdvancedFilters(product: Product, status: string, min: number | null, max: number | null): boolean {
     if (status !== 'all' && resolvedStatus(product) !== status) return false
-    const price = Number(resolvedPrice(product))
+    const price = toNumber(resolvedPrice(product))
     if (min !== null && price < min) return false
     if (max !== null && price > max) return false
     return true
@@ -969,7 +974,7 @@ const filteredProducts = computed(() => {
     if (filters.applied.sortByPrice === 'none') return items
 
     return [...items].sort((a, b) => {
-        const diff = Number(resolvedPrice(a)) - Number(resolvedPrice(b))
+        const diff = toNumber(resolvedPrice(a)) - toNumber(resolvedPrice(b))
         return filters.applied.sortByPrice === 'asc' ? diff : -diff
     })
 })
@@ -1003,7 +1008,7 @@ const cartItems = computed(() => Object.values(knownProducts.value).filter((prod
 const total = computed(() => {
     return Object.values(knownProducts.value).reduce((sum, product) => {
         const qty = quantities.value[product.uuid] || 0
-        return sum + qty * Number(resolvedPrice(product))
+        return sum + qty * toNumber(resolvedPrice(product))
     }, 0)
 })
 
@@ -1045,7 +1050,7 @@ async function applyBasketSeed() {
             skipped++
             continue
         }
-        quantities.value[product.uuid] = (quantities.value[product.uuid] || 0) + item.quantity
+        quantities.value[product.uuid] = (quantities.value[product.uuid] || 0) + toNumber(item.quantity)
         added++
     }
 

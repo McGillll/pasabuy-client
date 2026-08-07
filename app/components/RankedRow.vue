@@ -4,7 +4,7 @@
             class="w-5 text-center text-xs font-bold"
             :class="rank === 1 ? 'text-primary' : 'text-dimmed'"
         >
-            {{ rank }}
+            <BaseNumber :value="rank" :maximum-fraction-digits="0" />
         </span>
 
         <div class="min-w-0 flex-1">
@@ -18,8 +18,15 @@
         </div>
 
         <div class="text-right shrink-0">
-            <p class="text-sm font-semibold font-mono tabular-nums">{{ qty }}</p>
-            <p v-if="unit" class="text-[10px] text-dimmed">{{ unit }}</p>
+            <BaseNumber
+                class="text-sm font-semibold"
+                :class="qtyPrefix ? 'font-mono tabular-nums' : ''"
+                :value="qty"
+                :prefix="qtyPrefix"
+            />
+            <p v-if="unitValue !== undefined || unitLabel" class="text-[10px] text-dimmed">
+                <BaseNumber v-if="unitValue !== undefined" :value="unitValue" :maximum-fraction-digits="0" />{{ unitLabel ? ` ${unitLabel}` : '' }}
+            </p>
         </div>
     </div>
 </template>
@@ -30,6 +37,8 @@ defineProps<{
     name: string
     progressPct: number
     qty: string | number
-    unit?: string
+    qtyPrefix?: string
+    unitValue?: string | number
+    unitLabel?: string
 }>()
 </script>

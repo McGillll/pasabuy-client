@@ -52,20 +52,20 @@
                                 <p class="font-medium text-highlighted">{{ item.product_name }}</p>
                                 <UBadge v-if="item.bonus_quantity > 0" color="success" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
                             </div>
-                            <p class="mt-0.5 font-mono text-sm tabular-nums text-muted">₱{{ item.actual_price ?? item.estimated_price }} × {{ workspace.getLineQuantity(item) }}</p>
+                            <p class="mt-0.5 text-sm text-muted"><BaseNumber :value="item.actual_price ?? item.estimated_price" prefix="₱" class="font-mono tabular-nums" /> × <BaseNumber :value="workspace.getLineQuantity(item)" /></p>
                             <p
                                 v-if="item.bonus_quantity > 0"
                                 class="mt-1.5 inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success"
                             >
                                 <UIcon name="i-lucide-sparkles" class="size-3" />
-                                +{{ item.bonus_quantity }} free
+                                +<BaseNumber :value="item.bonus_quantity" /> free
                             </p>
                         </div>
                         <div class="flex shrink-0 items-center gap-2 pt-0.5">
                             <UBadge v-if="item.is_out_of_stock" color="error" variant="subtle" size="sm">
                                 Out of stock
                             </UBadge>
-                            <p v-else class="font-mono font-medium tabular-nums text-highlighted">₱{{ workspace.getLineSubtotal(item).toFixed(2) }}</p>
+                            <BaseNumber v-else :value="workspace.getLineSubtotal(item)" prefix="₱" class="font-mono font-medium tabular-nums text-highlighted" />
                             <BaseButton
                                 v-if="workspace.canEditOrderItems && workspace.findEditableItem(item.product_uuid)"
                                 icon="i-lucide-pencil"
@@ -120,7 +120,7 @@
 
             <div class="flex items-center justify-between border-t border-default pt-3 font-medium text-highlighted">
                 <span>Total</span>
-                <span class="font-mono tabular-nums">₱{{ workspace.draftOrderTotal !== null ? workspace.draftOrderTotal.toFixed(2) : workspace.viewingOrder.total_amount }}</span>
+                <BaseNumber :value="workspace.draftOrderTotal ?? workspace.viewingOrder.total_amount" prefix="₱" class="font-mono tabular-nums" />
             </div>
 
             <div v-if="workspace.canEditOrderItems" class="flex justify-end gap-2">

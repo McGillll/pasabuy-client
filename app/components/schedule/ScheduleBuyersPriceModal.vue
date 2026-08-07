@@ -7,10 +7,10 @@
         <div class="space-y-4">
             <BaseTable :data="workspace.buyers" :columns="buyerColumns" :loading="workspace.buyersLoading">
                 <template #quantity-cell="{ row }">
-                    <span class="font-mono tabular-nums">{{ row.original.quantity }}</span>
+                    <BaseNumber :value="row.original.quantity" />
                 </template>
                 <template #subtotal-cell="{ row }">
-                    <span class="font-mono tabular-nums">₱{{ row.original.subtotal }}</span>
+                    <BaseNumber :value="row.original.subtotal" prefix="₱" class="font-mono tabular-nums" />
                 </template>
                 <template #status-cell="{ row }">
                     <OrderStatusBadge :status="row.original.status" />
@@ -21,8 +21,8 @@
                             <p class="font-medium text-highlighted">{{ buyer.customer_name }}</p>
                         </template>
                         <template #meta>
-                            <span class="text-muted font-mono tabular-nums">Qty {{ buyer.quantity }}</span>
-                            <span class="font-medium text-highlighted font-mono tabular-nums">₱{{ buyer.subtotal }}</span>
+                            <span class="text-muted">Qty <BaseNumber :value="buyer.quantity" /></span>
+                            <BaseNumber :value="buyer.subtotal" prefix="₱" class="font-medium text-highlighted font-mono tabular-nums" />
                         </template>
                         <template #status>
                             <OrderStatusBadge :status="buyer.status" />

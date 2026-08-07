@@ -38,8 +38,8 @@
                             <span class="text-xs text-muted truncate">{{ stage.label }}</span>
                         </div>
                         <div class="flex items-baseline gap-1">
-                            <span class="text-sm font-semibold text-highlighted font-mono tabular-nums">{{ stage.count }}</span>
-                            <span class="text-xs text-dimmed">{{ stage.pct }}%</span>
+                            <BaseNumber :value="stage.count" :maximum-fraction-digits="0" class="text-sm font-semibold text-highlighted" />
+                            <BaseNumber :value="stage.pct" suffix="%" :maximum-fraction-digits="0" class="text-xs text-dimmed" />
                         </div>
                     </div>
                 </div>

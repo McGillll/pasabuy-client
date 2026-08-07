@@ -60,14 +60,14 @@
                 <p class="text-sm text-muted">{{ row.original.category_name ?? '-' }}</p>
             </template>
             <template #quantity-cell="{ row }">
-                <span class="font-mono text-lg font-bold tabular-nums" :class="row.original.is_checked ? 'text-muted' : 'text-highlighted'">{{ row.original.quantity }}x</span>
+                    <BaseNumber :value="row.original.quantity" suffix="x" class="text-lg font-bold" :class="row.original.is_checked ? 'text-muted' : 'text-highlighted'" />
             </template>
             <template #adjustment-cell="{ row }">
                 <UBadge v-if="row.original.additional_quantity > 0" color="warning" variant="subtle" size="sm">
-                    +{{ row.original.additional_quantity }} more
+                    +<BaseNumber :value="row.original.additional_quantity" /> more
                 </UBadge>
                 <UBadge v-if="row.original.return_quantity > 0" color="error" variant="subtle" size="sm">
-                    return {{ row.original.return_quantity }}
+                    return <BaseNumber :value="row.original.return_quantity" />
                 </UBadge>
             </template>
             <template #list-item="{ item }">
@@ -86,7 +86,7 @@
                     <template #title>
                         <div class="flex w-full items-center justify-between gap-2">
                             <p class="font-medium text-highlighted" :class="{ 'line-through text-muted': item.is_checked }">{{ item.product_name }}</p>
-                            <p class="shrink-0 font-mono text-xl font-bold tabular-nums" :class="item.is_checked ? 'text-muted' : 'text-highlighted'">{{ item.quantity }}x</p>
+                            <BaseNumber :value="item.quantity" suffix="x" class="shrink-0 text-xl font-bold" :class="item.is_checked ? 'text-muted' : 'text-highlighted'" />
                         </div>
                     </template>
                     <template #subtitle>
@@ -94,10 +94,10 @@
                     </template>
                     <template v-if="item.additional_quantity > 0 || item.return_quantity > 0" #status>
                         <UBadge v-if="item.additional_quantity > 0" color="warning" variant="subtle" size="sm">
-                            +{{ item.additional_quantity }} more
+                            +<BaseNumber :value="item.additional_quantity" /> more
                         </UBadge>
                         <UBadge v-if="item.return_quantity > 0" color="error" variant="subtle" size="sm">
-                            return {{ item.return_quantity }}
+                            return <BaseNumber :value="item.return_quantity" />
                         </UBadge>
                     </template>
                 </ListCard>

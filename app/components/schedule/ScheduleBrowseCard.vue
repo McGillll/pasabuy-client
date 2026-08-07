@@ -24,7 +24,8 @@
         </div>
 
         <UBadge color="neutral" variant="subtle" size="sm">
-            {{ schedule.product_count ?? 0 }} {{ schedule.product_count === 1 ? 'product' : 'products' }}
+            <BaseNumber :value="schedule.product_count ?? 0" :maximum-fraction-digits="0" />
+            {{ schedule.product_count === 1 ? 'product' : 'products' }}
         </UBadge>
     </UCard>
 </template>

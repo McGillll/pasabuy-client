@@ -142,11 +142,11 @@
                             <div v-if="invoiceState.is_active" class="mt-4 rounded-lg bg-elevated/50 p-3">
                                 <p class="text-sm font-medium text-highlighted">Worked example</p>
                                 <p class="mt-1 text-sm text-muted">
-                                    Say an order totals ₱1,000 and the customer has already paid ₱600, leaving ₱400 unpaid past the due date.
+                                    Say an order totals <BaseNumber :value="1000" prefix="₱" class="font-mono tabular-nums" /> and the customer has already paid <BaseNumber :value="600" prefix="₱" class="font-mono tabular-nums" />, leaving <BaseNumber :value="400" prefix="₱" class="font-mono tabular-nums" /> unpaid past the due date.
                                 </p>
                                 <ul class="mt-2 space-y-1 text-sm text-muted">
-                                    <li><span class="font-medium text-highlighted">Outstanding balance:</span> interest applies only to the ₱400 still owed, so it shrinks as the customer pays more.</li>
-                                    <li><span class="font-medium text-highlighted">Full invoice total:</span> interest applies to the original ₱1,000 regardless of the ₱600 already paid.</li>
+                                    <li><span class="font-medium text-highlighted">Outstanding balance:</span> interest applies only to the <BaseNumber :value="400" prefix="₱" class="font-mono tabular-nums" /> still owed, so it shrinks as the customer pays more.</li>
+                                    <li><span class="font-medium text-highlighted">Full invoice total:</span> interest applies to the original <BaseNumber :value="1000" prefix="₱" class="font-mono tabular-nums" /> regardless of the <BaseNumber :value="600" prefix="₱" class="font-mono tabular-nums" /> already paid.</li>
                                 </ul>
                             </div>
                         </UCard>
@@ -324,11 +324,11 @@ async function loadInvoiceSettings() {
     try {
         const response = await invoiceSettingService.fetchInvoiceSettings()
         const data = response.data
-        invoiceState.markup_threshold_amount = Number(data.markup_threshold_amount)
-        invoiceState.markup_percentage = Number(data.markup_percentage)
-        invoiceState.markup_fixed_amount = Number(data.markup_fixed_amount)
-        invoiceState.handling_fee = Number(data.handling_fee)
-        invoiceState.interest_rate = Number(data.interest_rate)
+        invoiceState.markup_threshold_amount = toNumber(data.markup_threshold_amount)
+        invoiceState.markup_percentage = toNumber(data.markup_percentage)
+        invoiceState.markup_fixed_amount = toNumber(data.markup_fixed_amount)
+        invoiceState.handling_fee = toNumber(data.handling_fee)
+        invoiceState.interest_rate = toNumber(data.interest_rate)
         invoiceState.interest_period = data.interest_period
         invoiceState.interest_base = data.interest_base
         invoiceState.is_active = data.is_active

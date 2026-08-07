@@ -23,7 +23,7 @@
                 <div class="flex items-start justify-between gap-4">
                     <div class="min-w-0 flex-1">
                         <h1 class="text-lg font-semibold leading-tight text-highlighted">Shopping checklist</h1>
-                        <p class="mt-1 text-sm text-muted">{{ checkedCount }} of {{ totalCount }} picked up</p>
+                        <p class="mt-1 text-sm text-muted"><BaseNumber :value="checkedCount" /> of <BaseNumber :value="totalCount" /> picked up</p>
                     </div>
                     <BaseProgressRing :value="checkedCount" :max="totalCount" class="mt-0.5 shrink-0" />
                 </div>
@@ -61,15 +61,15 @@
                                     <UBadge v-if="item.category_name" color="neutral" variant="subtle" size="sm" class="shrink-0">
                                         {{ item.category_name }}
                                     </UBadge>
-                                    <p class="shrink-0 font-mono text-lg font-bold tabular-nums" :class="item.is_checked ? 'text-muted' : 'text-highlighted'">{{ item.quantity }}x</p>
+                                    <BaseNumber :value="item.quantity" suffix="x" class="shrink-0 text-lg font-bold" :class="item.is_checked ? 'text-muted' : 'text-highlighted'" />
                                 </div>
                             </template>
                             <template v-if="item.additional_quantity > 0 || item.return_quantity > 0" #status>
                                 <UBadge v-if="item.additional_quantity > 0" color="warning" variant="subtle" size="sm">
-                                    <span class="font-mono tabular-nums">+{{ item.additional_quantity }}</span> more
+                                    +<BaseNumber :value="item.additional_quantity" /> more
                                 </UBadge>
                                 <UBadge v-if="item.return_quantity > 0" color="error" variant="subtle" size="sm">
-                                    <span class="font-mono tabular-nums">-{{ item.return_quantity }}</span> to return
+                                    -<BaseNumber :value="item.return_quantity" /> to return
                                 </UBadge>
                             </template>
                         </ListCard>

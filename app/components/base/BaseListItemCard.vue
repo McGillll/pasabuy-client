@@ -32,7 +32,9 @@
                 <p v-if="meta" class="truncate text-xs text-muted">{{ meta }}</p>
             </div>
 
-            <span v-if="price" class="shrink-0 font-semibold text-highlighted">{{ price }}</span>
+            <span v-if="$slots.price || price" class="shrink-0 font-semibold text-highlighted">
+                <slot name="price">{{ price }}</slot>
+            </span>
             <UIcon v-else name="i-lucide-chevron-right" class="size-4 shrink-0 text-dimmed" />
         </div>
     </div>

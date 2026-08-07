@@ -9,14 +9,17 @@
             <BaseListItemCard
                 :name="item.name"
                 :meta="metaFor(item)"
-                :price="`₱${item.default_price}`"
                 :image-url="item.image_url"
                 :inactive="!item.is_active"
                 :status-icon="statusIconFor(item)"
                 :status-icon-class="statusIconClassFor(item)"
                 :status-label="statusLabelFor(item)"
                 @click="openSheet(item)"
-            />
+            >
+                <template #price>
+                    <BaseNumber :value="item.default_price" prefix="₱" class="font-mono tabular-nums" />
+                </template>
+            </BaseListItemCard>
         </template>
     </BaseList>
 

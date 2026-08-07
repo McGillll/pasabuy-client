@@ -21,7 +21,7 @@
                             Excludes products marked out of stock. Quantities for B1T1 products are already doubled to reflect the free bonus item.
                         </BaseHelpTooltip>
                     </span>
-                    <span class="font-mono tabular-nums">₱{{ workspace.summaryGrandTotal.toFixed(2) }}</span>
+                    <BaseNumber :value="workspace.summaryGrandTotal" prefix="₱" class="font-mono tabular-nums" />
                 </div>
             </template>
             <BaseTable
@@ -43,16 +43,16 @@
                     <p class="text-sm text-muted">{{ row.original.category_name ?? '-' }}</p>
                 </template>
                 <template #default_price-cell="{ row }">
-                    <span class="font-mono tabular-nums">₱{{ row.original.default_price }}</span>
+                    <BaseNumber :value="row.original.default_price" prefix="₱" class="font-mono tabular-nums" />
                 </template>
                 <template #total_quantity-cell="{ row }">
-                    <span class="font-mono tabular-nums">{{ workspace.getDisplayQuantity(row.original) }}</span>
+                    <BaseNumber :value="workspace.getDisplayQuantity(row.original)" />
                 </template>
                 <template #subtotal-cell="{ row }">
                     <span v-if="workspace.getScheduleProductStatus(row.original.product_uuid) === 'out_of_stock'" class="text-sm font-medium text-error">
                         Out of stock
                     </span>
-                    <span v-else class="font-mono tabular-nums">₱{{ row.original.subtotal }}</span>
+                    <BaseNumber v-else :value="row.original.subtotal" prefix="₱" class="font-mono tabular-nums" />
                 </template>
                 <template #list-item="{ item }">
                     <ListCard
@@ -67,11 +67,11 @@
                             {{ item.category_name ?? '-' }}
                         </template>
                         <template #meta>
-                            <span class="text-muted font-mono tabular-nums">₱{{ item.default_price }} × {{ workspace.getDisplayQuantity(item) }}</span>
+                            <span class="text-muted"><BaseNumber :value="item.default_price" prefix="₱" class="font-mono tabular-nums" /> × <BaseNumber :value="workspace.getDisplayQuantity(item)" /></span>
                             <span v-if="workspace.getScheduleProductStatus(item.product_uuid) === 'out_of_stock'" class="font-medium text-error">
                                 Out of stock
                             </span>
-                            <span v-else class="font-medium text-highlighted font-mono tabular-nums">₱{{ item.subtotal }}</span>
+                            <BaseNumber v-else :value="item.subtotal" prefix="₱" class="font-medium text-highlighted font-mono tabular-nums" />
                         </template>
                         <template v-if="workspace.getScheduleProductStatus(item.product_uuid) === 'b1t1'" #status>
                             <UBadge color="warning" variant="subtle" size="sm">

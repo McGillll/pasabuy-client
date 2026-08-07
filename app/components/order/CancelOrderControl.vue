@@ -18,7 +18,7 @@
 const props = defineProps<{
     loading?: boolean
     orderTitle?: string
-    orderTotal?: string
+    orderTotal?: string | number
 }>()
 
 const emit = defineEmits<{ confirm: [] }>()
@@ -27,7 +27,7 @@ const open = ref(false)
 
 const description = computed(() => {
     if (props.orderTitle && props.orderTotal) {
-        return `Canceling ${props.orderTitle} (₱${props.orderTotal}) cannot be undone.`
+        return `Canceling ${props.orderTitle} (₱${formatNumber(props.orderTotal)}) cannot be undone.`
     }
 
     return 'This cannot be undone.'

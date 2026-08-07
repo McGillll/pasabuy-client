@@ -5,7 +5,7 @@
                 <p class="font-medium text-highlighted">{{ item.product_name }}</p>
                 <UBadge v-if="item.bonus_quantity > 0" color="success" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
             </div>
-            <p class="mt-0.5 text-sm text-muted"><span class="font-mono tabular-nums">₱{{ item.actual_price ?? item.estimated_price }}</span> × <span class="font-mono tabular-nums">{{ item.quantity }}</span></p>
+            <p class="mt-0.5 text-sm text-muted"><BaseNumber :value="item.actual_price ?? item.estimated_price" prefix="₱" class="font-mono tabular-nums" /> × <BaseNumber :value="item.quantity" /></p>
             <UBadge
                 v-if="item.bonus_quantity > 0"
                 color="success"
@@ -14,14 +14,14 @@
                 icon="i-lucide-sparkles"
                 class="mt-1.5"
             >
-                +{{ item.bonus_quantity }} free
+                +<BaseNumber :value="item.bonus_quantity" :maximum-fraction-digits="0" /> free
             </UBadge>
         </div>
         <div class="shrink-0 pt-0.5 text-right">
             <UBadge v-if="item.is_out_of_stock" color="error" variant="subtle" size="sm">
                 Out of stock
             </UBadge>
-            <p v-else class="font-mono tabular-nums font-medium text-highlighted">₱{{ item.subtotal }}</p>
+            <BaseNumber v-else :value="item.subtotal" prefix="₱" class="font-mono font-medium tabular-nums text-highlighted" />
         </div>
     </div>
 </template>

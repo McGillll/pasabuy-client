@@ -256,7 +256,7 @@ async function fetchSuggestions() {
         if (requestId !== suggestionRequestId) return
         suggestionItems.value = (result.data.items as Product[]).map((product) => ({
             label: product.name,
-            description: `₱${product.default_price}${product.category ? ` · ${product.category.name}` : ''}`,
+            description: `₱${formatNumber(product.default_price)}${product.category ? ` · ${product.category.name}` : ''}`,
             product
         })) as InputMenuItem[]
     } catch {

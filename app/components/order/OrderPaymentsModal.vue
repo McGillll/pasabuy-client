@@ -33,7 +33,7 @@
                 <template #list-item="{ item: payment }">
                     <ListCard :actions="paymentActions(payment)">
                         <template #title>
-                            <p class="font-medium text-highlighted">₱{{ payment.amount }}</p>
+                            <BaseNumber :value="payment.amount" prefix="₱" class="font-medium text-highlighted" />
                         </template>
                         <template #subtitle>
                             <span class="capitalize">{{ payment.method.replace('_', ' ') }}</span> · {{ formatDate(payment.paid_at) }}
@@ -220,7 +220,7 @@ function deletePayment(payment: OrderPayment) {
 
     askConfirm({
         title: 'Remove payment?',
-        description: `Remove the ₱${payment.amount} payment recorded on ${formatDate(payment.paid_at)}?`,
+        description: `Remove the ₱${formatNumber(payment.amount)} payment recorded on ${formatDate(payment.paid_at)}?`,
         confirmLabel: 'Remove',
         color: 'error',
         action: async () => {

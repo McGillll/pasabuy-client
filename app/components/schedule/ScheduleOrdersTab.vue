@@ -131,7 +131,7 @@
                 </template>
                 <template #total_amount-cell="{ row }">
                     <div class="flex flex-col items-end">
-                        <span class="font-mono tabular-nums">{{ workspace.orderDisplayAmount(row.original) }}</span>
+                        <BaseNumber :value="workspace.orderDisplayAmount(row.original)" prefix="₱" class="font-mono tabular-nums" />
                         <span v-if="workspace.isFinished" class="text-xs text-muted">Balance due</span>
                     </div>
                 </template>
@@ -206,7 +206,7 @@
                                 {{ order.customer_contact }} · <span class="font-mono text-xs">{{ order.order_no }}</span>
                             </template>
                             <template #meta>
-                                <span class="font-medium text-highlighted font-mono tabular-nums">₱{{ workspace.orderDisplayAmount(order) }}</span>
+                                <BaseNumber :value="workspace.orderDisplayAmount(order)" prefix="₱" class="font-medium text-highlighted font-mono tabular-nums" />
                                 <span v-if="workspace.isFinished" class="text-xs text-muted">Balance due</span>
                             </template>
                             <template #status>

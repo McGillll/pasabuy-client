@@ -14,31 +14,31 @@
                         <p class="text-highlighted">{{ item.product_name }}</p>
                         <UBadge v-if="item.bonus_quantity > 0" color="success" variant="subtle" size="sm" icon="i-lucide-gift">B1T1</UBadge>
                     </div>
-                    <p class="text-xs text-muted"><span class="font-mono tabular-nums">₱{{ item.unit_price.toFixed(2) }} × {{ item.quantity }}</span></p>
+                    <p class="text-xs text-muted"><BaseNumber :value="item.unit_price" prefix="₱" class="font-mono tabular-nums" /> × <BaseNumber :value="item.quantity" /></p>
                     <UBadge v-if="item.bonus_quantity > 0" color="success" variant="subtle" size="sm" icon="i-lucide-sparkles" class="mt-1">
-                        +{{ item.bonus_quantity }} free
+                        +<BaseNumber :value="item.bonus_quantity" :maximum-fraction-digits="0" /> free
                     </UBadge>
                 </div>
-                <span class="shrink-0 font-mono tabular-nums font-medium text-highlighted">₱{{ item.line_total.toFixed(2) }}</span>
+                <BaseNumber :value="item.line_total" prefix="₱" class="shrink-0 font-mono font-medium tabular-nums text-highlighted" />
             </div>
         </div>
 
         <div class="space-y-1 border-t border-default pt-2">
             <div class="flex items-center justify-between">
                 <span class="text-muted">Subtotal</span>
-                <span class="font-mono tabular-nums">₱{{ invoice.subtotal.toFixed(2) }}</span>
+                <BaseNumber :value="invoice.subtotal" prefix="₱" class="font-mono tabular-nums" />
             </div>
             <div class="flex items-center justify-between">
                 <span class="text-muted">Markup</span>
-                <span class="font-mono tabular-nums">₱{{ invoice.markup_amount.toFixed(2) }}</span>
+                <BaseNumber :value="invoice.markup_amount" prefix="₱" class="font-mono tabular-nums" />
             </div>
             <div v-if="invoice.handling_fee > 0" class="flex items-center justify-between">
                 <span class="text-muted">Handling fee</span>
-                <span class="font-mono tabular-nums">₱{{ invoice.handling_fee.toFixed(2) }}</span>
+                <BaseNumber :value="invoice.handling_fee" prefix="₱" class="font-mono tabular-nums" />
             </div>
             <div class="flex items-center justify-between border-t border-dashed border-default pt-1 font-medium text-highlighted">
                 <span>Order total</span>
-                <span class="font-mono tabular-nums">₱{{ invoice.total.toFixed(2) }}</span>
+                <BaseNumber :value="invoice.total" prefix="₱" class="font-mono tabular-nums" />
             </div>
         </div>
 
@@ -65,32 +65,34 @@
                 >
                     <span class="text-muted">{{ line.label }}</span>
                     <span class="flex shrink-0 items-center gap-2">
-                        <span :class="['font-mono tabular-nums', line.type === 'payment' ? 'text-success' : 'text-error']">
-                            {{ line.amount >= 0 ? '+' : '' }}₱{{ line.amount.toFixed(2) }}
-                        </span>
-                        <span class="font-mono tabular-nums font-medium text-highlighted">₱{{ line.running_total.toFixed(2) }}</span>
+                        <BaseNumber
+                            :value="line.amount"
+                            :prefix="toNumber(line.amount) >= 0 ? '+₱' : '₱'"
+                            :class="line.type === 'payment' ? 'font-mono tabular-nums text-success' : 'font-mono tabular-nums text-error'"
+                        />
+                        <BaseNumber :value="line.running_total" prefix="₱" class="font-mono font-medium tabular-nums text-highlighted" />
                     </span>
                 </li>
             </ol>
             <div class="flex items-center justify-between text-error">
                 <span>Interest total</span>
-                <span class="font-mono tabular-nums">₱{{ invoice.interest_total.toFixed(2) }}</span>
+                <BaseNumber :value="invoice.interest_total" prefix="₱" class="font-mono tabular-nums" />
             </div>
         </div>
 
         <div class="flex items-center justify-between border-t border-default pt-2 text-base font-semibold text-highlighted">
             <span>Grand total</span>
-            <span class="font-mono tabular-nums">₱{{ invoice.grand_total.toFixed(2) }}</span>
+            <BaseNumber :value="invoice.grand_total" prefix="₱" class="font-mono tabular-nums" />
         </div>
 
         <div class="space-y-1 border-t border-default pt-2">
             <div class="flex items-center justify-between">
                 <span class="text-muted">Amount paid</span>
-                <span class="font-mono tabular-nums">₱{{ invoice.amount_paid.toFixed(2) }}</span>
+                <BaseNumber :value="invoice.amount_paid" prefix="₱" class="font-mono tabular-nums" />
             </div>
             <div class="flex items-center justify-between font-semibold text-highlighted">
                 <span>Amount due</span>
-                <span class="font-mono tabular-nums">₱{{ invoice.balance_due.toFixed(2) }}</span>
+                <BaseNumber :value="invoice.balance_due" prefix="₱" class="font-mono tabular-nums" />
             </div>
         </div>
 

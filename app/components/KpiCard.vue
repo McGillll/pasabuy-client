@@ -23,7 +23,12 @@
                         {{ label }}
                         <BaseHelpTooltip v-if="tooltip">{{ tooltip }}</BaseHelpTooltip>
                     </p>
-                    <p class="font-mono tabular-nums text-2xl font-semibold text-highlighted">{{ value }}</p>
+                    <BaseNumber
+                        class="text-2xl font-semibold text-highlighted"
+                        :class="prefix ? 'font-mono tabular-nums' : ''"
+                        :value="value"
+                        :prefix="prefix"
+                    />
                     <p v-if="delta" class="text-xs text-dimmed mt-0.5">{{ delta }}</p>
                 </div>
             </div>
@@ -39,6 +44,7 @@ const props = withDefaults(defineProps<{
     color?: KpiCardColor
     label: string
     value: string | number
+    prefix?: string
     delta?: string
     tooltip?: string
     loading?: boolean

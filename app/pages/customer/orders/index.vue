@@ -9,7 +9,8 @@
             :icon="owedTotal > 0 ? 'i-lucide-circle-alert' : 'i-lucide-circle-check'"
             :color="owedTotal > 0 ? 'error' : 'success'"
             :label="owedTotal > 0 ? 'Balance due' : 'All settled'"
-            :value="owedTotal > 0 ? currency(owedTotal) : currency(paidTotal)"
+            :value="owedTotal > 0 ? owedTotal : paidTotal"
+            prefix="₱"
             :delta="owedDelta"
             :loading="loading"
         />
@@ -26,7 +27,7 @@
                         aria-label="Previous year"
                         @click="year -= 1"
                     />
-                    <span class="min-w-12 text-center font-mono text-sm font-semibold tabular-nums text-highlighted">{{ year }}</span>
+                    <span class="min-w-12 text-center text-sm font-semibold text-highlighted">{{ year }}</span>
                     <BaseButton
                         icon="i-lucide-chevron-right"
                         size="sm"
@@ -82,7 +83,7 @@
             <span class="flex flex-col items-start text-left">
                 <span class="text-xs font-medium">{{ priorityOrder.is_overdue ? 'Oldest overdue balance' : 'Oldest unpaid balance' }} &middot; all statuses</span>
                 <span class="text-sm font-semibold">
-                    {{ priorityOrder.pasabuy_schedule?.title }} &middot; <span class="font-mono tabular-nums">₱{{ currency(priorityOrder.amount_due) }}</span>
+                    {{ priorityOrder.pasabuy_schedule?.title }} &middot; <BaseNumber :value="priorityOrder.amount_due" prefix="₱" class="font-mono tabular-nums" />
                 </span>
             </span>
         </BaseButton>
@@ -126,11 +127,15 @@
                             <UIcon name="i-lucide-chevron-right" class="size-3.5 transition-transform" :class="expandedGroups[key] ? 'rotate-90' : ''" />
                             <UIcon :name="GROUP_META[key].icon" class="size-3.5" />
                             {{ GROUP_META[key].label }}
-                            <span class="font-mono tabular-nums">{{ groups[key].length }}</span>
+                            <BaseNumber :value="groups[key].length" :maximum-fraction-digits="0" />
                         </span>
-                        <span v-if="groupTotal(key) !== null" class="font-mono text-sm font-semibold tabular-nums" :class="GROUP_TEXT_CLASSES[key]">
-                            ₱{{ currency(groupTotal(key)!) }}
-                        </span>
+                        <BaseNumber
+                            v-if="groupTotal(key) !== null"
+                            :value="groupTotal(key)!"
+                            prefix="₱"
+                            class="font-mono text-sm font-semibold tabular-nums"
+                            :class="GROUP_TEXT_CLASSES[key]"
+                        />
                     </button>
 
                     <div v-if="expandedGroups[key]" :id="`group-${key}`" class="space-y-2">
@@ -145,15 +150,15 @@
                             <template #meta>
                                 <span v-if="key === 'overdue' || key === 'unpaid'" class="flex items-baseline gap-1">
                                     <span class="text-xs text-dimmed">Due</span>
-                                    <span class="font-mono tabular-nums font-medium" :class="GROUP_TEXT_CLASSES[key]">₱{{ currency(order.amount_due) }}</span>
+                                    <BaseNumber :value="order.amount_due" prefix="₱" class="font-mono font-medium tabular-nums" :class="GROUP_TEXT_CLASSES[key]" />
                                 </span>
                                 <span v-else-if="key === 'paid'" class="flex items-baseline gap-1">
                                     <span class="text-xs text-dimmed">Paid</span>
-                                    <span class="font-mono tabular-nums font-medium" :class="GROUP_TEXT_CLASSES[key]">₱{{ currency(order.amount_paid) }}</span>
+                                    <BaseNumber :value="order.amount_paid" prefix="₱" class="font-mono font-medium tabular-nums" :class="GROUP_TEXT_CLASSES[key]" />
                                 </span>
                                 <span v-else-if="key === 'cancelled'" class="flex items-baseline gap-1">
                                     <span class="text-xs text-dimmed">Total</span>
-                                    <span class="font-mono tabular-nums text-muted">₱{{ currency(Number(order.total_amount)) }}</span>
+                                    <BaseNumber :value="order.total_amount" prefix="₱" class="font-mono tabular-nums text-muted" />
                                 </span>
                             </template>
                         </ListCard>
@@ -205,7 +210,7 @@
 
                     <div class="flex items-center justify-between border-t border-default pt-3 font-medium text-highlighted">
                         <span>Total</span>
-                        <span class="font-mono tabular-nums">₱{{ selectedOrder.total_amount }}</span>
+                        <BaseNumber :value="selectedOrder.total_amount" prefix="₱" class="font-mono tabular-nums" />
                     </div>
                 </template>
 
@@ -317,10 +322,6 @@ const statusFilterItems: { label: string; value: LifecycleStatusFilter }[] = [
     { label: customerOrderStatusLabel.cancelled, value: 'cancelled' }
 ]
 
-function currency(value: number) {
-    return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
 function bucketFor(order: Order): PaymentGroupKey {
     if (order.status === 'cancelled') return 'cancelled'
     if (order.status === 'pending') return 'awaiting'
@@ -337,8 +338,8 @@ function bucketize(list: Order[]) {
 
 function totalFor(list: Order[], key: PaymentGroupKey): number | null {
     if (key === 'awaiting' || key === 'cancelled') return null
-    if (key === 'paid') return list.reduce((sum, order) => sum + Number(order.amount_paid), 0)
-    return list.reduce((sum, order) => sum + Number(order.amount_due), 0)
+    if (key === 'paid') return list.reduce((sum, order) => sum + toNumber(order.amount_paid), 0)
+    return list.reduce((sum, order) => sum + toNumber(order.amount_due), 0)
 }
 
 /**

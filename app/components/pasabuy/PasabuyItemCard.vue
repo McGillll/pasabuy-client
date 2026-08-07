@@ -30,16 +30,16 @@
                 color="neutral"
                 variant="solid"
                 size="sm"
-                class="absolute right-2 top-2 font-mono tabular-nums"
+                class="absolute right-2 top-2"
             >
-                {{ quantity }}
+                <BaseNumber :value="quantity" :maximum-fraction-digits="0" />
             </UBadge>
         </div>
 
         <div class="flex flex-1 flex-col gap-1 p-3">
             <p class="line-clamp-2 text-sm font-medium text-highlighted">{{ name }}</p>
-            <p class="mt-auto flex flex-wrap items-baseline gap-x-1.5 font-mono text-sm font-semibold tabular-nums text-highlighted">
-                ₱{{ price }}
+            <p class="mt-auto flex flex-wrap items-baseline gap-x-1.5 text-sm font-semibold text-highlighted">
+                <BaseNumber :value="price" prefix="₱" class="font-mono tabular-nums" />
                 <span class="font-sans text-xs font-normal text-dimmed">{{ confirmed ? 'confirmed' : 'estimated' }}</span>
             </p>
         </div>

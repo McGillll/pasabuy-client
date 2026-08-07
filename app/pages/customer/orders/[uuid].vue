@@ -80,7 +80,7 @@
                 <template #footer>
                     <div class="flex items-center justify-between font-medium text-highlighted">
                         <span>Total</span>
-                        <span class="font-mono tabular-nums">₱{{ order.total_amount }}</span>
+                        <BaseNumber :value="order.total_amount" prefix="₱" class="font-mono tabular-nums" />
                     </div>
                 </template>
             </UCard>

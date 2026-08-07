@@ -61,9 +61,11 @@
                         <h1 class="text-xl font-semibold text-highlighted">{{ product.name }}</h1>
 
                         <div class="flex items-center gap-3">
-                            <p class="font-mono text-2xl font-semibold tabular-nums text-highlighted">
-                                ₱{{ product.default_price }}
-                            </p>
+                            <BaseNumber
+                                :value="product.default_price"
+                                prefix="₱"
+                                class="font-mono text-2xl font-semibold tabular-nums text-highlighted"
+                            />
                             <div v-if="product.default_product_status === 'b1t1'" class="flex items-center gap-1">
                                 <UBadge
                                     color="success"

@@ -63,10 +63,10 @@ export function useScheduleWorkspace(uuid: string) {
     function getScheduleProductPrice(productUuid: string | null) {
         const sp = schedule.value?.products.find((p) => p.product?.uuid === productUuid)
         if (sp) {
-            return sp.actual_price !== null && sp.actual_price !== undefined ? Number(sp.actual_price) : Number(sp.product?.default_price ?? 0)
+            return sp.actual_price !== null && sp.actual_price !== undefined ? toNumber(sp.actual_price) : toNumber(sp.product?.default_price ?? 0)
         }
         const product = allProducts.value.find((p) => p.uuid === productUuid)
-        return Number(product?.default_price ?? 0)
+        return toNumber(product?.default_price ?? 0)
     }
 
     async function saveDetails() {
@@ -179,7 +179,7 @@ export function useScheduleWorkspace(uuid: string) {
     const summary = ref<ScheduleSummaryItem[]>([])
     const canConfirmPrice = computed(() => schedule.value?.status !== 'finished')
 
-    const summaryGrandTotal = computed(() => summary.value.reduce((sum, item) => sum + Number(item.subtotal), 0))
+    const summaryGrandTotal = computed(() => summary.value.reduce((sum, item) => sum + toNumber(item.subtotal), 0))
 
     function getDisplayQuantity(item: ScheduleSummaryItem) {
         return getScheduleProductStatus(item.product_uuid) === 'b1t1' ? item.total_quantity * 2 : item.total_quantity
@@ -238,8 +238,8 @@ export function useScheduleWorkspace(uuid: string) {
 
         const scheduleProduct = schedule.value?.products.find((sp) => sp.product?.uuid === item.product_uuid)
         confirmForm.actual_price = scheduleProduct?.actual_price !== null && scheduleProduct?.actual_price !== undefined
-            ? Number(scheduleProduct.actual_price)
-            : Number(scheduleProduct?.product?.default_price ?? 0)
+            ? toNumber(scheduleProduct.actual_price)
+            : toNumber(scheduleProduct?.product?.default_price ?? 0)
         confirmForm.product_status = scheduleProduct?.product_status ?? 'none'
 
         buyersLoading.value = true
@@ -716,7 +716,7 @@ export function useScheduleWorkspace(uuid: string) {
     }
 
     function getLineSubtotal(item: OrderItem) {
-        if (!canEditOrderItems.value || !item.product_uuid) return Number(item.subtotal)
+        if (!canEditOrderItems.value || !item.product_uuid) return toNumber(item.subtotal)
         if (getScheduleProductStatus(item.product_uuid) === 'out_of_stock') return 0
         return getScheduleProductPrice(item.product_uuid) * getLineQuantity(item)
     }

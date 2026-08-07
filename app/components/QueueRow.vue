@@ -16,7 +16,7 @@
                 <p class="text-xs text-dimmed">{{ timestamp }}</p>
             </div>
 
-            <span class="text-sm font-medium text-highlighted shrink-0 font-mono tabular-nums">{{ amount }}</span>
+            <BaseNumber class="shrink-0 font-mono text-sm font-medium tabular-nums text-highlighted" :value="amount" prefix="₱" />
 
             <ListCardButton icon="i-lucide-ellipsis-vertical" aria-label="Order actions" @click="expanded = !expanded" />
         </div>
@@ -58,7 +58,7 @@ defineProps<{
     subtitleLabel: string
     subtitleHref?: string
     timestamp: string
-    amount: string
+    amount: string | number
     menuItems: DropdownMenuItem[]
 }>()
 

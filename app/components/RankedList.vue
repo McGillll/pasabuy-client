@@ -71,7 +71,9 @@
                     :name="item.name"
                     :progress-pct="item.progressPct"
                     :qty="item.qty"
-                    :unit="item.unit"
+                    :qty-prefix="item.qtyPrefix"
+                    :unit-value="item.unitValue"
+                    :unit-label="item.unitLabel"
                 />
             </div>
         </Transition>
@@ -87,7 +89,9 @@ interface RankedListItem {
     name: string
     progressPct: number
     qty: string | number
-    unit?: string
+    qtyPrefix?: string
+    unitValue?: string | number
+    unitLabel?: string
 }
 
 const props = withDefaults(defineProps<{

@@ -125,7 +125,7 @@
                     >
                         <div class="flex items-center justify-between gap-2 sm:block">
                             <div>
-                                <span class="text-sm font-medium text-highlighted">{{ selectedPendingUuids.size }} selected</span>
+                                <span class="text-sm font-medium text-highlighted"><BaseNumber :value="selectedPendingUuids.size" :maximum-fraction-digits="0" /> selected</span>
                                 <button
                                     v-if="pendingTotal > perPage && selectedPendingUuids.size < pendingTotal"
                                     type="button"
@@ -266,7 +266,7 @@
                     </NuxtLink>
                 </template>
                 <template #total_amount-cell="{ row }">
-                    <span class="font-mono tabular-nums">₱{{ row.original.total_amount }}</span>
+                    <BaseNumber :value="row.original.total_amount" prefix="₱" class="font-mono tabular-nums" />
                 </template>
                 <template #status-cell="{ row }">
                     <OrderStatusBadge :status="row.original.status" />
@@ -286,7 +286,7 @@
                             </NuxtLink>
                         </template>
                         <template #meta>
-                            <span class="font-medium text-highlighted font-mono tabular-nums">₱{{ order.total_amount }}</span>
+                            <BaseNumber :value="order.total_amount" prefix="₱" class="font-mono tabular-nums font-medium text-highlighted" />
                             <span class="text-muted">{{ formatDate(order.created_at) }}</span>
                         </template>
                     </ListCard>

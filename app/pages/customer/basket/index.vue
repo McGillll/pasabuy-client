@@ -45,7 +45,7 @@
 
                         <div class="min-w-0 flex-1">
                             <p class="truncate font-medium text-highlighted">{{ item.product_name }}</p>
-                            <p class="font-mono tabular-nums text-sm font-medium text-highlighted">₱{{ item.subtotal.toFixed(2) }}</p>
+                            <BaseNumber :value="item.subtotal" prefix="₱" class="font-mono text-sm font-medium tabular-nums text-highlighted" />
                         </div>
                     </button>
 
@@ -59,7 +59,7 @@
                             :aria-label="`Decrease quantity for ${item.product_name}`"
                             @click="onDecrement(item)"
                         />
-                        <span class="w-6 text-center font-mono tabular-nums font-medium">{{ item.quantity }}</span>
+                        <BaseNumber :value="item.quantity" :maximum-fraction-digits="0" class="w-6 text-center font-medium" />
                         <BaseButton
                             icon="i-lucide-plus"
                             size="xs"
@@ -83,8 +83,8 @@
             </div>
 
             <div class="flex items-center justify-between rounded-xl border border-default bg-elevated/50 px-4 py-3">
-                <p class="text-sm text-muted">{{ totalItems }} item{{ totalItems === 1 ? '' : 's' }}</p>
-                <p class="font-mono tabular-nums text-lg font-semibold text-highlighted">₱{{ totalAmount.toFixed(2) }}</p>
+                <p class="text-sm text-muted"><BaseNumber :value="totalItems" :maximum-fraction-digits="0" /> item{{ toNumber(totalItems) === 1 ? '' : 's' }}</p>
+                <BaseNumber :value="totalAmount" prefix="₱" class="font-mono text-lg font-semibold tabular-nums text-highlighted" />
             </div>
 
             <div class="space-y-3">
@@ -141,8 +141,8 @@
                     <UIcon name="i-lucide-image-off" class="size-8" />
                 </div>
 
-                <p class="font-mono tabular-nums text-lg font-semibold text-highlighted">
-                    ₱{{ viewedItem.price }} <span class="text-xs font-normal text-dimmed">each</span>
+                <p class="text-lg font-semibold text-highlighted">
+                    <BaseNumber :value="viewedItem.price" prefix="₱" class="font-mono tabular-nums" /> <span class="text-xs font-normal text-dimmed">each</span>
                 </p>
 
                 <div class="flex items-center justify-between gap-3">
@@ -156,7 +156,7 @@
                             :aria-label="`Decrease quantity for ${viewedItem.product_name}`"
                             @click="onDecrement(viewedItem)"
                         />
-                        <span class="w-6 text-center font-mono tabular-nums font-medium">{{ viewedItem.quantity }}</span>
+                        <BaseNumber :value="viewedItem.quantity" :maximum-fraction-digits="0" class="w-6 text-center font-medium" />
                         <BaseButton
                             icon="i-lucide-plus"
                             size="xs"
@@ -167,7 +167,7 @@
                             @click="onIncrement(viewedItem)"
                         />
                     </div>
-                    <p class="font-mono tabular-nums text-lg font-semibold text-highlighted">₱{{ viewedItem.subtotal.toFixed(2) }}</p>
+                    <BaseNumber :value="viewedItem.subtotal" prefix="₱" class="font-mono text-lg font-semibold tabular-nums text-highlighted" />
                 </div>
             </div>
         </BaseModal>
@@ -206,15 +206,15 @@ watch(viewedItem, (item) => {
 })
 
 async function onIncrement(item: BasketItem) {
-    await updateQuantity(item.uuid, item.quantity + 1)
+    await updateQuantity(item.uuid, toNumber(item.quantity) + 1)
 }
 
 async function onDecrement(item: BasketItem) {
-    if (item.quantity <= 1) {
+    if (toNumber(item.quantity) <= 1) {
         await remove(item.uuid)
         return
     }
-    await updateQuantity(item.uuid, item.quantity - 1)
+    await updateQuantity(item.uuid, toNumber(item.quantity) - 1)
 }
 
 async function onRemove(item: BasketItem) {

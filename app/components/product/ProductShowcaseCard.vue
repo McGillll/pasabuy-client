@@ -41,8 +41,8 @@
         <div class="flex flex-1 flex-col gap-1 p-3">
             <p v-if="product.category" class="truncate text-xs text-dimmed">{{ product.category.name }}</p>
             <p class="line-clamp-2 text-sm font-medium text-highlighted">{{ product.name }}</p>
-            <p class="mt-auto font-mono text-base font-semibold tabular-nums text-highlighted">
-                ₱{{ product.default_price }}
+            <p class="mt-auto text-base font-semibold text-highlighted">
+                <BaseNumber :value="product.default_price" prefix="₱" class="font-mono tabular-nums" />
             </p>
         </div>
     </div>
