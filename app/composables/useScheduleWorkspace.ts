@@ -3,11 +3,13 @@ import { orderService } from '@/components/api/admin/OrderService'
 import { pasabuyScheduleService } from '@/components/api/admin/PasabuyScheduleService'
 import type { ConfirmPricePayload } from '@/components/api/admin/PasabuyScheduleService'
 import { productService } from '@/components/api/admin/ProductService'
+import { settingsService } from '@/components/api/settings/SettingsService'
 import APIError from '@/components/api/user/APIError'
 import type { Product } from '@/types/Product'
 import type { Schedule, ScheduleProduct, ScheduleSummaryItem, ChecklistItem, ProductBuyer } from '@/types/Schedule'
 import type { Order } from '@/types/Order'
 import type { OrderItem } from '@/types/OrderItem'
+import type { Settings } from '@/types/Settings'
 
 export interface EditableItem {
     product_uuid: string
@@ -172,6 +174,29 @@ export function useScheduleWorkspace(uuid: string) {
     async function copyLink() {
         await copyTextAsync(async () => publicLink.value)
         toast.add({ title: 'Link copied', color: 'success' })
+    }
+
+    const isPosterModalOpen = ref(false)
+    const posterBusinessName = ref('Pasabuy')
+    const posterSettingsLoaded = ref(false)
+
+    async function loadPosterBusinessName() {
+        if (posterSettingsLoaded.value) return
+
+        try {
+            const response = await settingsService.fetchPublicSettings()
+            const settings = response.data as Settings
+            posterBusinessName.value = settings.business_name?.trim() || 'Pasabuy'
+        } catch {
+            posterBusinessName.value = 'Pasabuy'
+        } finally {
+            posterSettingsLoaded.value = true
+        }
+    }
+
+    function openPosterModal() {
+        isPosterModalOpen.value = true
+        loadPosterBusinessName()
     }
 
     // ---- Summary / pricing ----
@@ -894,6 +919,8 @@ export function useScheduleWorkspace(uuid: string) {
         detailsForm,
         savingDetails,
         publicLink,
+        isPosterModalOpen,
+        posterBusinessName,
         canSetStatus,
         getScheduleProductStatus,
         getScheduleProductPrice,
@@ -907,6 +934,7 @@ export function useScheduleWorkspace(uuid: string) {
         confirmFinishSchedule,
         handleStatusTabChange,
         copyLink,
+        openPosterModal,
 
         summary,
         canConfirmPrice,

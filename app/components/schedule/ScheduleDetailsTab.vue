@@ -1,14 +1,17 @@
 <template>
     <div class="mt-4 max-w-lg space-y-4">
-        <div class="flex items-center gap-3 rounded-xl bg-elevated px-3 py-2.5 ring-1 ring-default">
-            <div class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <UIcon name="i-lucide-link" class="size-4" />
+        <div class="flex items-center gap-3 rounded-lg bg-elevated p-3 ring-1 ring-default">
+            <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <UIcon name="i-lucide-image" class="size-5" />
             </div>
             <div class="min-w-0 flex-1">
-                <p class="text-xs font-medium uppercase tracking-wide text-dimmed">Share link</p>
+                <p class="text-xs font-medium uppercase tracking-wide text-dimmed">Share poster</p>
                 <p class="truncate text-sm font-medium text-highlighted">{{ workspace.schedule!.title }}</p>
             </div>
-            <BaseButton icon="i-lucide-copy" color="primary" variant="soft" size="sm" @click="workspace.copyLink">Copy</BaseButton>
+            <BaseButton icon="i-lucide-sparkles" color="primary" size="sm" class="shrink-0" @click="workspace.openPosterModal">
+                <span class="sm:hidden">Generate</span>
+                <span class="hidden sm:inline">Generate poster</span>
+            </BaseButton>
         </div>
 
         <UCard>

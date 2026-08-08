@@ -52,6 +52,7 @@
         <ScheduleBuyersPriceModal :workspace="workspace" />
         <ScheduleOrderDetailModal :workspace="workspace" />
         <ScheduleFinishModal :workspace="workspace" />
+        <SchedulePosterModal :workspace="workspace" />
 
         <BaseConfirmModal
             v-model:open="workspace.confirmDialog.open"
