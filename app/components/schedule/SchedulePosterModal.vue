@@ -8,54 +8,55 @@
     >
         <div class="space-y-4">
             <div ref="previewViewport" class="overflow-hidden rounded-lg" :style="{ height: `${previewHeight}px` }">
-                <div class="mx-auto" :style="posterPreviewFrameStyle">
-                    <div
-                        ref="posterEl"
-                        :style="posterTransformStyle"
-                        class="relative h-[1350px] w-[1080px] overflow-hidden bg-slate-950 text-white [font-family:Aptos,'Segoe_UI_Variable_Text','Segoe_UI',ui-sans-serif,system-ui,sans-serif]"
-                    >
-                        <div class="absolute inset-0 bg-[linear-gradient(135deg,#020617_0%,#0f172a_46%,#111827_100%)]" />
-                        <div class="absolute right-0 top-0 h-full w-[320px] skew-x-[-14deg] bg-primary/12" />
-                        <div class="absolute bottom-0 left-0 h-[260px] w-full skew-y-[-8deg] bg-slate-800/70" />
-                        <div class="absolute left-[72px] top-[42px] h-[12px] w-[210px] rounded-full bg-primary" />
+                <div class="mx-auto overflow-hidden" :style="posterPreviewFrameStyle">
+                    <div :style="posterPreviewScaleStyle">
+                        <div
+                            ref="posterEl"
+                            class="relative h-[1350px] w-[1080px] overflow-hidden bg-slate-950 text-white [font-family:Aptos,'Segoe_UI_Variable_Text','Segoe_UI',ui-sans-serif,system-ui,sans-serif]"
+                        >
+                            <div class="absolute inset-0 bg-[linear-gradient(135deg,#020617_0%,#0f172a_46%,#111827_100%)]" />
+                            <div class="absolute right-0 top-0 h-full w-[320px] skew-x-[-14deg] bg-primary/12" />
+                            <div class="absolute bottom-0 left-0 h-[260px] w-full skew-y-[-8deg] bg-slate-800/70" />
+                            <div class="absolute left-[72px] top-[42px] h-[12px] w-[210px] rounded-full bg-primary" />
 
-                        <div class="absolute left-[72px] top-[92px] z-10 min-w-0">
-                            <p class="text-[32px] font-semibold uppercase leading-none tracking-wide text-primary">Pasabuy schedule</p>
-                            <p class="mt-[20px] max-w-[620px] text-[50px] font-bold leading-tight text-white">{{ businessName }}</p>
-                        </div>
-
-                        <div class="absolute left-[72px] top-[330px] z-10 space-y-[34px]">
-                            <h2 class="line-clamp-4 max-w-[880px] text-[96px] font-black leading-[0.98] text-white">{{ schedule.title }}</h2>
-                            <p class="flex items-center gap-[20px] text-[42px] font-semibold text-slate-200">
-                                <span class="flex size-[70px] items-center justify-center rounded-[24px] bg-white/10 text-primary">
-                                    <UIcon name="i-lucide-calendar-clock" class="size-[38px]" />
-                                </span>
-                                {{ scheduleDateLabel }}
-                            </p>
-                        </div>
-
-                        <p class="absolute left-[72px] top-[575px] z-10 line-clamp-5 max-w-[840px] text-[40px] font-normal leading-snug text-slate-300">
-                            {{ notesLabel }}
-                        </p>
-
-                        <div class="absolute bottom-[190px] left-[72px] z-10 w-[560px]">
-                            <div class="flex items-center gap-[22px] text-primary">
-                                <UIcon name="i-lucide-qr-code" class="size-[62px] shrink-0" />
-                                <p class="text-[52px] font-black leading-[1.05] text-white [font-family:Bahnschrift,'Aptos_Display','Segoe_UI_Variable_Display','Arial_Narrow',sans-serif]">Scan to order</p>
+                            <div class="absolute left-[72px] top-[92px] z-10 min-w-0">
+                                <p class="text-[32px] font-semibold uppercase leading-none tracking-wide text-primary">Pasabuy schedule</p>
+                                <p class="mt-[20px] max-w-[620px] text-[50px] font-bold leading-tight text-white">{{ businessName }}</p>
                             </div>
-                            <p class="mt-[22px] max-w-[480px] text-[28px] leading-tight text-slate-400">
-                                Prices are estimates until confirmed after shopping
-                            </p>
-                        </div>
 
-                        <div class="absolute bottom-[190px] right-[60px] z-10 rounded-[36px] bg-white p-[24px] shadow-2xl shadow-black/40">
-                            <img v-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="" class="size-[272px]" />
-                            <div v-else class="flex size-[272px] items-center justify-center bg-slate-100 text-slate-500">
-                                <UIcon name="i-lucide-loader-circle" class="size-[54px] animate-spin" />
+                            <div class="absolute left-[72px] top-[330px] z-10 space-y-[34px]">
+                                <h2 class="line-clamp-4 max-w-[880px] text-[96px] font-black leading-[0.98] text-white">{{ schedule.title }}</h2>
+                                <p class="flex items-center gap-[20px] text-[42px] font-semibold text-slate-200">
+                                    <span class="flex size-[70px] items-center justify-center rounded-[24px] bg-white/10 text-primary">
+                                        <UIcon name="i-lucide-calendar-clock" class="size-[38px]" />
+                                    </span>
+                                    {{ scheduleDateLabel }}
+                                </p>
                             </div>
-                        </div>
 
-                        <p class="absolute bottom-[72px] left-[72px] z-10 max-w-[936px] truncate text-[28px] text-slate-500">{{ workspace.publicLink }}</p>
+                            <p class="absolute left-[72px] top-[575px] z-10 line-clamp-5 max-w-[840px] text-[40px] font-normal leading-snug text-slate-300">
+                                {{ notesLabel }}
+                            </p>
+
+                            <div class="absolute bottom-[190px] left-[72px] z-10 w-[560px]">
+                                <div class="flex items-center gap-[22px] text-primary">
+                                    <UIcon name="i-lucide-qr-code" class="size-[62px] shrink-0" />
+                                    <p class="text-[52px] font-black leading-[1.05] text-white [font-family:Bahnschrift,'Aptos_Display','Segoe_UI_Variable_Display','Arial_Narrow',sans-serif]">Scan to order</p>
+                                </div>
+                                <p class="mt-[22px] max-w-[480px] text-[28px] leading-tight text-slate-400">
+                                    Prices are estimates until confirmed after shopping
+                                </p>
+                            </div>
+
+                            <div class="absolute bottom-[190px] right-[60px] z-10 rounded-[36px] bg-white p-[24px] shadow-2xl shadow-black/40">
+                                <img v-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="" class="size-[272px]" />
+                                <div v-else class="flex size-[272px] items-center justify-center bg-slate-100 text-slate-500">
+                                    <UIcon name="i-lucide-loader-circle" class="size-[54px] animate-spin" />
+                                </div>
+                            </div>
+
+                            <p class="absolute bottom-[72px] left-[72px] z-10 max-w-[936px] truncate text-[28px] text-slate-500">{{ workspace.publicLink }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -110,7 +111,7 @@ const posterPreviewFrameStyle = computed(() => ({
     width: `${POSTER_WIDTH * previewScale.value}px`,
     height: `${POSTER_HEIGHT * previewScale.value}px`
 }))
-const posterTransformStyle = computed(() => ({
+const posterPreviewScaleStyle = computed(() => ({
     transform: `scale(${previewScale.value})`,
     transformOrigin: 'top left'
 }))
