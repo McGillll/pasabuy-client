@@ -166,8 +166,16 @@ async function createPosterBlob() {
         skipFonts: true,
         width: POSTER_WIDTH,
         height: POSTER_HEIGHT,
+        canvasWidth: POSTER_WIDTH,
+        canvasHeight: POSTER_HEIGHT,
         pixelRatio: 1,
-        backgroundColor: '#020617'
+        backgroundColor: '#020617',
+        style: {
+            transform: 'none',
+            transformOrigin: 'top left',
+            width: `${POSTER_WIDTH}px`,
+            height: `${POSTER_HEIGHT}px`
+        }
     })
     const response = await fetch(dataUrl)
     return await response.blob()
