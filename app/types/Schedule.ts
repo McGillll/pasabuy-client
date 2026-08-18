@@ -51,6 +51,7 @@ export interface ChecklistItem {
     product_name: string
     category_name: string | null
     quantity: number
+    picked_quantity: number
     is_checked: boolean
     checked_at: string | null
     additional_quantity: number

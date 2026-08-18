@@ -370,6 +370,16 @@
                     />
                 </template>
 
+                <template v-else-if="isBlockedByEmailVerification">
+                    <UAlert
+                        color="warning"
+                        variant="subtle"
+                        icon="i-lucide-mail-warning"
+                        title="Verify your email to order"
+                        description="You can keep items in your Blue Basket, but you need to verify your email before placing them in this pasabuy."
+                    />
+                </template>
+
                 <template v-else-if="isBlockedByReceivable">
                     <UAlert
                         color="warning"
@@ -438,6 +448,13 @@
                     <p class="flex items-center gap-1.5 text-sm text-info">
                         <UIcon name="i-lucide-clock" class="size-4 shrink-0" />
                         Waiting on admin approval. You can order once approved, keep browsing meanwhile.
+                    </p>
+                </template>
+
+                <template v-else-if="isBlockedByEmailVerification">
+                    <p class="flex items-center gap-1.5 text-sm text-warning">
+                        <UIcon name="i-lucide-mail-warning" class="size-4 shrink-0" />
+                        Verify your email before placing items in this pasabuy.
                     </p>
                 </template>
 
@@ -620,6 +637,15 @@
                         </template>
                     </UAlert>
 
+                    <UAlert
+                        v-else-if="isBlockedByEmailVerification"
+                        color="warning"
+                        variant="subtle"
+                        icon="i-lucide-mail-warning"
+                        title="Verify your email to order"
+                        description="Your items can stay in your Blue Basket, but you need to verify your email before placing them in this pasabuy."
+                    />
+
                     <template v-else>
                         <UAlert v-if="submitError" color="error" variant="subtle" :title="submitError" />
                         <div class="flex items-center justify-between">
@@ -775,6 +801,7 @@ const editingOrder = ref(false)
 
 const isLoggedIn = computed(() => !!user.value)
 const isApproved = computed(() => user.value?.is_approved === true)
+const isEmailVerified = computed(() => user.value?.is_verified === true)
 
 const isValidToOrder = computed(() => user.value?.is_valid_to_order !== false)
 const receivable = computed(() => toNumber(user.value?.receivable ?? 0))
@@ -784,6 +811,7 @@ const receivable = computed(() => toNumber(user.value?.receivable ?? 0))
  * (the backend only gates *new* order creation on it), so the blocked state
  * below must not apply while editingOrder is true.
  */
+const isBlockedByEmailVerification = computed(() => isLoggedIn.value && isApproved.value && !isEmailVerified.value)
 const isBlockedByReceivable = computed(() => isValidToOrder.value === false && !editingOrder.value)
 
 const PRICING_NOTE_DISMISSED_KEY = 'pasabuy-pricing-note-dismissed'
@@ -1030,11 +1058,14 @@ function viewCartItem(product: Product) {
 
 /**
  * Deep-link support for "Send to a pasabuy" on the Blue Basket page: ?basket=1
- * seeds every basket item's quantity into this schedule's cart (matched by
- * product uuid against the shared global catalog). The cart drawer is left
- * closed — auto-opening it used to skip straight to "Place order" for
- * customers who are currently blocked by an unpaid balance, bypassing the
- * warning state entirely. A toast confirms the items landed instead.
+ * seeds every basket item's quantity into this schedule's cart. Products are
+ * global and always orderable regardless of schedule, so a basket item is
+ * matched by uuid against the locally known catalog/schedule products first,
+ * falling back to a direct fetch-by-uuid (same as the ?product= deep link)
+ * before it's ever treated as unavailable. The cart drawer is left closed —
+ * auto-opening it used to skip straight to "Place order" for customers who
+ * are currently blocked by an unpaid balance, bypassing the warning state
+ * entirely. A toast confirms the items landed instead.
  */
 async function applyBasketSeed() {
     if (route.query.basket !== '1') return
@@ -1045,11 +1076,23 @@ async function applyBasketSeed() {
     let skipped = 0
 
     for (const item of items) {
-        const product = knownProducts.value[item.product_uuid]
+        let product = knownProducts.value[item.product_uuid] ?? scheduleProductByUuid.value.get(item.product_uuid)?.product ?? null
+
+        if (!product) {
+            try {
+                const result = await publicProductService.fetchByUuidCacheable(item.product_uuid, null)
+                if (result !== 'not-modified') product = result.data as Product
+            } catch {
+                product = null
+            }
+        }
+
         if (!product) {
             skipped++
             continue
         }
+
+        knownProducts.value[product.uuid] = product
         quantities.value[product.uuid] = (quantities.value[product.uuid] || 0) + toNumber(item.quantity)
         added++
     }
@@ -1175,14 +1218,30 @@ async function cancelOrder() {
     }
 }
 
-function startEditOrder() {
+async function startEditOrder() {
     if (!myOrder.value) return
     for (const product of catalogItems.value) {
         quantities.value[product.uuid] = 0
     }
+
     for (const item of myOrder.value.items) {
+        if (!item.product_uuid) continue
+
+        let product = knownProducts.value[item.product_uuid] ?? scheduleProductByUuid.value.get(item.product_uuid)?.product ?? null
+
+        if (!product) {
+            try {
+                const result = await publicProductService.fetchByUuidCacheable(item.product_uuid, null)
+                if (result !== 'not-modified') product = result.data as Product
+            } catch {
+                product = null
+            }
+        }
+
+        if (product) knownProducts.value[product.uuid] = product
         quantities.value[item.product_uuid] = item.quantity
     }
+
     submitError.value = null
     editingOrder.value = true
 }

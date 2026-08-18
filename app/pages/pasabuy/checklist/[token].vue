@@ -65,8 +65,11 @@
                                 </div>
                             </template>
                             <template v-if="item.additional_quantity > 0 || item.return_quantity > 0" #status>
+                                <UBadge color="neutral" variant="subtle" size="sm">
+                                    <BaseNumber :value="item.picked_quantity" /> already picked
+                                </UBadge>
                                 <UBadge v-if="item.additional_quantity > 0" color="warning" variant="subtle" size="sm">
-                                    +<BaseNumber :value="item.additional_quantity" /> more
+                                    need +<BaseNumber :value="item.additional_quantity" /> more
                                 </UBadge>
                                 <UBadge v-if="item.return_quantity > 0" color="error" variant="subtle" size="sm">
                                     -<BaseNumber :value="item.return_quantity" /> to return

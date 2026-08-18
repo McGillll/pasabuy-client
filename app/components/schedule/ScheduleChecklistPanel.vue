@@ -63,8 +63,11 @@
                     <BaseNumber :value="row.original.quantity" suffix="x" class="text-lg font-bold" :class="row.original.is_checked ? 'text-muted' : 'text-highlighted'" />
             </template>
             <template #adjustment-cell="{ row }">
+                <UBadge v-if="row.original.additional_quantity > 0 || row.original.return_quantity > 0" color="neutral" variant="subtle" size="sm">
+                    <BaseNumber :value="row.original.picked_quantity" /> already picked
+                </UBadge>
                 <UBadge v-if="row.original.additional_quantity > 0" color="warning" variant="subtle" size="sm">
-                    +<BaseNumber :value="row.original.additional_quantity" /> more
+                    need +<BaseNumber :value="row.original.additional_quantity" /> more
                 </UBadge>
                 <UBadge v-if="row.original.return_quantity > 0" color="error" variant="subtle" size="sm">
                     return <BaseNumber :value="row.original.return_quantity" />
@@ -93,8 +96,11 @@
                         {{ item.category_name ?? '-' }}
                     </template>
                     <template v-if="item.additional_quantity > 0 || item.return_quantity > 0" #status>
+                        <UBadge color="neutral" variant="subtle" size="sm">
+                            <BaseNumber :value="item.picked_quantity" /> already picked
+                        </UBadge>
                         <UBadge v-if="item.additional_quantity > 0" color="warning" variant="subtle" size="sm">
-                            +<BaseNumber :value="item.additional_quantity" /> more
+                            need +<BaseNumber :value="item.additional_quantity" /> more
                         </UBadge>
                         <UBadge v-if="item.return_quantity > 0" color="error" variant="subtle" size="sm">
                             return <BaseNumber :value="item.return_quantity" />
