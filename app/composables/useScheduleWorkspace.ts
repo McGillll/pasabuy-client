@@ -627,7 +627,11 @@ export function useScheduleWorkspace(uuid: string) {
                 const haystack = `${order.customer_name} ${order.customer_contact} ${order.order_no}`.toLowerCase()
                 if (!haystack.includes(query)) return false
             }
-            if (orderStatusFilter.value !== 'all' && order.status !== orderStatusFilter.value) return false
+            if (orderStatusFilter.value === 'all') {
+                if (order.status === 'cancelled') return false
+            } else if (order.status !== orderStatusFilter.value) {
+                return false
+            }
             if (orderPaymentStatusFilter.value !== 'all' && order.payment_status !== orderPaymentStatusFilter.value) return false
             if (orderDeliveryStatusFilter.value !== 'all' && order.delivery_status !== orderDeliveryStatusFilter.value) return false
             return true
