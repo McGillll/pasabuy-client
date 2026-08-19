@@ -6,6 +6,7 @@ export interface Order {
     customer_name: string
     customer_contact: string
     status: 'pending' | 'confirmed' | 'cancelled'
+    channel: 'customer' | 'seller'
     payment_status: 'unpaid' | 'partially_paid' | 'paid'
     delivery_status: 'not_delivered' | 'delivered'
     total_amount: string

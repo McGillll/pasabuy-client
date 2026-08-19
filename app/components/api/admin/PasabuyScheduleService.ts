@@ -18,6 +18,12 @@ export interface AdminOrderItemInput {
     quantity: number
 }
 
+export interface CreateOrderForCustomerPayload {
+    customer_name: string
+    customer_contact?: string
+    items: AdminOrderItemInput[]
+}
+
 class PasabuyScheduleService extends BaseAPIService {
     async fetchSchedules(params: object = {}): Promise<any> {
         return await this.request('/admin/pasabuy-schedules', 'GET', params)
@@ -105,6 +111,10 @@ class PasabuyScheduleService extends BaseAPIService {
 
     async updateOrderItems(scheduleUuid: string, orderUuid: string, items: AdminOrderItemInput[]): Promise<any> {
         return await this.request(`/admin/pasabuy-schedules/${scheduleUuid}/orders/${orderUuid}/items`, 'PUT', { items })
+    }
+
+    async createOrderForCustomer(scheduleUuid: string, payload: CreateOrderForCustomerPayload): Promise<any> {
+        return await this.request(`/admin/pasabuy-schedules/${scheduleUuid}/orders`, 'POST', payload)
     }
 }
 

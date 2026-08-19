@@ -49,6 +49,8 @@
             </template>
         </BaseTabs>
 
+        <FabButton v-if="activeTab === 'orders'" aria-label="Add order" @click="workspace.openAddOrderModal" class="mb-3"/>
+
         <ScheduleBuyersPriceModal :workspace="workspace" />
         <ScheduleOrderDetailModal :workspace="workspace" />
         <ScheduleFinishModal :workspace="workspace" />

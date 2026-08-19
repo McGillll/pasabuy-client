@@ -17,6 +17,11 @@ export interface EditableItem {
     quantity: number
 }
 
+export interface AddOrderDraftItem extends EditableItem {
+    unitPrice: number
+    isOutOfStock: boolean
+}
+
 export function useScheduleWorkspace(uuid: string) {
     const toast = useToast()
     const { displayName } = useProductDisplayName()
@@ -850,6 +855,137 @@ export function useScheduleWorkspace(uuid: string) {
         ]
     }
 
+    // ---- Seller-placed order ("Add order") ----
+    // Lets the seller record an order for a customer who won't use the app themselves
+    // (walk-in, phone/chat order). Mirrors the editableItems pattern above, but builds a
+    // brand-new order instead of editing an existing one.
+
+    const isAddOrderModalOpen = ref(false)
+    const addOrderForm = reactive({ customer_name: '', customer_contact: '' })
+    const addOrderItems = ref<AddOrderDraftItem[]>([])
+    const addOrderItemToAdd = ref<string | undefined>(undefined)
+    const savingAddOrder = ref(false)
+
+    // Product picker is its own debounced backend search (not the shared `allProducts`
+    // used by the order-item editor above) so opening this modal never pulls the whole
+    // catalog into memory — only ever one page of matches, with pagination to reach the rest.
+    const ADD_ORDER_PRODUCTS_PER_PAGE = 20
+    const addOrderProductSearch = ref('')
+    const addOrderProductPage = ref(1)
+    const addOrderProductTotal = ref(0)
+    const addOrderSearchResults = ref<Product[]>([])
+    const addOrderSearchLoading = ref(false)
+    let addOrderSearchRequestId = 0
+
+    const addOrderProductOptions = computed(() => {
+        const usedUuids = new Set(addOrderItems.value.map((item) => item.product_uuid))
+        return addOrderSearchResults.value
+            .filter((product) => product.is_active && !usedUuids.has(product.uuid))
+            .map((product) => ({ label: displayName(product), value: product.uuid }))
+    })
+
+    const addOrderTotal = computed(() =>
+        addOrderItems.value.reduce((sum, item) => sum + (item.isOutOfStock ? 0 : item.unitPrice * item.quantity), 0)
+    )
+
+    // Snapshots price/stock status at the moment the seller adds the item (from either the
+    // schedule's own confirmed pricing, or the product's catalog default), the same way the
+    // backend resolves it on submit — not a live lookup, since the search-result cache this
+    // product came from is replaced on every page/search change and won't still hold it.
+    function resolveAddOrderPrice(product: Product) {
+        const scheduleProduct = schedule.value?.products.find((sp) => sp.product?.uuid === product.uuid)
+        if (scheduleProduct) {
+            const isOutOfStock = scheduleProduct.product_status === 'out_of_stock'
+            const unitPrice = scheduleProduct.actual_price !== null && scheduleProduct.actual_price !== undefined
+                ? toNumber(scheduleProduct.actual_price)
+                : toNumber(product.default_price)
+            return { unitPrice, isOutOfStock }
+        }
+        return { unitPrice: toNumber(product.default_price), isOutOfStock: false }
+    }
+
+    async function searchAddOrderProducts() {
+        const requestId = ++addOrderSearchRequestId
+        addOrderSearchLoading.value = true
+        try {
+            const response = await productService.fetchProducts({
+                search: addOrderProductSearch.value.trim() || undefined,
+                page: addOrderProductPage.value,
+                per_page: ADD_ORDER_PRODUCTS_PER_PAGE
+            })
+            if (requestId !== addOrderSearchRequestId) return
+            addOrderSearchResults.value = response.data.items
+            addOrderProductTotal.value = response.data.total
+        } catch {
+            if (requestId !== addOrderSearchRequestId) return
+            addOrderSearchResults.value = []
+            addOrderProductTotal.value = 0
+        } finally {
+            if (requestId === addOrderSearchRequestId) addOrderSearchLoading.value = false
+        }
+    }
+
+    useSearchDebounce(addOrderProductSearch, () => {
+        addOrderProductPage.value = 1
+        searchAddOrderProducts()
+    }, 400)
+
+    watch(addOrderProductPage, searchAddOrderProducts)
+
+    function openAddOrderModal() {
+        addOrderForm.customer_name = ''
+        addOrderForm.customer_contact = ''
+        addOrderItems.value = []
+        addOrderItemToAdd.value = undefined
+        addOrderProductSearch.value = ''
+        addOrderProductPage.value = 1
+        isAddOrderModalOpen.value = true
+        searchAddOrderProducts()
+    }
+
+    function addAddOrderItem() {
+        if (!addOrderItemToAdd.value) return
+        const product = addOrderSearchResults.value.find((p) => p.uuid === addOrderItemToAdd.value)
+        if (!product) return
+
+        const { unitPrice, isOutOfStock } = resolveAddOrderPrice(product)
+        addOrderItems.value.push({ product_uuid: product.uuid, product_name: displayName(product), quantity: 1, unitPrice, isOutOfStock })
+        addOrderItemToAdd.value = undefined
+    }
+
+    function removeAddOrderItem(productUuid: string) {
+        addOrderItems.value = addOrderItems.value.filter((item) => item.product_uuid !== productUuid)
+    }
+
+    async function submitAddOrder() {
+        if (!addOrderForm.customer_name.trim()) {
+            toast.add({ title: 'Customer name is required', color: 'error' })
+            return
+        }
+
+        if (addOrderItems.value.length === 0) {
+            toast.add({ title: 'Add at least one item', color: 'error' })
+            return
+        }
+
+        savingAddOrder.value = true
+        try {
+            const response = await pasabuyScheduleService.createOrderForCustomer(uuid, {
+                customer_name: addOrderForm.customer_name.trim(),
+                customer_contact: addOrderForm.customer_contact.trim() || undefined,
+                items: addOrderItems.value.map((item) => ({ product_uuid: item.product_uuid, quantity: item.quantity }))
+            })
+            orders.value = [response.data as Order, ...orders.value]
+            await refreshSummary()
+            isAddOrderModalOpen.value = false
+            toast.add({ title: 'Order added', description: addOrderForm.customer_name, color: 'success' })
+        } catch (error) {
+            toast.add({ title: 'Failed to add order', description: (error as APIError).message, color: 'error' })
+        } finally {
+            savingAddOrder.value = false
+        }
+    }
+
     // ---- Load / refresh orchestration ----
 
     async function loadAll() {
@@ -1027,6 +1163,23 @@ export function useScheduleWorkspace(uuid: string) {
         addEditableItem,
         revertOrderItems,
         saveOrderItems,
+
+        isAddOrderModalOpen,
+        addOrderForm,
+        addOrderItems,
+        addOrderItemToAdd,
+        savingAddOrder,
+        addOrderProductSearch,
+        addOrderProductPage,
+        addOrderProductTotal,
+        addOrderProductPerPage: ADD_ORDER_PRODUCTS_PER_PAGE,
+        addOrderSearchLoading,
+        addOrderProductOptions,
+        addOrderTotal,
+        openAddOrderModal,
+        addAddOrderItem,
+        removeAddOrderItem,
+        submitAddOrder,
 
         loadAll,
         pullRefresh,

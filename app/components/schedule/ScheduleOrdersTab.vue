@@ -8,6 +8,9 @@
             @filter-click="isOrderFiltersOpen = true"
         >
             <template #inline>
+                <BaseButton icon="i-lucide-plus" class="hidden sm:inline-flex shrink-0" @click="workspace.openAddOrderModal">
+                    Add order
+                </BaseButton>
                 <div class="hidden sm:flex items-center gap-2">
                     <BaseSelect
                         v-model="workspace.orderStatusFilter"
@@ -116,7 +119,10 @@
                     </div>
                 </template>
                 <template #customer_name-cell="{ row }">
-                    <p class="font-medium text-highlighted">{{ row.original.customer_name }}</p>
+                    <div class="flex items-center gap-1.5">
+                        <p class="font-medium text-highlighted">{{ row.original.customer_name }}</p>
+                        <UBadge v-if="row.original.channel === 'seller'" color="neutral" variant="subtle" size="sm">Manual</UBadge>
+                    </div>
                     <p class="text-xs text-dimmed">{{ row.original.customer_contact }} · <span class="font-mono">{{ row.original.order_no }}</span></p>
                 </template>
                 <template #status-cell="{ row }">
@@ -200,7 +206,10 @@
                                 </div>
                             </template>
                             <template #title>
-                                <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
+                                <div class="flex items-center gap-1.5">
+                                    <p class="font-medium text-highlighted">{{ order.customer_name }}</p>
+                                    <UBadge v-if="order.channel === 'seller'" color="neutral" variant="subtle" size="sm">Manual</UBadge>
+                                </div>
                             </template>
                             <template #subtitle>
                                 {{ order.customer_contact }} · <span class="font-mono text-xs">{{ order.order_no }}</span>
@@ -291,6 +300,8 @@
             :order="selectedOrderForPayments"
             @updated="workspace.refreshOrders"
         />
+
+        <ScheduleAddOrderModal :workspace="workspace" />
     </div>
 </template>
 
