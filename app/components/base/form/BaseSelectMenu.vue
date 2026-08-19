@@ -8,6 +8,7 @@
         :loading="loading"
         :size="size"
         :ignore-filter="ignoreFilter"
+        :content="content"
         :class="class"
         :ui="mergedUi"
     >
@@ -28,6 +29,7 @@ const props = withDefaults(defineProps<{
     size?: SelectMenuProps['size']
     /** Skips the built-in label-matching filter, for when `items` is already server-filtered. */
     ignoreFilter?: boolean
+    content?: SelectMenuProps['content']
     class?: string
     ui?: SelectMenuProps['ui']
 }>(), {

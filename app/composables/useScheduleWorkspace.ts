@@ -866,22 +866,38 @@ export function useScheduleWorkspace(uuid: string) {
     const addOrderItemToAdd = ref<string | undefined>(undefined)
     const savingAddOrder = ref(false)
 
-    // Product picker is its own debounced backend search (not the shared `allProducts`
-    // used by the order-item editor above) so opening this modal never pulls the whole
-    // catalog into memory — only ever one page of matches, with pagination to reach the rest.
-    const ADD_ORDER_PRODUCTS_PER_PAGE = 20
+    // Backend-searched product picker (not the shared `allProducts` used by the order-item
+    // editor above), so opening this modal never pulls the whole catalog into memory. Uses
+    // BaseSelectMenu uncontrolled (no bound search-term/ignore-filter — that combination is
+    // what broke the trigger's label display) and only listens to `update:search-term` to
+    // know when to refetch; select + explicit "Add" button, same interaction as the seller's
+    // existing "Add a product" editor above.
     const addOrderProductSearch = ref('')
-    const addOrderProductPage = ref(1)
-    const addOrderProductTotal = ref(0)
     const addOrderSearchResults = ref<Product[]>([])
     const addOrderSearchLoading = ref(false)
     let addOrderSearchRequestId = 0
 
+    // Every product ever seen in a search result this modal session, keyed by uuid. Selecting
+    // an item makes the select box itself emit an `update:search-term` (e.g. on close), which
+    // re-triggers a search and replaces `addOrderSearchResults` — if the just-picked product
+    // isn't in the new result set, BaseSelectMenu has no item left to resolve its label from
+    // and falls back to printing the raw uuid. Keeping a running cache and pinning the current
+    // selection's option in below means its label stays resolvable regardless.
+    const addOrderProductCache = new Map<string, Product>()
+
     const addOrderProductOptions = computed(() => {
         const usedUuids = new Set(addOrderItems.value.map((item) => item.product_uuid))
-        return addOrderSearchResults.value
+        const options = addOrderSearchResults.value
             .filter((product) => product.is_active && !usedUuids.has(product.uuid))
             .map((product) => ({ label: displayName(product), value: product.uuid }))
+
+        const selectedUuid = addOrderItemToAdd.value
+        if (selectedUuid && !options.some((option) => option.value === selectedUuid)) {
+            const cached = addOrderProductCache.get(selectedUuid)
+            if (cached) options.unshift({ label: displayName(cached), value: selectedUuid })
+        }
+
+        return options
     })
 
     const addOrderTotal = computed(() =>
@@ -905,32 +921,29 @@ export function useScheduleWorkspace(uuid: string) {
     }
 
     async function searchAddOrderProducts() {
+        const query = addOrderProductSearch.value.trim()
+        if (!query) {
+            addOrderSearchLoading.value = false
+            addOrderSearchResults.value = []
+            return
+        }
+
         const requestId = ++addOrderSearchRequestId
         addOrderSearchLoading.value = true
         try {
-            const response = await productService.fetchProducts({
-                search: addOrderProductSearch.value.trim() || undefined,
-                page: addOrderProductPage.value,
-                per_page: ADD_ORDER_PRODUCTS_PER_PAGE
-            })
+            const response = await productService.fetchProducts({ search: query, per_page: 100 })
             if (requestId !== addOrderSearchRequestId) return
             addOrderSearchResults.value = response.data.items
-            addOrderProductTotal.value = response.data.total
+            for (const product of response.data.items as Product[]) addOrderProductCache.set(product.uuid, product)
         } catch {
             if (requestId !== addOrderSearchRequestId) return
             addOrderSearchResults.value = []
-            addOrderProductTotal.value = 0
         } finally {
             if (requestId === addOrderSearchRequestId) addOrderSearchLoading.value = false
         }
     }
 
-    useSearchDebounce(addOrderProductSearch, () => {
-        addOrderProductPage.value = 1
-        searchAddOrderProducts()
-    }, 400)
-
-    watch(addOrderProductPage, searchAddOrderProducts)
+    useSearchDebounce(addOrderProductSearch, searchAddOrderProducts, 400)
 
     function openAddOrderModal() {
         addOrderForm.customer_name = ''
@@ -938,14 +951,15 @@ export function useScheduleWorkspace(uuid: string) {
         addOrderItems.value = []
         addOrderItemToAdd.value = undefined
         addOrderProductSearch.value = ''
-        addOrderProductPage.value = 1
+        addOrderSearchResults.value = []
+        addOrderProductCache.clear()
         isAddOrderModalOpen.value = true
-        searchAddOrderProducts()
     }
 
     function addAddOrderItem() {
         if (!addOrderItemToAdd.value) return
         const product = addOrderSearchResults.value.find((p) => p.uuid === addOrderItemToAdd.value)
+            ?? addOrderProductCache.get(addOrderItemToAdd.value)
         if (!product) return
 
         const { unitPrice, isOutOfStock } = resolveAddOrderPrice(product)
@@ -1170,9 +1184,6 @@ export function useScheduleWorkspace(uuid: string) {
         addOrderItemToAdd,
         savingAddOrder,
         addOrderProductSearch,
-        addOrderProductPage,
-        addOrderProductTotal,
-        addOrderProductPerPage: ADD_ORDER_PRODUCTS_PER_PAGE,
         addOrderSearchLoading,
         addOrderProductOptions,
         addOrderTotal,

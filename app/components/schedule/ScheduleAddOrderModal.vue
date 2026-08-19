@@ -25,26 +25,18 @@
                 <div class="flex items-center gap-2">
                     <BaseSelectMenu
                         v-model="workspace.addOrderItemToAdd"
-                        v-model:search-term="workspace.addOrderProductSearch"
-                        ignore-filter
                         :items="workspace.addOrderProductOptions"
                         :loading="workspace.addOrderSearchLoading"
+                        :content="{ side: 'top' }"
                         placeholder="Search products…"
-                        class="flex-1"
+                        class="min-w-0 flex-1"
+                        @update:search-term="onSearchTermChange"
                     />
                     <BaseButton
                         icon="i-lucide-plus"
                         :disabled="!workspace.addOrderItemToAdd"
                         aria-label="Add item"
                         @click="workspace.addAddOrderItem"
-                    />
-                </div>
-                <div v-if="workspace.addOrderProductTotal > workspace.addOrderProductPerPage" class="flex justify-center pt-2">
-                    <UPagination
-                        v-model:page="workspace.addOrderProductPage"
-                        :total="workspace.addOrderProductTotal"
-                        :items-per-page="workspace.addOrderProductPerPage"
-                        size="sm"
                     />
                 </div>
             </BaseFormField>
@@ -97,4 +89,8 @@ const props = defineProps<{
 const canSubmit = computed(() =>
     props.workspace.addOrderForm.customer_name.trim().length > 0 && props.workspace.addOrderItems.length > 0
 )
+
+function onSearchTermChange(term: string) {
+    props.workspace.addOrderProductSearch = term
+}
 </script>
