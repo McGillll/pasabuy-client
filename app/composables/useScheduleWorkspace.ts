@@ -344,10 +344,14 @@ export function useScheduleWorkspace(uuid: string) {
     })
 
     const filteredChecklistItems = computed(() => {
-        return checklistItems.value.filter((item) => {
-            if (checklistCategoryFilter.value !== 'all' && (item.category_name ?? 'Uncategorized') !== checklistCategoryFilter.value) return false
-            return true
-        })
+        return checklistItems.value
+            .filter((item) => {
+                if (checklistCategoryFilter.value !== 'all' && (item.category_name ?? 'Uncategorized') !== checklistCategoryFilter.value) return false
+                return true
+            })
+            // Stable sort: unchecked items stay on top (still to buy), checked items sink to
+            // the bottom (already picked up), preserving each group's original relative order.
+            .sort((a, b) => Number(a.is_checked) - Number(b.is_checked))
     })
 
     const checklistCheckedCount = computed(() => checklistItems.value.filter((item) => item.is_checked).length)

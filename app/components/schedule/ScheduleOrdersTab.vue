@@ -8,7 +8,12 @@
             @filter-click="isOrderFiltersOpen = true"
         >
             <template #inline>
-                <BaseButton icon="i-lucide-plus" class="hidden sm:inline-flex shrink-0" @click="workspace.openAddOrderModal">
+                <BaseButton
+                    v-if="!workspace.isFinished"
+                    icon="i-lucide-plus"
+                    class="hidden sm:inline-flex shrink-0"
+                    @click="workspace.openAddOrderModal"
+                >
                     Add order
                 </BaseButton>
                 <div class="hidden sm:flex items-center gap-2">
