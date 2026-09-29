@@ -701,7 +701,12 @@ export function useScheduleWorkspace(uuid: string) {
 
     const isOrderModalOpen = ref(false)
     const viewingOrder = ref<Order | null>(null)
-    const canEditOrderItems = computed(() => isClosed.value)
+    const canEditOrderItems = computed(() => {
+        if (viewingOrder.value?.channel === 'seller') {
+            return !isFinished.value
+        }
+        return isClosed.value
+    })
     const editingProductUuid = ref<string | null>(null)
 
     const editableItems = ref<EditableItem[]>([])
