@@ -381,6 +381,12 @@ export function useScheduleWorkspace(uuid: string) {
         }
     }
 
+    // Background refresh for useLiveResync: no loading state, no error toast.
+    async function resyncChecklist() {
+        const response = await pasabuyScheduleService.fetchChecklist(uuid)
+        checklistItems.value = mergeChecklistItems(checklistItems.value, response.data)
+    }
+
     async function regenerateChecklist(silent = false) {
         if (!silent) regeneratingChecklist.value = true
         try {
@@ -1141,6 +1147,7 @@ export function useScheduleWorkspace(uuid: string) {
         checklistTotalCount,
         filteredChecklistItems,
         loadChecklist,
+        resyncChecklist,
         regenerateChecklist,
         toggleChecklist,
         startChecklistLiveSync,

@@ -299,6 +299,13 @@ onMounted(async () => {
 
 onPullToRefresh(load)
 
+useLiveResync(async () => {
+    const response = await publicChecklistService.fetchChecklist(token)
+    checklistItems.value = mergeChecklistItems(checklistItems.value, response.data)
+}, {
+    canResync: () => !loading.value && !errorMessage.value && !togglingUuid.value && !confirming.value
+})
+
 onUnmounted(() => {
     if (channel) $echo.leaveChannel(`checklist.${token}`)
 })

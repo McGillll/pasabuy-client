@@ -257,4 +257,11 @@ watch(() => props.workspace.isLocked, (locked) => {
 }, { immediate: true })
 
 onUnmounted(() => props.workspace.stopChecklistLiveSync())
+
+useLiveResync(() => props.workspace.resyncChecklist(), {
+    canResync: () => props.workspace.isLocked
+        && !props.workspace.togglingUuid
+        && !props.workspace.confirmingChecklistUuid
+        && !confirming.value
+})
 </script>
