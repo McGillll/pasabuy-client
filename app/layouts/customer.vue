@@ -13,6 +13,15 @@
                     <div class="ml-auto flex shrink-0 items-center gap-1">
                         <UColorModeButton color="neutral" variant="ghost" size="sm" square class="min-h-11 min-w-11 justify-center" />
                         <NuxtLink
+                            v-if="isSuperadmin"
+                            to="/admin"
+                            class="flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-medium text-muted transition-colors hover:bg-elevated hover:text-highlighted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            aria-label="Switch to admin view"
+                        >
+                            <UIcon name="i-lucide-shield" class="size-5" />
+                            <span class="hidden sm:inline">Admin view</span>
+                        </NuxtLink>
+                        <NuxtLink
                             to="/customer/account"
                             class="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             aria-label="My account"
@@ -145,7 +154,7 @@ interface MobileNavLink {
     to: string
 }
 
-const { user } = useAuth()
+const { user, isSuperadmin } = useAuth()
 const pendingWelcome = useWelcomeOverlay()
 const route = useRoute()
 const { itemCount, load: loadBasket } = useBasket()

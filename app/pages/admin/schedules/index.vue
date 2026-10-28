@@ -88,6 +88,16 @@
                             Close
                         </BaseButton>
                         <BaseButton
+                            v-if="isSuperadmin"
+                            size="sm"
+                            color="error"
+                            variant="ghost"
+                            icon="i-lucide-trash-2"
+                            aria-label="Delete schedule"
+                            :loading="deletingUuid === row.original.uuid"
+                            @click="deleteSchedule(row.original)"
+                        />
+                        <BaseButton
                             size="sm"
                             color="neutral"
                             variant="ghost"
@@ -288,16 +298,50 @@ function closeSchedule(scheduleRow: Schedule) {
     })
 }
 
+const { isSuperadmin } = useAuth()
+const deletingUuid = ref<string | null>(null)
+
+function deleteSchedule(scheduleRow: Schedule) {
+    askConfirm({
+        title: 'Delete schedule?',
+        description: `Delete "${scheduleRow.title}"? All of its orders and recorded payments are deleted too. This cannot be undone.`,
+        confirmLabel: 'Delete schedule',
+        color: 'error',
+        action: async () => {
+            deletingUuid.value = scheduleRow.uuid
+            try {
+                await pasabuyScheduleService.deleteSchedule(scheduleRow.uuid)
+                toast.add({ title: 'Schedule deleted', color: 'success' })
+                await loadSchedules()
+            } catch (error) {
+                toast.add({ title: 'Failed to delete schedule', description: (error as APIError).message, color: 'error' })
+            } finally {
+                deletingUuid.value = null
+            }
+        }
+    })
+}
+
 function scheduleActions(scheduleRow: Schedule): DropdownMenuItem[] {
-    if (scheduleRow.status !== 'open') return []
-    return [
-        {
+    const actions: DropdownMenuItem[] = []
+    if (scheduleRow.status === 'open') {
+        actions.push({
             label: 'Close schedule',
             icon: 'i-lucide-lock',
             loading: closingUuid.value === scheduleRow.uuid,
             onSelect: () => closeSchedule(scheduleRow)
-        }
-    ]
+        })
+    }
+    if (isSuperadmin.value) {
+        actions.push({
+            label: 'Delete schedule',
+            icon: 'i-lucide-trash-2',
+            color: 'error',
+            loading: deletingUuid.value === scheduleRow.uuid,
+            onSelect: () => deleteSchedule(scheduleRow)
+        })
+    }
+    return actions
 }
 
 onMounted(loadSchedules)

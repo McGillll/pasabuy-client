@@ -6,7 +6,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
     }
 
-    const { user, fetchCurrentUser } = useAuth()
+    const { user, canAccessAdmin, fetchCurrentUser } = useAuth()
     if (!user.value) {
         try {
             await fetchCurrentUser()
@@ -15,7 +15,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         }
     }
 
-    if (user.value?.role !== 'admin') {
+    if (!canAccessAdmin.value) {
         return navigateTo('/customer')
     }
 })

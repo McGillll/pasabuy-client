@@ -32,7 +32,7 @@
         <UCard>
             <p class="mb-3 text-xs font-medium uppercase tracking-wide text-dimmed">Schedule info</p>
 
-            <template v-if="!workspace.isLocked">
+            <template v-if="!workspace.isLocked || workspace.canEditFinished">
                 <form class="space-y-4" @submit.prevent="workspace.saveDetails">
                     <BaseFormField label="Title" required>
                         <BaseInput v-model="workspace.detailsForm.title" placeholder="July grocery run" />
@@ -41,7 +41,7 @@
                         <BaseTextarea v-model="workspace.detailsForm.description" placeholder="Optional notes for this pasabuy" />
                     </BaseFormField>
                     <BaseFormField label="Pasabuy date" hint="The date you'll go to the store; ordering closes once this date arrives" required>
-                        <BaseDatePicker v-model="workspace.detailsForm.pasabuyScheduleDate" min="today" />
+                        <BaseDatePicker v-model="workspace.detailsForm.pasabuyScheduleDate" :min="workspace.canEditFinished ? undefined : 'today'" />
                     </BaseFormField>
                     <BaseButton type="submit" :loading="workspace.savingDetails">
                         Save details
@@ -107,6 +107,7 @@ const props = defineProps<{
 const isFormExpanded = ref(false)
 
 const statusNote = computed(() => {
+    if (props.workspace.canEditFinished) return 'Finished. As superadmin you can still edit details, prices and order items, or move it back to closed.'
     if (props.workspace.isFinished) return 'This batch is fully settled. Details can no longer be edited.'
     if (props.workspace.isClosed) return 'Reopen to edit the title, description, or pasabuy date below.'
     return 'Close the schedule once ordering ends, then mark it finished once fully settled.'

@@ -4,7 +4,7 @@ export default defineNuxtRouteMiddleware(async () => {
     const token = localStorage.getItem('_token')
     if (!token) return
 
-    const { user, fetchCurrentUser } = useAuth()
+    const { user, canAccessAdmin, fetchCurrentUser } = useAuth()
     if (!user.value) {
         try {
             await fetchCurrentUser()
@@ -15,6 +15,6 @@ export default defineNuxtRouteMiddleware(async () => {
         }
     }
 
-    const homePath = user.value?.role === 'admin' ? '/admin' : '/customer'
+    const homePath = canAccessAdmin.value ? '/admin' : '/customer'
     return navigateTo(homePath)
 })

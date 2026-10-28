@@ -1,9 +1,11 @@
+export type UserRole = 'superadmin' | 'admin' | 'customer'
+
 export interface User {
     uuid: string
     first_name: string
     last_name: string
     email: string
-    role: string
+    role: UserRole
     is_approved: boolean
     is_verified: boolean
     receivable: number

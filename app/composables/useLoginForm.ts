@@ -2,7 +2,7 @@ import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import APIError from '@/components/api/user/APIError'
 
 export function useLoginForm() {
-    const { login, user, logout } = useAuth()
+    const { login, user, logout, canAccessAdmin, canAccessCustomer } = useAuth()
     const route = useRoute()
 
     const state = reactive({
@@ -40,11 +40,14 @@ export function useLoginForm() {
                 return
             }
 
-            const isAdmin = user.value?.role === 'admin'
-            const namespace = isAdmin ? '/admin' : '/customer'
+            const isAdmin = canAccessAdmin.value
             const defaultTarget = isAdmin ? '/admin' : '/customer'
             const redirect = route.query.redirect as string | undefined
-            const target = redirect && redirect.startsWith(namespace) ? redirect : defaultTarget
+            const redirectAllowed = !!redirect && (
+                (canAccessAdmin.value && redirect.startsWith('/admin')) ||
+                (canAccessCustomer.value && redirect.startsWith('/customer'))
+            )
+            const target = redirectAllowed ? redirect! : defaultTarget
 
             if (!isAdmin) await prepareWelcomeOverlay()
 

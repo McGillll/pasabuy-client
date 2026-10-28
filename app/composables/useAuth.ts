@@ -5,6 +5,9 @@ import type { User } from '@/types/User'
 
 export function useAuth() {
     const user = useState<User | null>('auth_user', () => null)
+    const isSuperadmin = computed(() => user.value?.role === 'superadmin')
+    const canAccessAdmin = computed(() => user.value?.role === 'admin' || isSuperadmin.value)
+    const canAccessCustomer = computed(() => user.value?.role === 'customer' || isSuperadmin.value)
 
     async function login(email: string, password: string, remember: boolean = false) {
         const response = await authService.login({ email, password, remember })
@@ -49,5 +52,5 @@ export function useAuth() {
         return await authService.resendVerificationEmail()
     }
 
-    return { user, login, logout, fetchCurrentUser, forgotPassword, resetPassword, verifyEmail, resendVerificationEmail }
+    return { user, isSuperadmin, canAccessAdmin, canAccessCustomer, login, logout, fetchCurrentUser, forgotPassword, resetPassword, verifyEmail, resendVerificationEmail }
 }

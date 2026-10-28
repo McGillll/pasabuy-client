@@ -137,7 +137,7 @@ import IconProducts from '@/components/icons/IconProducts.vue'
 import IconSchedules from '@/components/icons/IconSchedules.vue'
 import IconCustomers from '@/components/icons/IconCustomers.vue'
 
-const { user, logout } = useAuth()
+const { user, isSuperadmin, logout } = useAuth()
 const sidebarMode = useSidebarMode()
 
 const fullName = computed(() => `${user.value?.first_name ?? ''} ${user.value?.last_name ?? ''}`.trim())
@@ -149,6 +149,7 @@ onMounted(() => {
 const accountMenuItems = computed<DropdownMenuItem[]>(() => [
     { label: 'My Account', icon: 'i-lucide-user', to: '/admin/account' },
     { label: 'Settings', icon: 'i-lucide-settings', to: '/admin/settings' },
+    ...(isSuperadmin.value ? [{ label: 'Switch to customer view', icon: 'i-lucide-store', to: '/customer' }] : []),
     { label: 'Log out', icon: 'i-lucide-log-out', onSelect: () => logout('/login') }
 ])
 

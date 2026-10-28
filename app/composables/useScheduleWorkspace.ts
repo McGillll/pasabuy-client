@@ -30,6 +30,7 @@ export function useScheduleWorkspace(uuid: string) {
     const { runUndoable } = useUndoableAction()
     const { setOrderStatusUndoable } = useOrderUndoAction()
     const { $echo } = useNuxtApp()
+    const { isSuperadmin } = useAuth()
 
     // ---- Core schedule ----
 
@@ -41,6 +42,8 @@ export function useScheduleWorkspace(uuid: string) {
     const isClosed = computed(() => schedule.value?.status === 'closed')
     const isFinished = computed(() => schedule.value?.status === 'finished')
     const isLocked = computed(() => isClosed.value || isFinished.value)
+    // Superadmins may still edit details, prices and order items after a schedule is finished.
+    const canEditFinished = computed(() => isFinished.value && isSuperadmin.value)
 
     const detailsForm = reactive({
         title: '',
@@ -60,6 +63,7 @@ export function useScheduleWorkspace(uuid: string) {
         if (changingStatus.value) return false
         if (current === 'open') return target === 'closed'
         if (current === 'closed') return target === 'open' || target === 'finished'
+        if (current === 'finished') return isSuperadmin.value && target === 'closed'
         return false
     }
 
@@ -99,10 +103,13 @@ export function useScheduleWorkspace(uuid: string) {
     }
 
     function closeSchedule() {
+        const revertingFinished = isFinished.value
         askConfirm({
-            title: 'Close schedule?',
-            description: 'Customers will no longer be able to order or edit their orders. You can reopen it later if needed.',
-            confirmLabel: 'Close schedule',
+            title: revertingFinished ? 'Move back to closed?' : 'Close schedule?',
+            description: revertingFinished
+                ? 'The due date is cleared and invoices will be sent again when you finish it. Recorded payments are kept.'
+                : 'Customers will no longer be able to order or edit their orders. You can reopen it later if needed.',
+            confirmLabel: revertingFinished ? 'Move to closed' : 'Close schedule',
             action: async () => {
                 changingStatus.value = true
                 try {
@@ -207,7 +214,7 @@ export function useScheduleWorkspace(uuid: string) {
     // ---- Summary / pricing ----
 
     const summary = ref<ScheduleSummaryItem[]>([])
-    const canConfirmPrice = computed(() => schedule.value?.status !== 'finished')
+    const canConfirmPrice = computed(() => schedule.value?.status !== 'finished' || canEditFinished.value)
 
     const summaryGrandTotal = computed(() => summary.value.reduce((sum, item) => sum + toNumber(item.subtotal), 0))
 
@@ -703,9 +710,9 @@ export function useScheduleWorkspace(uuid: string) {
     const viewingOrder = ref<Order | null>(null)
     const canEditOrderItems = computed(() => {
         if (viewingOrder.value?.channel === 'seller') {
-            return !isFinished.value
+            return !isFinished.value || canEditFinished.value
         }
-        return isClosed.value
+        return isClosed.value || canEditFinished.value
     })
     const editingProductUuid = ref<string | null>(null)
 
@@ -1079,6 +1086,8 @@ export function useScheduleWorkspace(uuid: string) {
         isClosed,
         isFinished,
         isLocked,
+        isSuperadmin,
+        canEditFinished,
         detailsForm,
         savingDetails,
         publicLink,
