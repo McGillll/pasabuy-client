@@ -77,7 +77,15 @@
 
 <script setup lang="ts">
 definePageMeta({
-    layout: false,
+    layout: 'auth',
+    authPanel: 'right',
+    pageTransition: {
+        mode: 'out-in',
+        enterActiveClass: 'transition duration-300 ease-out motion-reduce:transition-none',
+        enterFromClass: 'opacity-0 translate-y-2',
+        leaveActiveClass: 'transition duration-200 ease-in motion-reduce:transition-none',
+        leaveToClass: 'opacity-0'
+    },
     middleware: 'guest',
 })
 
