@@ -35,12 +35,20 @@ const emit = defineEmits<{
 
 const SCROLLABLE_UI: TabsProps['ui'] = {
     list: 'flex-nowrap overflow-x-auto',
-    trigger: 'grow-0 shrink-0 min-w-20 justify-center py-2.5'
+    trigger: 'grow-0 shrink-0 min-w-20 justify-center min-h-9'
 }
 
-const mergedUi = computed<TabsProps['ui']>(() => (
-    props.scrollable ? { ...SCROLLABLE_UI, ...props.ui } : props.ui
-))
+// 36px trigger + the list's p-1 = 44px, matching search inputs and filter chips
+// (and the 44px touch-target minimum).
+const PILL_UI: TabsProps['ui'] = {
+    trigger: 'min-h-9'
+}
 
 const resolvedVariant = computed<TabsProps['variant']>(() => props.variant ?? (props.scrollable ? 'pill' : undefined))
+
+const mergedUi = computed<TabsProps['ui']>(() => {
+    if (props.scrollable) return { ...SCROLLABLE_UI, ...props.ui }
+    if (resolvedVariant.value !== 'link') return { ...PILL_UI, ...props.ui }
+    return props.ui
+})
 </script>

@@ -17,7 +17,11 @@
                 <UIcon name="i-lucide-store" class="size-4 text-dimmed" />
                 {{ schedule.seller_name }}
             </span>
-            <span v-if="schedule.pasabuy_schedule_date" class="inline-flex items-center gap-1.5">
+            <span v-if="cutoffCountdown" class="inline-flex items-center gap-1.5 font-medium text-highlighted" role="timer">
+                <UIcon name="i-lucide-timer" class="size-4 text-warning" />
+                {{ cutoffCountdown }}
+            </span>
+            <span v-else-if="schedule.pasabuy_schedule_date" class="inline-flex items-center gap-1.5">
                 <UIcon name="i-lucide-alarm-clock" class="size-4 text-dimmed" />
                 Close by {{ formatDate(schedule.pasabuy_schedule_date) }}
             </span>
@@ -34,7 +38,10 @@
 import { NuxtLink } from '#components'
 import type { ScheduleBrowseItem } from '@/types/Schedule'
 
-defineProps<{
+const props = defineProps<{
     schedule: ScheduleBrowseItem
 }>()
+
+const { closingCountdown } = useScheduleClosingSoon()
+const cutoffCountdown = computed(() => closingCountdown(props.schedule))
 </script>

@@ -58,18 +58,18 @@
                 :columns="columns"
                 :loading="loading"
                 :ui="{ tr: 'hover:bg-elevated/50 transition-colors' }"
-                :meta="{ class: { tr: (row: { original: Schedule }) => isClosingSoon(row.original) ? 'bg-warning/10 hover:bg-warning/15' : '' } }"
+                :meta="{ class: { tr: (row: { original: Schedule }) => isClosingSoon(row.original) ? 'bg-warning/10 hover:bg-warning/15 dark:bg-warning/5 dark:hover:bg-warning/10' : '' } }"
             >
                 <template #title-cell="{ row }">
                     <NuxtLink :to="`/admin/schedules/${row.original.uuid}`" class="font-medium text-highlighted hover:text-primary">
                         {{ row.original.title }}
                     </NuxtLink>
                     <span v-if="isClosingSoon(row.original)" class="ml-2 inline-flex items-center gap-1 text-xs font-medium text-warning">
-                        <UIcon name="i-lucide-clock" class="size-3.5" /> closing soon
+                        <UIcon name="i-lucide-clock" class="size-3.5" /> Closing soon
                     </span>
                 </template>
                 <template #status-cell="{ row }">
-                    <BaseStatusBadge :color="scheduleStatusColor[row.original.status]" :label="row.original.status" />
+                    <BaseStatusBadge :color="scheduleStatusColor[row.original.status]" :label="scheduleStatusLabel[row.original.status] ?? row.original.status" />
                 </template>
                 <template #pasabuy_schedule_date-cell="{ row }">
                     <span class="text-muted">{{ row.original.pasabuy_schedule_date ? formatDate(row.original.pasabuy_schedule_date) : '-' }}</span>
@@ -126,11 +126,11 @@
                         <template #meta>
                             <span class="text-muted">{{ scheduleRow.pasabuy_schedule_date ? formatDate(scheduleRow.pasabuy_schedule_date) : '-' }}</span>
                             <span v-if="isClosingSoon(scheduleRow)" class="inline-flex items-center gap-1 text-xs font-medium text-warning">
-                                <UIcon name="i-lucide-clock" class="size-3.5" /> closing soon
+                                <UIcon name="i-lucide-clock" class="size-3.5" /> Closing soon
                             </span>
                         </template>
                         <template #status>
-                            <BaseStatusBadge :color="scheduleStatusColor[scheduleRow.status]" :label="scheduleRow.status" />
+                            <BaseStatusBadge :color="scheduleStatusColor[scheduleRow.status]" :label="scheduleStatusLabel[scheduleRow.status] ?? scheduleRow.status" />
                         </template>
                     </ListCard>
                 </template>

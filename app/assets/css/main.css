@@ -5,7 +5,7 @@
  * Pasabuy palette (colorhunt.co/palette/2936814274d995ccddd0e7e6)
  * This is the ONLY file to edit when changing the site's color palette or font.
  * app.config.ts just points Nuxt UI's "primary"/"secondary" tokens at these
- * scales by name and should not need to change again.
+ * scales by name, and picks the built-in neutral scale ("stone").
  */
 @theme static {
     --font-sans: "Inter", sans-serif;
@@ -40,6 +40,31 @@
     /* "Chrome divider" shadow: separates fixed chrome (sidebar, headers,
        sticky sub-navs, bottom tab bar) from scrollable content beneath it. */
     --shadow-chrome: 0 2px 10px -4px rgba(0, 0, 0, 0.08);
+}
+
+/* Warm minimalism: the neutral scale is "stone" (app.config.ts), the page sits on a warm
+   off-white instead of pure white, and corners are slightly softer. Borders and solid
+   buttons stay as-is on purpose: flat UI with weak click cues measurably slows users
+   down (NN/g, "Flat UI Elements Attract Less Attention"). */
+:root {
+    --ui-radius: 0.3125rem;
+}
+
+/* Unlayered, so it would beat Nuxt UI's layered .dark tokens; scope it to light mode. */
+:root:not(.dark) {
+    --ui-bg: #fdfcfa;
+}
+
+/* Dark mode keeps a hint of navy (same hue as primary) instead of stone's warm charcoal.
+   Text tokens stay on the stone scale; only surfaces and borders are tinted. */
+.dark {
+    --ui-bg: #0e1322;
+    --ui-bg-muted: #151b2e;
+    --ui-bg-elevated: #151b2e;
+    --ui-bg-accented: #212a42;
+    --ui-border: #1e2639;
+    --ui-border-muted: #262f47;
+    --ui-border-accented: #262f47;
 }
 
 @keyframes fade-scale-in {

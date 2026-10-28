@@ -3,7 +3,18 @@ export default defineAppConfig({
         colors: {
             primary: 'primary',
             secondary: 'secondary',
-            neutral: 'slate'
+            neutral: 'stone'
+        },
+        // 44px controls to match inputs/buttons. Nine 44px buttons overflow a 375px
+        // screen, so first/last jump buttons only appear from sm up.
+        pagination: {
+            slots: {
+                first: 'min-h-11 min-w-11 justify-center max-sm:hidden',
+                prev: 'min-h-11 min-w-11 justify-center',
+                item: 'min-h-11 min-w-11 justify-center',
+                next: 'min-h-11 min-w-11 justify-center',
+                last: 'min-h-11 min-w-11 justify-center max-sm:hidden'
+            }
         },
         dropdownMenu: {
             slots: {

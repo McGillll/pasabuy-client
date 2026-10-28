@@ -1,5 +1,5 @@
 <template>
-    <BaseTabs v-model="activeSummaryTab" :items="summaryTabs" class="w-full mt-4">
+    <BaseTabs v-model="activeSummaryTab" :items="summaryTabs" :ui="{ leadingIcon: 'max-sm:hidden' }" class="w-full mt-4">
         <template #pricing>
             <SchedulePricingPanel :workspace="workspace" />
         </template>

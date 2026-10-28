@@ -31,7 +31,12 @@
                         <h1 class="text-2xl font-semibold text-highlighted">{{ schedule.title }}</h1>
                         <p v-if="schedule.description" class="mt-1 text-muted">{{ schedule.description }}</p>
                         <div v-if="schedule.pasabuy_schedule_date" class="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted">
-                            <span class="inline-flex items-center gap-1.5">
+                            <span v-if="cutoffCountdown" class="inline-flex items-center gap-1.5 font-medium text-highlighted" role="timer">
+                                <UIcon name="i-lucide-timer" class="size-4 text-warning" />
+                                {{ cutoffCountdown }}
+                                <span class="font-normal text-muted">({{ formatDate(schedule.pasabuy_schedule_date) }})</span>
+                            </span>
+                            <span v-else class="inline-flex items-center gap-1.5">
                                 <UIcon name="i-lucide-alarm-clock" class="size-4 text-dimmed" />
                                 Close by {{ formatDate(schedule.pasabuy_schedule_date) }}
                             </span>
@@ -712,8 +717,12 @@ const uuid = route.params.uuid as string
 const toast = useToast()
 const { user, fetchCurrentUser } = useAuth()
 const { displayName } = useProductDisplayName()
+const { closingCountdown } = useScheduleClosingSoon()
 
 const schedule = ref<Schedule | null>(null)
+
+// Baymard: a live countdown makes an order cutoff feel real where a static date doesn't.
+const cutoffCountdown = computed(() => schedule.value ? closingCountdown(schedule.value) : null)
 const { data: catalog, ensure: ensureCatalogLoaded } = useCachedFetch<Product[]>(
     'public-product-catalog',
     (etag) => publicProductService.fetchCatalogCacheable({ per_page: 200 }, etag)

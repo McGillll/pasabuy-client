@@ -4,9 +4,9 @@
         :class="[
             clickable ? 'cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary' : '',
             dimmed ? 'opacity-50' : '',
-            tone === 'warning' ? 'border-warning bg-warning/10' : 'border-default bg-default',
+            tone === 'warning' ? 'border-warning bg-warning/10 dark:bg-warning/5' : 'border-default bg-default',
             clickable && tone !== 'warning' ? 'hover:bg-elevated/50' : '',
-            clickable && tone === 'warning' ? 'hover:bg-warning/15' : ''
+            clickable && tone === 'warning' ? 'hover:bg-warning/15 dark:hover:bg-warning/10' : ''
         ]"
         :role="clickable ? 'button' : undefined"
         :tabindex="clickable ? 0 : undefined"

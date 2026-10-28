@@ -13,15 +13,36 @@
 
         <DailyVerseCard />
 
-        <div class="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-6">
-            <div class="space-y-6">
-                <AttentionQueue
-                    title="Needs attention"
-                    hint="Orders waiting on confirm or cancel"
-                    help-text="Orders land here while they're still pending, meaning you haven't confirmed or cancelled them yet. Confirm or cancel each one from its menu to clear it from this list."
-                    :count="pendingOrders.length"
-                    :items="attentionQueueItems"
-                    view-all-href="/admin/schedules"
+        <!-- Bento grid. DOM order is the mobile priority order (act first, glance second,
+             browse last); lg placement turns it into a 12-column grid. -->
+        <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
+            <LiveScheduleCard
+                class="h-full lg:col-span-8"
+                :schedule="liveSchedule"
+                :order-count="liveOrderCount"
+                :pending-count="livePendingCount"
+                :other-open-count="Math.max(0, openSchedules.length - 1)"
+                :loading="loading"
+            />
+
+            <AttentionQueue
+                class="h-full lg:col-span-4 lg:row-span-2"
+                title="Needs attention"
+                hint="Orders waiting on confirm or cancel"
+                help-text="Orders land here while they're still pending, meaning you haven't confirmed or cancelled them yet. Confirm or cancel each one from its menu to clear it from this list."
+                :count="pendingOrders.length"
+                :items="attentionQueueItems"
+                view-all-href="/admin/schedules"
+                :loading="loading"
+            />
+
+            <KpiStrip class="lg:col-span-8 lg:grid-cols-4" :items="kpiItems" :loading="loading" />
+
+            <div class="space-y-4 sm:space-y-6 lg:col-span-7">
+                <PipelineBar
+                    title="Order pipeline"
+                    help-text="How many orders across all your schedules are currently pending, confirmed, or cancelled."
+                    :stages="pipelineStages"
                     :loading="loading"
                 />
 
@@ -33,16 +54,7 @@
                 />
             </div>
 
-            <div class="space-y-6">
-                <KpiStrip :items="kpiItems" :loading="loading" />
-
-                <PipelineBar
-                    title="Order pipeline"
-                    help-text="How many orders across all your schedules are currently pending, confirmed, or cancelled."
-                    :stages="pipelineStages"
-                    :loading="loading"
-                />
-
+            <div class="space-y-4 sm:space-y-6 lg:col-span-5">
                 <RankedList
                     :title="rankingTabs.find((tab) => tab.value === rankingTab)?.label ?? 'Rankings'"
                     :help-text="rankingTab === 'products'
@@ -111,6 +123,20 @@ const { data: schedules, ensure: ensureSchedulesLoaded } = useCachedFetch<Schedu
     (etag) => pasabuyScheduleService.fetchSchedulesCacheable({ per_page: 100 }, etag)
 )
 const pendingOrders = ref<PendingOrder[]>([])
+const liveOrderCount = ref(0)
+
+const openSchedules = computed(() => (schedules.value ?? []).filter((s) => s.status === 'open'))
+
+// The hero tile shows the open pasabuy closing soonest; undated ones sort last.
+const liveSchedule = computed(() =>
+    [...openSchedules.value].sort((a, b) =>
+        (a.pasabuy_schedule_date ?? '9999-12-31').localeCompare(b.pasabuy_schedule_date ?? '9999-12-31')
+    )[0] ?? null
+)
+
+const livePendingCount = computed(() =>
+    liveSchedule.value ? pendingOrders.value.filter((o) => o.scheduleUuid === liveSchedule.value?.uuid).length : 0
+)
 const loadingRankings = ref(true)
 const topProducts = ref<TopProduct[]>([])
 const topBuyers = ref<TopBuyer[]>([])
@@ -201,7 +227,7 @@ const scheduleRowItems = computed(() =>
         title: schedule.title,
         status: schedule.status,
         statusColor: scheduleStatusColor[schedule.status],
-        statusLabel: schedule.status,
+        statusLabel: scheduleStatusLabel[schedule.status] ?? schedule.status,
         href: `/admin/schedules/${schedule.uuid}`,
         ...scheduleClosingSoon(schedule)
     }))
@@ -271,6 +297,10 @@ async function loadDashboard(force = false) {
             { label: 'Confirmed', count: confirmedOrdersResponse.data.total, color: 'bg-success' },
             { label: 'Cancelled', count: cancelledOrdersResponse.data.total, color: 'bg-error' }
         ]
+
+        liveOrderCount.value = liveSchedule.value
+            ? (await orderService.fetchOrders({ schedule_uuid: liveSchedule.value.uuid, per_page: 1 })).data.total
+            : 0
     } catch (error) {
         toast.add({
             title: 'Failed to load dashboard',

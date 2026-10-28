@@ -12,7 +12,7 @@
             </div>
             <p class="text-xs font-medium uppercase tracking-wide text-dimmed">Verse of the day</p>
         </div>
-        <p class="text-lg font-medium leading-relaxed text-highlighted">{{ verse.text }}</p>
+        <p class="font-medium leading-relaxed text-highlighted">{{ verse.text }}</p>
         <p class="mt-3 text-sm text-muted">{{ verse.reference }}</p>
     </UCard>
 </template>
